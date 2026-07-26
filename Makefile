@@ -1,75 +1,120 @@
-.PHONY: install dev lint typecheck test backend clean
+.PHONY: install dev backend lint typecheck test-python lint-python migrate deploy-backend deploy-mobile help setup setup-local setup-cloud setup-validate
 
-# Install all dependencies
+# ── Setup ─────────────────────────────────────────────────────
+setup:
+	@./scripts/setup.sh all
+
+setup-local:
+	@./scripts/setup.sh local
+
+setup-cloud:
+	@./scripts/setup.sh cloud
+
+setup-plantnet:
+	@./scripts/setup.sh plantnet
+
+setup-validate:
+	@./scripts/setup.sh validate
+
+setup-show:
+	@./scripts/setup.sh show
+
+# ── Install ───────────────────────────────────────────────────
 install:
 	npm install
 	cd api && pip install -r requirements.txt
 
-# Start Expo dev server
+# ── Start ─────────────────────────────────────────────────────
 dev:
-	npx expo start
+	@./scripts/start.sh all
 
-# Start with Android
-dev-android:
-	npx expo start --android
+dev-backend:
+	@./scripts/start.sh backend
 
-# Start Python backend
-backend:
-	cd api && vercel dev
+dev-supabase:
+	@./scripts/start.sh supabase
 
-# Lint TypeScript
+# ── Lint & Test ───────────────────────────────────────────────
 lint:
 	npm run lint
 
-# Type check TypeScript
 typecheck:
 	npx tsc --noEmit
 
-# Run Python tests
 test-python:
-	cd api && pytest
+	cd api && python -m pytest tests/ -v
 
-# Lint Python
 lint-python:
 	cd api && ruff check .
 	cd api && ruff format --check .
 
-# Build Android APK
+# ── Build ─────────────────────────────────────────────────────
 build-android:
 	npx eas-cli build -p android --profile preview
 
-# Build Android production
 build-android-prod:
 	npx eas-cli build -p android --profile production
 
-# Deploy backend to Vercel
+# ── Deploy ────────────────────────────────────────────────────
 deploy-backend:
-	cd api && vercel deploy --prod
+	@./scripts/deploy.sh backend
 
-# Run Supabase migrations
+deploy-mobile:
+	@./scripts/deploy.sh mobile
+
+deploy-migrate:
+	@./scripts/deploy.sh migrate
+
+deploy-all:
+	@./scripts/deploy.sh all
+
+# ── Database ──────────────────────────────────────────────────
 migrate:
 	supabase db push
 
-# Clean generated files
-clean:
-	rm -rf node_modules
-	rm -rf .expo
-	rm -rf api/__pycache__
-	rm -rf api/.pytest_cache
+# ── Pre-commit ────────────────────────────────────────────────
+precommit-install:
+	pip install pre-commit
+	pre-commit install
 
-# Help
+precommit-run:
+	pre-commit run --all-files
+
+# ── Clean ─────────────────────────────────────────────────────
+clean:
+	rm -rf node_modules .expo api/__pycache__ api/.pytest_cache .pytest_cache
+	rm -rf api/.ruff_cache
+
+# ── Help ──────────────────────────────────────────────────────
 help:
-	@echo "Gardenify Development Commands:"
+	@echo "Gardenify Commands:"
 	@echo ""
-	@echo "  make install       - Install all dependencies"
-	@echo "  make dev           - Start Expo dev server"
-	@echo "  make dev-android   - Start with Android"
-	@echo "  make backend       - Start Python backend"
-	@echo "  make lint          - Lint TypeScript"
-	@echo "  make typecheck     - Type check TypeScript"
-	@echo "  make test-python   - Run Python tests"
-	@echo "  make lint-python   - Lint Python"
-	@echo "  make build-android - Build Android APK"
-	@echo "  make deploy-backend - Deploy backend to Vercel"
-	@echo "  make migrate       - Run Supabase migrations"
-	@echo "  make clean         - Clean generated files"
+	@echo "  Setup:"
+	@echo "    make setup              — Full local setup (Supabase + PlantNet)"
+	@echo "    make setup-local        — Local Supabase only"
+	@echo "    make setup-cloud        — Supabase Cloud"
+	@echo "    make setup-plantnet     — PlantNet API key"
+	@echo "    make setup-validate     — Validate .env"
+	@echo "    make setup-show         — Show .env (redacted)"
+	@echo ""
+	@echo "  Dev:"
+	@echo "    make dev                — Start everything (Supabase + backend)"
+	@echo "    make dev-backend        — Backend only"
+	@echo "    make dev-supabase       — Supabase only"
+	@echo ""
+	@echo "  Lint & Test:"
+	@echo "    make lint               — Lint TypeScript"
+	@echo "    make typecheck          — Type check TypeScript"
+	@echo "    make test-python        — Run Python tests"
+	@echo "    make lint-python        — Lint Python"
+	@echo ""
+	@echo "  Build & Deploy:"
+	@echo "    make build-android      — EAS preview build"
+	@echo "    make deploy-backend     — Vercel production"
+	@echo "    make deploy-migrate     — Supabase migrations"
+	@echo "    make deploy-all         — Everything"
+	@echo ""
+	@echo "  Other:"
+	@echo "    make precommit-install  — Install pre-commit hooks"
+	@echo "    make precommit-run      — Run pre-commit on all files"
+	@echo "    make clean              — Remove generated files"
