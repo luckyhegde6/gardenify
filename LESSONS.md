@@ -69,3 +69,57 @@ Running log of lessons learned during Gardenify development. Agents read this fi
 **Applies to:** backend
 **Severity:** important
 **Status:** active
+
+## 2026-07-27: Disease Detection via PlantNet Diseases API
+
+**Context:** User wanted disease detection alongside species identification
+**Decision:** Use PlantNet's separate diseases endpoint (`/v2/diseases/identify`) in parallel with species identification
+**Rationale:** Same image format, no additional API key needed. Returns disease name, confidence, description, and treatment. Runs after species ID so it doesn't block the primary flow.
+**Applies to:** backend
+**Severity:** important
+**Status:** active
+
+## 2026-07-27: Plant Care Analysis Engine
+
+**Context:** User wanted watering, sunlight, soil, growth, and propagation info
+**Decision:** Build a taxonomy-based care profile lookup system (genus → family → default)
+**Rationale:** PlantNet doesn't provide care instructions. We maintain care profiles keyed by genus/family. In production, this could connect to a plant database API (Trefle, Perenual) or LLM-generated care guides.
+**Applies to:** backend
+**Severity:** important
+**Status:** active
+
+## 2026-07-27: EXIF and GPS Metadata Extraction
+
+**Context:** User wanted image metadata capture (camera, date, GPS, dimensions)
+**Decision:** Use Pillow to extract EXIF data and image dimensions from uploaded images
+**Rationale:** EXIF gives us camera model, date taken, and GPS coordinates. Useful for: (1) helping identify where a plant was found, (2) tracking when photos were taken, (3) future features like location-based plant recommendations.
+**Applies to:** backend
+**Severity:** medium
+**Status:** active
+
+## 2026-07-27: In-Memory Result Caching
+
+**Context:** Avoid re-identifying the same images within a short window
+**Decision:** Cache identification results in-memory with 1-hour TTL, keyed by image hashes + organs + language
+**Rationale:** Simple first step before Redis/Supabase caching. Saves PlantNet quota for repeated identical uploads. Cache key includes organ selection since same image with different organ tags may yield different results.
+**Applies to:** backend
+**Severity:** medium
+**Status:** active
+
+## 2026-07-27: MEMORY.md for Agent Context Efficiency
+
+**Context:** Agents were burning context re-reading large files at session start
+**Decision:** Create MEMORY.md as a quick-recap file with key facts, current state, file references, and testing instructions
+**Rationale:** Agents can read MEMORY.md (200 lines) instead of AGENTS.md + architecture.md + phase TODOs (500+ lines). Saves ~60% context on session start.
+**Applies to:** all
+**Severity:** important
+**Status:** active
+
+## 2026-07-27: Swagger UI for Local API Testing
+
+**Context:** Need a way to test the identify endpoint with file uploads locally
+**Decision:** FastAPI's built-in Swagger UI at `/docs` supports multipart file upload testing
+**Rationale:** No need for Postman or curl — Swagger UI lets you upload images, set organ types, and see full request/response. Works with `vercel dev` locally.
+**Applies:** backend
+**Severity:** minor
+**Status:** active
