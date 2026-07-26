@@ -103,6 +103,26 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-07-27: OpenCode + Claude ECC Integration
+- **Duration**: ~45 min
+- **Goal**: Integrate opencode best practices (rules, plugins, skills, tools) + ECC patterns from affaan-m/ECC
+- **Files modified**:
+  - `opencode.json` — Full rewrite: 9 agents, 10 commands, permissions, plugin/skills config
+  - `SOUL.md` — Project identity and core principles
+  - `RULES.md` — Must always/never rules, agent/skill format, commit style
+  - `.opencode/plugins/gardenify-hooks.ts` — Auto-format, typecheck, security, session management hooks
+  - `.opencode/instructions/INSTRUCTIONS.md` — Security, coding, testing, git, Expo, Python, Supabase rules
+  - `.opencode/skills/tdd-workflow/SKILL.md` — TDD methodology for Gardenify
+  - `.opencode/skills/security-review/SKILL.md` — Security review checklist
+  - `.opencode/skills/expo-development/SKILL.md` — Expo SDK 55 patterns
+  - `.opencode/skills/fastapi-backend/SKILL.md` — FastAPI route/service/model patterns
+  - `.opencode/skills/supabase-rls/SKILL.md` — RLS policies and auth integration
+  - `.claude/rules/gardenify-guardrails.md` — Prompt defense, commit, code style, security defaults
+- **Tests status**: Not verified locally
+- **Next session**: Verify CI passes, run Playwright tests, get Supabase credentials
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done
