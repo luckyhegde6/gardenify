@@ -335,3 +335,50 @@ Running log of lessons learned during Gardenify development. Agents read this fi
 | No developer docs | Slow onboarding | Setup scripts + seed data |
 | Not configuring linters | CI failures | Create project-specific config |
 | Not excluding irrelevant dirs | Type errors | tsconfig exclude + cleanup |
+
+---
+
+### Mistake 9: Not Updating Session Files Before Commit
+
+**Context:** Made changes but didn't update session tracking, memory, handoffs, or PRD before committing.
+
+**What went wrong:**
+- No session log to track what was done
+- No handoff doc for next agent to resume
+- No PRD checklist to track progress
+- Memory file became stale
+
+**Root cause:** Focused on code changes, not on documentation workflow. No pre-commit checklist.
+
+**Fix:**
+1. Create pre-commit workflow:
+   - Update `.agents/sessions.md` with what was done
+   - Update `.agents/handoff-current.md` with next steps
+   - Update `MEMORY.md` with current state
+   - Update `LESSONS.md` with discoveries
+   - Update `PRD.md` with completed items
+2. Add to pre-commit hook or make checklist
+3. Treat docs as first-class citizens, not afterthoughts
+
+**Pattern:** "If it's not documented, it didn't happen. If it's not tracked, it won't be done."
+
+---
+
+### Pre-Commit Workflow (Established 2026-07-27)
+
+Before EVERY commit, update these files:
+
+```
+□ .agents/sessions.md — log what was done
+□ .agents/handoff-current.md — next steps for next agent
+□ MEMORY.md — current state + what's not done
+□ LESSONS.md — any new mistakes or discoveries
+□ PRD.md — check off completed items
+□ .agents/primer.md — quick context for new agents
+```
+
+This ensures:
+- Continuity between sessions
+- No work is forgotten
+- Progress is visible
+- Next agent can resume quickly
