@@ -335,6 +335,29 @@ Running log of lessons learned during Gardenify development. Agents read this fi
 | No developer docs | Slow onboarding | Setup scripts + seed data |
 | Not configuring linters | CI failures | Create project-specific config |
 | Not excluding irrelevant dirs | Type errors | tsconfig exclude + cleanup |
+| Not fixing ruff errors before push | CI failures on PR | Run `ruff check .` before push |
+
+---
+
+### Mistake 10: Not Running Ruff Locally Before Push
+
+**Context:** Pushed code with 9 ruff errors to GitHub Actions.
+
+**What went wrong:**
+- Import sorting (I001) in 4 files
+- `timezone.utc` → `UTC` alias (UP017) in health.py
+- `raise ... from e` missing (B904) in identify.py
+- Line too long (E501) in plant_care.py
+
+**Root cause:** Did not run `ruff check api/` locally before pushing.
+
+**Fix:**
+1. Run `ruff check api/` before every push
+2. Run `ruff format api/` to auto-fix formatting
+3. Add to pre-commit hook: `ruff check api/ && ruff format --check api/`
+4. Use `ruff check api/ --fix` to auto-fix import sorting
+
+**Pattern:** "If it's not in CI, it's not tested. If it's not in pre-commit, it's not caught."
 
 ---
 
