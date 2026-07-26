@@ -6,6 +6,9 @@
 # After first start, grab keys from:
 #   docker compose exec meta psql -U postgres -c "select ... from auth.jwt_keys"
 # Or open Studio at http://localhost:54323 → Settings → API
+#
+# ENVIRONMENT=local (default)
+# USE_REMOTE=false  (set to true to use prod Supabase from local backend)
 
 services:
   studio:

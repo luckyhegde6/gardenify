@@ -56,6 +56,24 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-07-27: Add ENVIRONMENT/USE_REMOTE env vars + seed scripts
+- **Duration**: ~30 min
+- **Goal**: Add environment mode switching and database seed scripts
+- **Files modified**:
+  - `api/config.py` — Added `environment`, `use_remote`, `is_production`, `supabase_effective_url`
+  - `.env.example` — Added ENVIRONMENT, USE_REMOTE vars with docs
+  - `.env.test` — Added ENVIRONMENT, USE_REMOTE vars
+  - `docker-compose.yml` — Updated comments with env var docs
+  - `supabase/seed.sql` — Full seed data (5 identifications, 3 favorites, test user)
+  - `scripts/seed.sh` — Bash seed script (local/production modes)
+  - `scripts/seed.ps1` — PowerShell seed script
+  - `Makefile` — Added seed, seed-local, seed-prod commands
+  - `api/routes/health.py` — Debug endpoint shows environment info
+- **Tests status**: Not verified locally
+- **Next session**: Verify CI passes, continue with testing framework
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done

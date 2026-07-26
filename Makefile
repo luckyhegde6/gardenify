@@ -1,4 +1,4 @@
-.PHONY: install dev backend lint typecheck test-python lint-python migrate deploy-backend deploy-mobile help setup setup-local setup-cloud setup-validate
+.PHONY: install dev backend lint typecheck test-python lint-python migrate deploy-backend deploy-mobile help setup setup-local setup-cloud setup-validate seed seed-local seed-prod
 
 # ── Setup ─────────────────────────────────────────────────────
 setup:
@@ -72,6 +72,15 @@ deploy-all:
 migrate:
 	supabase db push
 
+seed:
+	@./scripts/seed.sh local
+
+seed-local:
+	@./scripts/seed.sh local
+
+seed-prod:
+	@./scripts/seed.sh production
+
 # ── Pre-commit ────────────────────────────────────────────────
 precommit-install:
 	pip install pre-commit
@@ -113,6 +122,11 @@ help:
 	@echo "    make deploy-backend     — Vercel production"
 	@echo "    make deploy-migrate     — Supabase migrations"
 	@echo "    make deploy-all         — Everything"
+	@echo ""
+	@echo "  Database:"
+	@echo "    make migrate            — Run Supabase migrations"
+	@echo "    make seed               — Seed local database"
+	@echo "    make seed-prod          — Seed production database"
 	@echo ""
 	@echo "  Other:"
 	@echo "    make precommit-install  — Install pre-commit hooks"
