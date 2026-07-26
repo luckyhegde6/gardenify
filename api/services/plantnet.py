@@ -1,3 +1,5 @@
+"""PlantNet API client — species identification and disease detection."""
+
 import logging
 from io import BytesIO
 
@@ -7,8 +9,9 @@ from api.config import settings
 
 logger = logging.getLogger(__name__)
 
-PLANTNET_IDENTIFY_URL = f"{settings.plantnet_api_url}/identify/all"
-PLANTNET_DISEASE_URL = f"{settings.plantnet_api_url}/diseases/identify"
+SPECIES_URL = f"{settings.plantnet_api_url}/identify/all"
+DISEASE_URL = f"{settings.plantnet_api_url}/diseases/identify"
+VALID_ORGANS = {"leaf", "flower", "fruit", "bark", "auto"}
 
 
 async def identify_plant(
@@ -16,61 +19,39 @@ async def identify_plant(
     organs: list[str] | None = None,
     lang: str = "en",
 ) -> dict:
-    """Identify a plant species from one or more images.
+    """Identify plant species from images via PlantNet API.
 
-    Args:
-        images: List of (filename, image_bytes) tuples.
-        organs: Organ type per image (leaf/flower/fruit/bark/auto).
-        lang: Response language code.
-
-    Returns:
-        PlantNet API response dict.
-
-    Raises:
-        httpx.HTTPStatusError: If PlantNet returns an error.
-        ValueError: If input validation fails.
+    Raises ValueError on invalid input, httpx.HTTPStatusError on API failure.
     """
     if not images:
-        raise ValueError("At least one image is required")
-
+        raise ValueError("At least one image required")
     if len(images) > settings.max_images:
-        raise ValueError(f"Maximum {settings.max_images} images allowed")
+        raise ValueError(f"Max {settings.max_images} images")
 
-    if organs is None:
-        organs = ["auto"] * len(images)
-
+    organs = organs or ["auto"] * len(images)
     if len(organs) != len(images):
-        raise ValueError("Number of organs must match number of images")
+        raise ValueError("organs count must match images count")
 
-    valid_organs = {"leaf", "flower", "fruit", "bark", "auto"}
-    for organ in organs:
-        if organ not in valid_organs:
-            raise ValueError(f"Invalid organ '{organ}'. Must be one of: {valid_organs}")
+    bad = [o for o in organs if o not in VALID_ORGANS]
+    if bad:
+        raise ValueError(f"Invalid organs: {bad}. Use: {VALID_ORGANS}")
+
+    files = [("images", (fn, data.getvalue(), "image/jpeg")) for fn, data in images]
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        files = []
-        for filename, image_bytes in images:
-            files.append(("images", (filename, image_bytes.getvalue(), "image/jpeg")))
-
-        data = {"organs": organs, "lang": lang}
-
-        response = await client.post(
-            PLANTNET_IDENTIFY_URL,
+        resp = await client.post(
+            SPECIES_URL,
             params={"api-key": settings.plantnet_api_key},
             files=files,
-            data=data,
+            data={"organs": organs, "lang": lang},
         )
 
-        if response.status_code == 429:
-            logger.warning("PlantNet quota exceeded")
-            raise httpx.HTTPStatusError(
-                "Daily identification quota exceeded",
-                request=response.request,
-                response=response,
-            )
+    if resp.status_code == 429:
+        logger.warning("PlantNet quota exceeded")
+        raise httpx.HTTPStatusError("Quota exceeded", request=resp.request, response=resp)
 
-        response.raise_for_status()
-        return response.json()
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def identify_disease(
@@ -78,70 +59,44 @@ async def identify_disease(
     organs: list[str] | None = None,
     lang: str = "en",
 ) -> dict | None:
-    """Identify plant diseases from images using PlantNet diseases API.
-
-    Args:
-        images: List of (filename, image_bytes) tuples.
-        organs: Organ type per image.
-        lang: Response language code.
-
-    Returns:
-        Disease identification response dict, or None if unavailable.
-    """
+    """Detect plant diseases. Returns None on failure (non-critical)."""
     if not images:
         return None
 
-    if organs is None:
-        organs = ["leaf"] * len(images)
+    organs = organs or ["leaf"] * len(images)
+    files = [("images", (fn, data.getvalue(), "image/jpeg")) for fn, data in images]
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            files = []
-            for filename, image_bytes in images:
-                files.append(("images", (filename, image_bytes.getvalue(), "image/jpeg")))
-
-            data = {"organs": organs, "lang": lang}
-
-            response = await client.post(
-                PLANTNET_DISEASE_URL,
+            resp = await client.post(
+                DISEASE_URL,
                 params={"api-key": settings.plantnet_api_key},
                 files=files,
-                data=data,
+                data={"organs": organs, "lang": lang},
             )
-
-            if response.status_code != 200:
-                logger.warning(f"Disease API returned status {response.status_code}")
-                return None
-
-            return response.json()
-
+        if resp.status_code != 200:
+            logger.warning("Disease API returned %s", resp.status_code)
+            return None
+        return resp.json()
     except Exception as e:
-        logger.warning(f"Disease identification failed: {e}")
+        logger.warning("Disease detection failed: %s", e)
         return None
 
 
-def parse_plantnet_response(raw: dict) -> dict:
-    """Parse PlantNet API response into our standardized format.
-
-    Args:
-        raw: Raw PlantNet API response.
-
-    Returns:
-        Parsed response with best_match, results, and metadata.
-    """
+def parse_species(raw: dict) -> dict:
+    """Extract best_match + results[] from PlantNet response."""
     results = []
     for item in raw.get("results", []):
-        species = item.get("species", {})
+        sp = item.get("species", {})
         results.append({
             "score": item.get("score", 0.0),
             "species": {
-                "scientific_name": species.get("scientificNameWithoutAuthor", ""),
-                "common_names": species.get("commonNames", []),
-                "family": species.get("family", {}).get("scientificNameWithoutAuthor", ""),
-                "genus": species.get("genus", {}).get("scientificNameWithoutAuthor", ""),
+                "scientific_name": sp.get("scientificNameWithoutAuthor", ""),
+                "common_names": sp.get("commonNames", []),
+                "family": sp.get("family", {}).get("scientificNameWithoutAuthor", ""),
+                "genus": sp.get("genus", {}).get("scientificNameWithoutAuthor", ""),
             },
         })
-
     return {
         "best_match": raw.get("bestMatch", ""),
         "results": results,
@@ -150,22 +105,11 @@ def parse_plantnet_response(raw: dict) -> dict:
     }
 
 
-def parse_disease_response(raw: dict) -> dict:
-    """Parse PlantNet disease API response.
-
-    Args:
-        raw: Raw PlantNet disease API response.
-
-    Returns:
-        Parsed disease result.
-    """
-    if not raw or "results" not in raw or not raw["results"]:
+def parse_disease(raw: dict | None) -> dict:
+    """Extract top disease result. Returns empty dict if nothing found."""
+    if not raw or not raw.get("results"):
         return {"name": "", "confidence": 0.0, "description": "", "treatment": ""}
-
     top = raw["results"][0]
-    return {
-        "name": top.get("disease", {}).get("name", ""),
-        "confidence": top.get("score", 0.0),
-        "description": top.get("disease", {}).get("description", ""),
-        "treatment": top.get("disease", {}).get("treatment", ""),
-    }
+    d = top.get("disease", {})
+    return {"name": d.get("name", ""), "confidence": top.get("score", 0.0),
+            "description": d.get("description", ""), "treatment": d.get("treatment", "")}

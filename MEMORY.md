@@ -1,22 +1,21 @@
 # MEMORY.md — Quick Context for Agents
 
-> **Read this FIRST.** This file gives you a fast recap of the project without burning context reading everything.
+> **Read this FIRST.** Saves ~60% context vs reading AGENTS.md + architecture.md.
 
 ## Project Identity
 
-**Gardenify** — Plant identification mobile app. Users photograph plants → get species, confidence, taxonomy, disease check, and care instructions.
+**Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
 | Key | Value |
 |---|---|
 | Repo | `https://github.com/luckyhegde6/gardenify` |
 | EAS Project ID | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0` |
-| EAS Owner | `luckyhegdedev` |
-| Platform | Android-first, iOS later (Phase 3) |
+| Platform | Android-first, iOS later |
 | Backend | Python FastAPI on Vercel |
 | Database | Supabase (PostgreSQL + Auth + Storage) |
 | Plant AI | PlantNet API v2 (free 500/day) |
 
-## Architecture in 10 Seconds
+## Architecture (10 seconds)
 
 ```
 Expo App → FastAPI Backend → PlantNet API
@@ -25,195 +24,135 @@ Expo App → FastAPI Backend → PlantNet API
  (auth/db)     (storage)
 ```
 
-- **Auth**: Supabase Auth (email/password), JWT stored in expo-secure-store
-- **API Key**: PlantNet key stays server-side only (backend proxy)
-- **RLS**: Every table has Row Level Security — users see only their own data
-
-## Current State (as of last session)
+## Current State
 
 ### Done
-- [x] AGENTS.md, CLAUDE.md, LESSONS.md, MEMORY.md
-- [x] `.agents/` — architecture.md, phase TODOs, guidelines, security, handoff
-- [x] Python backend: FastAPI with `/api/identify`, `/api/health`
-- [x] PlantNet service integration (async httpx)
-- [x] Disease detection endpoint via PlantNet diseases API
-- [x] Plant care analysis service (watering, sunlight, soil, growth)
-- [x] Image caching (SHA-256 hash → cached result)
-- [x] Metadata capture (EXIF, GPS, timestamp, device)
-- [x] Pydantic schemas for all request/response models
-- [x] Supabase migrations (users, identifications, favorites, user_settings)
-- [x] OpenAPI 3.1 specification
-- [x] Python tests (pytest)
-- [x] HTML docs with Mermaid diagrams (3 pages)
-- [x] CI/CD: GitHub Actions (lint, eas-build, deploy, migrate, release)
-- [x] EAS config, MCP config, OpenCode config, Makefile
-- [x] OpenCode rules
+- [x] All agent docs (AGENTS.md, CLAUDE.md, LESSONS.md, MEMORY.md)
+- [x] `.agents/` — architecture, phase TODOs, security, handoff, self-improvement
+- [x] Backend: FastAPI `/api/identify`, `/api/health`, `/api/debug`
+- [x] PlantNet: species + disease detection
+- [x] Plant care: watering, sunlight, soil, temperature, growth, propagation
+- [x] Caching: SHA-256 hash → 1hr in-memory cache
+- [x] Metadata: EXIF, GPS, dimensions, camera info
+- [x] Structured logging with correlation IDs + request timing
+- [x] Supabase migrations with RLS on all tables
+- [x] CI/CD: GitHub Actions (lint, test, build, deploy)
+- [x] HTML docs with Mermaid (3 pages)
+- [x] Local dev: docker-compose.yml, dev.sh/dev.bat scripts
+- [x] MCP config (Expo remote + Supabase utils)
 
 ### Not Done
-- [ ] Expo mobile UI screens (Scan, History, Profile, Result)
-- [ ] Supabase project credentials (need from user)
-- [ ] PlantNet API key (need from user)
-- [ ] Vercel deployment (need credentials)
-- [ ] `supabase db push` (need project linked)
-- [ ] `vercel deploy --prod` (need project linked)
-- [ ] `npm install` (need to add supabase-js, image-picker deps)
+- [ ] Expo mobile UI screens
+- [ ] Supabase/PlantNet credentials (need from user)
+- [ ] Vercel deployment
 
-## Key Files Reference
+## Local Development
 
-| File | Purpose | Lines |
-|---|---|---|
-| `AGENTS.md` | Master agent instructions | 138 |
-| `CLAUDE.md` | Behavioral guidelines | — |
-| `MEMORY.md` | This file — quick context | — |
-| `LESSONS.md` | Running lessons log | — |
-| `.agents/architecture.md` | Full system architecture | 191 |
-| `.agents/phase-1-mvp.md` | MVP TODO checklist | — |
-| `api/main.py` | FastAPI entrypoint | 35 |
-| `api/config.py` | Settings from env | 17 |
-| `api/routes/identify.py` | POST /api/identify | 91 |
-| `api/routes/health.py` | GET /api/health | 14 |
-| `api/services/plantnet.py` | PlantNet API wrapper | 103 |
-| `api/services/plant_care.py` | Care analysis engine | — |
-| `api/services/cache.py` | Image hash + validation | — |
-| `api/models/schemas.py` | Pydantic models | — |
-| `supabase/migrations/001_initial_schema.sql` | DB schema + RLS | — |
+### Quick Start (recommended)
+```bash
+# One command — starts Supabase + backend
+./dev.sh        # macOS/Linux
+dev.bat         # Windows
+```
+
+### Manual Start
+```bash
+# 1. Start local Supabase (requires Docker)
+docker compose up -d
+# Dashboard: http://localhost:54323
+
+# 2. Start backend
+cd api
+pip install -r requirements.txt
+uvicorn api.main:app --reload --port 8000
+```
+
+### Test via Swagger
+1. Open `http://localhost:8000/docs` (debug mode only)
+2. Click `POST /api/identify` → Try it out
+3. Upload images, set organs `["leaf"]`, click Execute
+
+### Test via curl
+```bash
+curl -X POST http://localhost:8000/api/identify \
+  -F "images=@plant.jpg" -F 'organs=["leaf"]' -F "lang=en"
+```
+
+### Debug Endpoint
+```bash
+curl http://localhost:8000/api/debug
+# Returns: config status, cache stats, uptime, Python version
+```
 
 ## API Endpoints
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/api/health` | No | Health check |
-| `POST` | `/api/identify` | No* | Identify plant + disease + care |
-| `GET` | `/api/species/{name}` | No | Species details (Phase 2) |
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/identify` | Identify + disease + care |
+| `GET` | `/api/debug` | Debug info (dev only) |
 
-*Auth not required for MVP identify (PlantNet quota is the limit). Add auth later.
+## Key Files
+
+| File | Purpose |
+|---|---|
+| `api/main.py` | FastAPI app + logging middleware |
+| `api/config.py` | Settings from env vars |
+| `api/routes/identify.py` | POST /api/identify |
+| `api/routes/health.py` | Health + debug endpoints |
+| `api/services/plantnet.py` | PlantNet API client |
+| `api/services/plant_care.py` | Care profile lookup |
+| `api/services/cache.py` | Hashing, validation, caching, metadata |
+| `api/models/schemas.py` | Pydantic models |
+| `docker-compose.yml` | Local Supabase stack |
+| `.env.example` | All env vars with defaults |
+
+## Environment Variables
+
+```bash
+# Local dev (defaults work out of the box)
+cp .env.example .env
+
+# Production — supply these
+PLANTNET_API_KEY=your_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your_service_key
+```
+
+## Logging & Observability
+
+- Every request gets a **correlation ID** (X-Correlation-ID header)
+- Response time logged: `GET /api/identify → 200 (1234ms) [a1b2c3d4]`
+- Debug mode: `DEBUG=true` enables verbose logs + /api/debug + Swagger
+- Unhandled errors return correlation ID for tracing
 
 ## Database Tables
 
 | Table | Purpose | RLS |
 |---|---|---|
-| `users` | User profiles (auto-created on signup) | Users see own |
-| `identifications` | Plant scan results + metadata | Users see own |
-| `favorites` | Saved species bookmarks | Users see own |
-| `user_settings` | Per-user preferences | Users see own |
-
-## Environment Variables Needed
-
-```bash
-# Backend (Vercel) — SUPPLY THESE
-PLANTNET_API_KEY=your_key_here
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your_service_role_key
-
-# Frontend (Expo .env) — SUPPLY THESE
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-EXPO_PUBLIC_API_URL=http://localhost:3000/api
-```
-
-## Local Testing Quick Reference
-
-### 1. Start Backend
-```bash
-cd api
-pip install -r requirements.txt
-vercel dev
-# Opens at http://localhost:3000
-```
-
-### 2. Swagger UI
-```
-http://localhost:3000/docs
-```
-
-### 3. Test Identify via Swagger
-1. Open `http://localhost:3000/docs`
-2. Click `POST /api/identify`
-3. Click "Try it out"
-4. Upload 1-5 images (JPEG/PNG)
-5. Set organs: `["leaf"]` or `["auto"]`
-6. Set lang: `"en"`
-7. Click "Execute"
-
-### 4. Test via curl
-```bash
-curl -X POST http://localhost:3000/api/identify \
-  -F "images=@plant_photo.jpg" \
-  -F 'organs=["leaf"]' \
-  -F "lang=en"
-```
-
-### 5. Test Health Check
-```bash
-curl http://localhost:3000/api/health
-```
-
-## What Each Service Does
-
-### Image Processing Pipeline
-```
-User photo → Validate (type/size) → SHA-256 hash → Check cache
-  Cache HIT  → Return cached result (skip PlantNet call)
-  Cache MISS → Upload to Supabase Storage → Forward to PlantNet → Cache result → Return
-```
-
-### Metadata Captured Per Identification
-- Image SHA-256 hash (deduplication)
-- File size, dimensions, format
-- EXIF data if available (camera, date taken)
-- GPS coordinates (if user grants permission)
-- Device info (platform, app version)
-- Timestamp of identification
-- User organ selection (leaf/flower/fruit/bark)
-
-### Disease Detection
-- Uses PlantNet diseases API: `POST /v2/diseases/identify`
-- Same image upload format
-- Returns disease name, confidence, description
-- Runs in parallel with species identification
-
-### Plant Care Analysis
-Based on identified species, returns:
-- **Watering**: Frequency, method, seasonal adjustments
-- **Sunlight**: Direct/indirect/shade, hours per day
-- **Soil**: Type, pH, drainage requirements
-- **Temperature**: Min/max range, frost sensitivity
-- **Humidity**: Preferred level, misting needs
-- **Growth**: Mature height, spread, growth rate
-- **Bloom**: Flowering season, color, fragrance
-- **Propagation**: Seeds, cuttings, division
-- **Common Pests**: Aphids, spider mites, etc.
-- **Toxicity**: Safe for pets/children?
+| `users` | Profiles (auto-created on signup) | Users see own |
+| `identifications` | Scan results + metadata | Users see own |
+| `favorites` | Saved species | Users see own |
+| `user_settings` | Preferences | Users see own |
 
 ## Agent Workflow
 
-1. **Read MEMORY.md** (this file) — 30 seconds
-2. **Read relevant .agents/ file** — if doing architecture work
-3. **Read AGENTS.md** — if writing new code
-4. **Check LESSONS.md** — before making decisions
-5. **Run lint/typecheck** — before committing
-6. **Update LESSONS.md** — after learning something new
+1. Read MEMORY.md (this file) — 30 seconds
+2. Check LESSONS.md — before decisions
+3. Run lint/typecheck — before commits
+4. Update LESSONS.md — after discoveries
 
 ## Don't Waste Context On
 
-- Reading all `.agents/` files unless specifically needed
-- Re-reading architecture.md if you already know the system
-- Looking at HTML docs unless debugging rendering
-- Reading CI/CD workflows unless modifying them
+- `.agents/` files unless doing architecture work
+- HTML docs unless debugging rendering
+- CI/CD workflows unless modifying them
+- plant_care.py profiles unless changing care data
 
-## Key Decisions Already Made
+## Key Decisions
 
-- **PlantNet over Google Vision**: Free 500/day, specialized for plants
-- **FastAPI over Express**: Python ecosystem, type safety, async
-- **Supabase over Firebase**: RLS, PostgreSQL, open source
-- **expo-secure-store over AsyncStorage**: Security for tokens
-- **Server-side API key**: Never expose PlantNet key to client
-- **hybrid local+cloud**: react-native-fast-tflite for Phase 3+
-
-## External Docs
-
-- Expo SDK 55: https://docs.expo.dev/versions/v55.0.0/
-- Supabase + Expo: https://docs.expo.dev/guides/using-supabase/
-- PlantNet API: https://my.plantnet.org/doc/getting-started/introduction
-- FastAPI: https://fastapi.tiangolo.com/
-- Vercel Python: https://vercel.com/docs/functions/python
+- **PlantNet** over Google Vision: free 500/day, plant-specialized
+- **FastAPI** over Express: Python ecosystem, async, type safety
+- **Supabase** over Firebase: RLS, PostgreSQL, open source
+- **expo-secure-store** over AsyncStorage: security
+- **Server-side API key**: never expose PlantNet key to client

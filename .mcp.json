@@ -1,15 +1,15 @@
 {
   "mcpServers": {
     "expo": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-expo@latest"],
-      "env": {
-        "EXPO_TOKEN": "${EXPO_TOKEN}"
+      "type": "streamable-http",
+      "url": "https://mcp.expo.dev/mcp",
+      "authorization": {
+        "type": "oauth"
       }
     },
     "supabase": {
       "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-supabase@latest"],
+      "args": ["-y", "@supabase/mcp-utils@latest"],
       "env": {
         "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
       }

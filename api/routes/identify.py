@@ -1,3 +1,5 @@
+"""POST /api/identify — Plant identification, disease detection, care analysis."""
+
 import logging
 import uuid
 from io import BytesIO
@@ -5,27 +7,13 @@ from io import BytesIO
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from api.models.schemas import (
-    CareInfo,
-    DiseaseResult,
-    IdentificationResponse,
-    IdentificationResult,
-    ImageMetadata,
-    SpeciesInfo,
+    CareInfo, DiseaseResult, IdentificationResponse,
+    IdentificationResult, ImageMetadata, SpeciesInfo,
 )
-from api.services.plantnet import (
-    identify_disease,
-    identify_plant,
-    parse_disease_response,
-    parse_plantnet_response,
-)
+from api.services.plantnet import identify_plant, identify_disease, parse_species, parse_disease
 from api.services.plant_care import get_care_profile
 from api.services.cache import (
-    compute_image_hash,
-    extract_image_metadata,
-    get_cache_key,
-    get_cached_result,
-    set_cached_result,
-    validate_image,
+    compute_hash, validate_image, cache_key, cache_get, cache_set, extract_metadata,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,127 +26,78 @@ async def identify(
     organs: list[str] = Form(default=["auto"]),
     lang: str = Form(default="en"),
 ):
-    """Identify a plant species from one or more images.
+    """Identify plant + detect disease + return care instructions."""
+    _validate_request(images, organs)
 
-    Accepts 1-5 images of the same plant. Each image can be tagged with
-    an organ type (leaf, flower, fruit, bark, or auto for automatic detection).
+    # Process images: validate, hash, extract metadata
+    processed: list[tuple[str, BytesIO]] = []
+    hashes, meta_list = [], []
+    total = 0
 
-    Returns species identification, disease detection, plant care info,
-    and image metadata.
-    """
-    if len(images) < 1:
-        raise HTTPException(status_code=400, detail="At least one image is required")
+    for i, img in enumerate(images):
+        ct = img.content_type or "image/jpeg"
+        data = await img.read()
+        fn = img.filename or f"img_{i}.jpg"
 
-    if len(images) > 5:
-        raise HTTPException(status_code=400, detail="Maximum 5 images allowed")
+        validate_image(fn, len(data), ct)
+        total += len(data)
+        if total > 50 * 1024 * 1024:
+            raise HTTPException(400, "Total upload exceeds 50MB")
 
-    if len(organs) != len(images):
-        raise HTTPException(
-            status_code=400,
-            detail="Number of organ labels must match number of images",
-        )
+        hashes.append(compute_hash(data))
+        processed.append((fn, BytesIO(data)))
+        meta_list.append(ImageMetadata(**extract_metadata(fn, data, ct)))
 
-    processed_images: list[tuple[str, BytesIO]] = []
-    metadata_list: list[ImageMetadata] = []
-    image_hashes: list[str] = []
-    total_size = 0
-
-    for i, upload_file in enumerate(images):
-        content_type = upload_file.content_type or "image/jpeg"
-        content = await upload_file.read()
-        size = len(content)
-        filename = upload_file.filename or f"image_{i}.jpg"
-
-        try:
-            validate_image(filename, size, content_type)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
-        total_size += size
-        max_total = 50 * 1024 * 1024
-        if total_size > max_total:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Total image size exceeds {max_total // (1024*1024)}MB limit",
-            )
-
-        image_hash = compute_image_hash(content)
-        image_hashes.append(image_hash)
-        processed_images.append((filename, BytesIO(content)))
-
-        # Extract metadata
-        meta = extract_image_metadata(filename, content, content_type, i)
-        metadata_list.append(ImageMetadata(**meta))
-
-    # Check cache
-    cache_key = get_cache_key(image_hashes, organs, lang)
-    cached = get_cached_result(cache_key)
+    # Cache check
+    key = cache_key(hashes, organs, lang)
+    cached = cache_get(key)
     if cached:
         cached["cached"] = True
         return IdentificationResponse(**cached)
 
-    # Identify species
+    # Species identification
     try:
-        raw_response = await identify_plant(
-            images=processed_images,
-            organs=organs,
-            lang=lang,
-        )
+        raw = await identify_plant(processed, organs, lang)
     except Exception as e:
-        logger.error(f"PlantNet API error: {e}")
-        raise HTTPException(
-            status_code=502,
-            detail=f"Plant identification service error: {str(e)}",
-        )
+        logger.error("PlantNet error: %s", e)
+        raise HTTPException(502, f"Identification failed: {e}")
 
-    parsed = parse_plantnet_response(raw_response)
+    parsed = parse_species(raw)
+    results = [
+        IdentificationResult(score=r["score"], species=SpeciesInfo(**r["species"]))
+        for r in parsed["results"]
+    ]
 
-    results = []
-    for item in parsed["results"]:
-        results.append(
-            IdentificationResult(
-                score=item["score"],
-                species=SpeciesInfo(**item["species"]),
-            )
-        )
-
-    # Get care info for best match
-    care_info = None
-    disease_info = None
+    # Disease + care (only if we got a match)
+    disease_info, care_info = None, None
     if results:
         best = results[0]
-        care_profile = get_care_profile(
-            scientific_name=best.species.scientific_name,
-            genus=best.species.genus,
-            family=best.species.family,
-        )
-        care_info = CareInfo(**care_profile)
+        care_info = CareInfo(**get_care_profile(
+            best.species.scientific_name, best.species.genus, best.species.family,
+        ))
+        raw_disease = await identify_disease(processed, organs, lang)
+        if raw_disease:
+            disease_info = DiseaseResult(**parse_disease(raw_disease))
 
-        # Disease detection (run in parallel conceptually, sequential here)
-        disease_raw = await identify_disease(
-            images=processed_images,
-            organs=organs,
-            lang=lang,
-        )
-        if disease_raw:
-            disease_parsed = parse_disease_response(disease_raw)
-            disease_info = DiseaseResult(**disease_parsed)
-
-    identification_id = str(uuid.uuid4())
-
-    response_data = {
+    resp_data = {
         "best_match": parsed["best_match"],
         "results": results,
         "disease": disease_info,
         "care": care_info,
-        "metadata": metadata_list,
+        "metadata": meta_list,
         "remaining_quota": parsed.get("remaining_quota"),
         "version": parsed.get("version", ""),
         "cached": False,
-        "identification_id": identification_id,
+        "identification_id": uuid.uuid4().hex,
     }
+    cache_set(key, resp_data)
+    return IdentificationResponse(**resp_data)
 
-    # Cache the result
-    set_cached_result(cache_key, response_data)
 
-    return IdentificationResponse(**response_data)
+def _validate_request(images: list[UploadFile], organs: list[str]):
+    if len(images) < 1:
+        raise HTTPException(400, "At least 1 image required")
+    if len(images) > 5:
+        raise HTTPException(400, "Max 5 images")
+    if len(organs) != len(images):
+        raise HTTPException(400, "organs count must match images")
