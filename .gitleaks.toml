@@ -1,0 +1,25 @@
+# gitleaks config — exclude false positives for local dev tokens
+# https://github.com/gitleaks/gitleaks
+
+title = "Gardenify gitleaks config"
+
+[allowlist]
+  description = "Global allowlist"
+  paths = [
+    '''\.env\.example$''',
+    '''\.pre-commit-config\.yaml$''',
+    '''gitleaks\.toml$''',
+    '''package-lock\.json$''',
+  ]
+
+[[rules]]
+  id = "supabase-local-dev-tokens"
+  description = "Supabase local dev default tokens (not real secrets)"
+  regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZS1kZW1v'''
+  tags = [" Supabase", "local-dev"]
+
+[[rules]]
+  id = "generic-placeholder"
+  description = "Placeholder values that look like secrets"
+  regex = '''<(your-|placeholder|example|replace-me|fill-in|add-your)[a-z\-]*>'''
+  tags = ["placeholder"]
