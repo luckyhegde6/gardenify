@@ -13,7 +13,10 @@ P = {"methods": [], "difficulty": "", "notes": ""}
 
 _PROFILES = {
     "default": {
-        "watering": {**W, "frequency": "When top inch dry", "amount": "Until drains", "method": "Water soil, not leaves"},
+        "watering": {
+            **W, "frequency": "When top inch dry", "amount": "Until drains",
+            "method": "Water soil, not leaves",
+        },
         "sunlight": {**S, "preference": "Bright indirect", "hours_per_day": "6-8h"},
         "soil": {**SO, "type": "Well-draining mix", "ph": "6.0-7.0", "drainage": "Essential"},
         "temperature": {**T},
@@ -23,7 +26,10 @@ _PROFILES = {
         "general_tips": "Wipe leaves to remove dust",
     },
     "succulent": {
-        "watering": {**W, "frequency": "Every 2-3 weeks", "amount": "Soak then dry completely", "method": "Bottom water"},
+        "watering": {
+            **W, "frequency": "Every 2-3 weeks", "amount": "Soak then dry completely",
+            "method": "Bottom water",
+        },
         "sunlight": {**S, "preference": "Direct sun", "hours_per_day": "6+h"},
         "soil": {**SO, "type": "Cactus mix", "ph": "5.5-6.5", "drainage": "Fast — add sand"},
         "temperature": {**T, "min_fahrenheit": 40},

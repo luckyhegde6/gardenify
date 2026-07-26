@@ -7,13 +7,27 @@ from io import BytesIO
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from api.models.schemas import (
-    CareInfo, DiseaseResult, IdentificationResponse,
-    IdentificationResult, ImageMetadata, SpeciesInfo,
+    CareInfo,
+    DiseaseResult,
+    IdentificationResponse,
+    IdentificationResult,
+    ImageMetadata,
+    SpeciesInfo,
 )
-from api.services.plantnet import identify_plant, identify_disease, parse_species, parse_disease
-from api.services.plant_care import get_care_profile
 from api.services.cache import (
-    compute_hash, validate_image, cache_key, cache_get, cache_set, extract_metadata,
+    cache_get,
+    cache_key,
+    cache_set,
+    compute_hash,
+    extract_metadata,
+    validate_image,
+)
+from api.services.plant_care import get_care_profile
+from api.services.plantnet import (
+    identify_disease,
+    identify_plant,
+    parse_disease,
+    parse_species,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,7 +74,7 @@ async def identify(
         raw = await identify_plant(processed, organs, lang)
     except Exception as e:
         logger.error("PlantNet error: %s", e)
-        raise HTTPException(502, f"Identification failed: {e}")
+        raise HTTPException(502, f"Identification failed: {e}") from e
 
     parsed = parse_species(raw)
     results = [

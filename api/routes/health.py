@@ -2,7 +2,7 @@
 
 import platform
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 
@@ -30,7 +30,7 @@ async def debug_info():
         "version": "1.0.0",
         "python": platform.python_version(),
         "uptime_seconds": int(time.time() - _start_time),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "config": {
             "debug": settings.debug,
             "plantnet_configured": bool(settings.plantnet_api_key),
