@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gardenify — System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.6; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 1rem; font-size: 2rem; }
+        h2 { color: #79c0ff; margin: 2rem 0 1rem; font-size: 1.5rem; }
+        h3 { color: #d2a8ff; margin: 1.5rem 0 0.5rem; }
+        p { margin-bottom: 1rem; }
+        a { color: #58a6ff; }
+        .diagram { background: #161b22; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; overflow-x: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        pre { background: #0d1117; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; }
+        code { background: #1f2937; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9rem; }
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.3rem 0; }
+        .status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+        .complete { background: #238636; color: #fff; }
+        .pending { background: #9e6a03; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌿 Gardenify System Architecture</h1>
+        <p>Plant identification mobile app — Expo + FastAPI + Supabase + PlantNet</p>
+
+        <h2>System Overview</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+graph TB
+    subgraph Mobile["📱 Expo Mobile App"]
+        UI["UI Layer<br/>(expo-router)"]
+        State["State Management<br/>(Zustand)"]
+        API["API Client<br/>(fetch + React Query)"]
+        Auth["Auth Provider<br/>(Supabase Auth)"]
+    end
+
+    subgraph Backend["⚙️ Python Backend"]
+        FastAPI["FastAPI Server"]
+        Routes["API Routes"]
+        Services["Services"]
+        RateLimit["Rate Limiter"]
+    end
+
+    subgraph External["🌐 External APIs"]
+        PlantNet["PlantNet API<br/>(500/day free)"]
+    end
+
+    subgraph Supabase["🗄️ Supabase"]
+        PG["PostgreSQL"]
+        SAuth["Auth"]
+        Storage["Storage"]
+    end
+
+    UI --> State
+    State --> API
+    API --> FastAPI
+    API --> PG
+    Auth --> SAuth
+    FastAPI --> Routes
+    Routes --> Services
+    Services --> PlantNet
+    Services --> RateLimit
+    Services --> PG
+    PG --> Storage
+
+    style Mobile fill:#1a365d,stroke:#2563eb
+    style Backend fill:#1a365d,stroke:#2563eb
+    style External fill:#744210,stroke:#d97706
+    style Supabase fill:#1a365d,stroke:#2563eb
+            </pre>
+        </div>
+
+        <h2>Data Flow</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant App
+    participant Backend
+    participant PlantNet
+    participant Supabase
+
+    User->>App: Capture plant photo
+    App->>App: Validate image (type, size)
+    App->>Backend: POST /api/identify
+    Backend->>Backend: Validate request
+    Backend->>Backend: Check user quota
+    Backend->>PlantNet: Identify species
+    PlantNet-->>Backend: Return results
+    Backend->>Backend: Parse response
+    Backend->>Supabase: Save identification
+    Backend-->>App: Return results
+    App->>App: Display species match
+    User->>App: View details / Save favorite
+
+    Note over Backend,Supabase: User can view history
+    App->>Supabase: GET /identifications
+    Supabase-->>App: Return user's history
+            </pre>
+        </div>
+
+        <h2>Database Schema</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+erDiagram
+    USERS {
+        uuid id PK
+        text email UK
+        text full_name
+        text avatar_url
+        text subscription_tier
+        int identifications_used_today
+        date last_identification_date
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    IDENTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        text[] image_urls
+        text[] image_hashes
+        text best_match
+        float score
+        text species_scientific_name
+        text[] species_common_names
+        text species_family
+        text species_genus
+        text[] organs
+        jsonb raw_plantnet_response
+        timestamptz created_at
+    }
+
+    FAVORITES {
+        uuid id PK
+        uuid user_id FK
+        uuid identification_id FK
+        text notes
+        timestamptz created_at
+    }
+
+    USER_SETTINGS {
+        uuid user_id PK
+        text language
+        boolean notifications_enabled
+        boolean auto_save_to_history
+        text preferred_organ
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    USERS ||--o{ IDENTIFICATIONS : "creates"
+    USERS ||--o{ FAVORITES : "has"
+    USERS ||--|| USER_SETTINGS : "has"
+    IDENTIFICATIONS ||--o{ FAVORITES : "bookmarked by"
+            </pre>
+        </div>
+
+        <h2>Project Phases</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Phase A: Foundation <span class="status complete">Complete</span></h3>
+                <ul>
+                    <li>AGENTS.md — Agent instructions</li>
+                    <li>CLAUDE.md — Behavioral guidelines</li>
+                    <li>LESSONS.md — Learning log</li>
+                    <li>.agents/ — Architecture & TODOs</li>
+                    <li>README.md — Project overview</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Phase B: Backend <span class="status complete">Complete</span></h3>
+                <ul>
+                    <li>FastAPI server with routes</li>
+                    <li>PlantNet service integration</li>
+                    <li>Pydantic schemas</li>
+                    <li>Supabase migrations</li>
+                    <li>OpenAPI specification</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Phase C: Agentic Infra <span class="status pending">In Progress</span></h3>
+                <ul>
+                    <li>Self-improvement loop</li>
+                    <li>Handoff protocol</li>
+                    <li>Security harness</li>
+                    <li>Code generation guidelines</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Phase D: Documentation <span class="status pending">In Progress</span></h3>
+                <ul>
+                    <li>HTML docs with Mermaid</li>
+                    <li>API flow diagrams</li>
+                    <li>Auth flow diagrams</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Phase E: CI/CD & Build <span class="status pending">Pending</span></h3>
+                <ul>
+                    <li>GitHub Actions workflows</li>
+                    <li>EAS build configuration</li>
+                    <li>Vercel deployment config</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>API Endpoints</h2>
+        <div class="card">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #30363d;">
+                    <th style="text-align: left; padding: 0.5rem;">Method</th>
+                    <th style="text-align: left; padding: 0.5rem;">Endpoint</th>
+                    <th style="text-align: left; padding: 0.5rem;">Description</th>
+                </tr>
+                <tr style="border-bottom: 1px solid #30363d;">
+                    <td><code>GET</code></td>
+                    <td><code>/api/health</code></td>
+                    <td>Health check + quota info</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #30363d;">
+                    <td><code>POST</code></td>
+                    <td><code>/api/identify</code></td>
+                    <td>Identify plant from 1-5 images</td>
+                </tr>
+                <tr>
+                    <td><code>GET</code></td>
+                    <td><code>/api/species/{name}</code></td>
+                    <td>Species details (Phase 2)</td>
+                </tr>
+            </table>
+        </div>
+
+        <h2>Tech Stack</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Mobile</h3>
+                <ul>
+                    <li>Expo SDK 55</li>
+                    <li>React Native 0.83</li>
+                    <li>TypeScript 5.9</li>
+                    <li>expo-router</li>
+                    <li>react-native-fast-tflite</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Backend</h3>
+                <ul>
+                    <li>Python 3.12</li>
+                    <li>FastAPI 0.117+</li>
+                    <li>Vercel Serverless</li>
+                    <li>Pydantic v2</li>
+                    <li>httpx (async HTTP)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Database & Auth</h3>
+                <ul>
+                    <li>Supabase (PostgreSQL)</li>
+                    <li>Row Level Security</li>
+                    <li>Supabase Auth</li>
+                    <li>Supabase Storage</li>
+                    <li>Auto-provisioned schemas</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>DevOps</h3>
+                <ul>
+                    <li>GitHub Actions</li>
+                    <li>EAS Build</li>
+                    <li>Vercel Deploy</li>
+                    <li>Supabase CLI</li>
+                    <li>OpenCode + Skills</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Security Model</h2>
+        <div class="card">
+            <pre class="mermaid">
+graph LR
+    subgraph Client["Client Side"]
+        A["Supabase Anon Key<br/>(public)"]
+        B["JWT Token<br/>(user session)"]
+    end
+
+    subgraph Server["Server Side"]
+        C["PLANTNET_API_KEY<br/>(server only)"]
+        D["SUPABASE_SERVICE_KEY<br/>(server only)"]
+        E["RLS Policies<br/>(database level)"]
+    end
+
+    A -->|Read only| E
+    B -->|Own data only| E
+    C -->|Backend proxy| F[PlantNet API]
+    D -->|Admin operations| G[Supabase Admin]
+
+    style Client fill:#1a365d,stroke:#2563eb
+    style Server fill:#744210,stroke:#d97706
+            </pre>
+        </div>
+
+        <h2>Environment Variables</h2>
+        <div class="card">
+            <pre>
+# Backend (Vercel Environment)
+PLANTNET_API_KEY=your_plantnet_api_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your_service_role_key
+
+# Frontend (Expo / .env)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+EXPO_PUBLIC_API_URL=http://localhost:3000/api
+            </pre>
+        </div>
+
+        <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.9rem;">
+            <p>Gardenify — Built with Expo, FastAPI, Supabase, and PlantNet</p>
+            <p>Documentation generated for agent-assisted development</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

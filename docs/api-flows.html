@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gardenify — API Flow Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.6; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 1rem; font-size: 2rem; }
+        h2 { color: #79c0ff; margin: 2rem 0 1rem; font-size: 1.5rem; }
+        h3 { color: #d2a8ff; margin: 1.5rem 0 0.5rem; }
+        .diagram { background: #161b22; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; overflow-x: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        pre { background: #0d1117; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; }
+        code { background: #1f2937; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #30363d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌿 Gardenify API Flows</h1>
+
+        <h2>Plant Identification Flow</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    A[User captures photo] --> B{Validate image}
+    B -->|Invalid type| C[Show error: Unsupported format]
+    B -->|Too large| D[Show error: Max 10MB per image]
+    B -->|Valid| E[Send to backend]
+    E --> F[Backend validates request]
+    F --> G{Check user quota}
+    G -->|Quota exceeded| H[Show error: Daily limit reached]
+    G -->|Quota OK| I[Forward to PlantNet API]
+    I --> J{PlantNet response}
+    J -->|Success| K[Parse species results]
+    J -->|Error| L[Show error: Service unavailable]
+    K --> M[Save to Supabase]
+    M --> N[Display results to user]
+
+    style A fill:#238636,color:#fff
+    style N fill:#238636,color:#fff
+    style C fill:#da3633,color:#fff
+    style D fill:#da3633,color:#fff
+    style H fill:#da3633,color:#fff
+    style L fill:#da3633,color:#fff
+            </pre>
+        </div>
+
+        <h2>Authentication Flow</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant App
+    participant Supabase
+
+    User->>App: Enter email + password
+    App->>Supabase: signInWithPassword()
+    Supabase-->>App: JWT + session
+    App->>App: Store in SecureStore
+    App->>Supabase: GetUser profile
+    Supabase-->>App: User metadata
+    App->>App: Auto-create profile if new
+    App-->>User: Redirect to Home
+
+    Note over User,Supabase: Session refresh
+    App->>Supabase: getSession()
+    Supabase-->>App: Refreshed JWT
+    App->>App: Update SecureStore
+            </pre>
+        </div>
+
+        <h2>Image Storage Flow</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    A[Image selected] --> B[Validate format/size]
+    B --> C[Compute SHA-256 hash]
+    C --> D{Hash exists?}
+    D -->|Yes| E[Reuse existing URL]
+    D -->|No| F[Upload to Supabase Storage]
+    F --> G{Upload success?}
+    G -->|No| H[Retry up to 3 times]
+    H --> F
+    G -->|Yes| I[Get public URL]
+    I --> J[Store URL in identification]
+    E --> J
+    J --> K[Continue identification]
+
+    style A fill:#238636,color:#fff
+    style K fill:#238636,color:#fff
+    style H fill:#9e6a03,color:#fff
+            </pre>
+        </div>
+
+        <h2>Error Handling</h2>
+        <div class="card">
+            <table>
+                <tr>
+                    <th>Error Type</th>
+                    <th>HTTP Code</th>
+                    <th>User Message</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td>Invalid image format</td>
+                    <td>400</td>
+                    <td>"Unsupported image format"</td>
+                    <td>Prompt to retake photo</td>
+                </tr>
+                <tr>
+                    <td>Image too large</td>
+                    <td>400</td>
+                    <td>"Image exceeds 10MB limit"</td>
+                    <td>Compress or retake</td>
+                </tr>
+                <tr>
+                    <td>Quota exceeded</td>
+                    <td>429</td>
+                    <td>"Daily limit reached"</td>
+                    <td>Show quota reset time</td>
+                </tr>
+                <tr>
+                    <td>PlantNet down</td>
+                    <td>502</td>
+                    <td>"Service temporarily unavailable"</td>
+                    <td>Retry later, queue if offline</td>
+                </tr>
+                <tr>
+                    <td>No species found</td>
+                    <td>200</td>
+                    <td>"Could not identify plant"</td>
+                    <td>Suggest better photos</td>
+                </tr>
+            </table>
+        </div>
+
+        <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.9rem;">
+            <p>Gardenify API Flow Documentation</p>
+        </footer>
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

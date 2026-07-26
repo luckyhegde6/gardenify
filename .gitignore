@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.production
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +43,36 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Vercel
+.vercel/
+
+# Supabase
+supabase/.temp/
+
+# Testing
+coverage/
+.pytest_cache/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Agent artifacts
+.agents/handoff-current.md

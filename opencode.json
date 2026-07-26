@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+  "rules": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "mcp": {
+    "servers": {
+      "expo": {
+        "command": "npx",
+        "args": ["-y", "@anthropic-ai/mcp-expo@latest"],
+        "env": {
+          "EXPO_TOKEN": "${EXPO_TOKEN}"
+        }
+      },
+      "supabase": {
+        "command": "npx",
+        "args": ["-y", "@anthropic-ai/mcp-supabase@latest"],
+        "env": {
+          "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+        }
+      }
+    }
+  }
+}

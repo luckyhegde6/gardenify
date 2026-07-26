@@ -1,56 +1,163 @@
-# Welcome to your Expo app 👋
+# Gardenify
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Identify any plant, flower, leaf, or fruit with your camera. Powered by PlantNet AI.
 
-## Get started
+Gardenify is a plant identification mobile app built with Expo (React Native) for Android. Users capture photos and receive species identification with confidence scores, common names, and taxonomy details.
 
-1. Install dependencies
+## Architecture
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+┌──────────────┐     ┌───────────────────┐     ┌──────────────┐
+│  Expo App    │────▶│  Python Backend   │────▶│ PlantNet API │
+│  (Android)   │     │  FastAPI/Vercel   │     │ (500/day)    │
+│              │     └────────┬──────────┘     └──────────────┘
+│  supabase-js │             │
+│  (direct)    │     ┌───────▼───────────┐
+└──────────────┘     │  Supabase         │
+                     │  Auth + DB + Store │
+                     └───────────────────┘
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Tech Stack
 
-### Other setup steps
+| Layer | Technology |
+|---|---|
+| Mobile | Expo SDK 55 (React Native) |
+| Language | TypeScript 5.9 / Python 3.12 |
+| Backend | FastAPI on Vercel |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth |
+| Plant AI | PlantNet API v2 |
+| Build | EAS Build |
+| CI/CD | GitHub Actions |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Prerequisites
 
-## Learn more
+- Node.js 20+
+- Python 3.12+
+- Vercel CLI (`npm install -g vercel`)
+- Supabase CLI (`npm install -g supabase`)
+- Expo CLI (`npm install -g expo-cli`)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Quick Start
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 1. Clone and install
 
-## Join the community
+```bash
+git clone https://github.com/luckyhegde6/gardenify.git
+cd gardenify
+npm install
+```
 
-Join our community of developers creating universal apps.
+### 2. Set up Supabase
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+# Start local Supabase (requires Docker)
+supabase start
+
+# Or create a project at https://supabase.com
+# Then run migrations:
+supabase db push
+```
+
+### 3. Configure environment
+
+```bash
+cp .env.example .env
+# Fill in your Supabase URL, anon key, and PlantNet API key
+```
+
+### 4. Start the app
+
+```bash
+# Terminal 1: Expo dev server
+npx expo start
+
+# Terminal 2: Python backend
+cd api
+pip install -r requirements.txt
+vercel dev
+```
+
+## Development Commands
+
+| Command | Description |
+|---|---|
+| `npx expo start` | Start Expo dev server |
+| `npx expo start --android` | Start on Android |
+| `npm run lint` | Lint TypeScript |
+| `npx tsc --noEmit` | Type check |
+| `vercel dev` | Start Python backend locally |
+| `pytest` | Run Python tests |
+| `npx eas-cli build -p android` | Build Android APK |
+
+## Project Structure
+
+```
+src/                    # Expo app
+  app/                  # File-based routes (expo-router)
+    (auth)/             # Auth screens
+    (tabs)/             # Tab screens (Scan, History, Profile)
+    identification/     # Result detail screens
+  components/           # Reusable UI components
+  hooks/                # Custom React hooks
+  lib/                  # Utilities (supabase, api, types)
+
+api/                    # Python backend
+  main.py               # FastAPI entrypoint
+  routes/               # API routes
+  services/             # Business logic
+  models/               # Pydantic schemas
+
+supabase/               # Database
+  migrations/           # SQL migrations
+  seed.sql              # Seed data
+
+.agents/                # Agent configuration
+docs/                   # HTML documentation
+```
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Health check + quota info |
+| `POST` | `/api/identify` | Identify plant from images |
+| `GET` | `/api/species/{name}` | Species details |
+
+## Deployment
+
+### Backend (Vercel)
+
+```bash
+vercel deploy --prod
+```
+
+### Mobile (EAS Build)
+
+```bash
+# Build Android APK
+npx eas-cli build -p android --profile production
+
+# Build and submit to Play Store
+npx eas-cli build -p android --profile production --submit
+```
+
+## Documentation
+
+- [Architecture](.agents/architecture.md) — Full system design
+- [Phase 1 MVP](.agents/phase-1-mvp.md) — MVP checklist
+- [Security](.agents/security-harness.md) — Security practices
+- [API Docs](docs/api-flows.html) — API flow diagrams
+- [HTML Docs](docs/index.html) — Visual documentation
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes following the code conventions in `AGENTS.md`
+3. Run `npm run lint` and `npx tsc --noEmit`
+4. Create a pull request with a clear description
+
+## License
+
+MIT
