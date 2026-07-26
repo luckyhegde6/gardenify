@@ -20,6 +20,10 @@
         "env": {
           "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
         }
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest"]
       }
     }
   }

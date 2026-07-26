@@ -74,6 +74,35 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-07-27: Playwright + Deployment Guides + Dev Workflow
+- **Duration**: ~45 min
+- **Goal**: Complete testing framework, deployment guides, dev workflow docs
+- **Files modified**:
+  - `playwright.config.ts` — Playwright config for API + visual tests
+  - `e2e/api-tests/health.spec.ts` — API health/debug/identify endpoint tests
+  - `e2e/api-tests/integration.spec.ts` — Full flow, caching, error recovery, security tests
+  - `e2e/visual/api-snapshots.spec.ts` — Response structure snapshots, timing tests
+  - `e2e/android/README.md` — Android emulator testing guide
+  - `docs/vercel-deployment.md` — Vercel backend deployment guide
+  - `docs/supabase-integration.md` — Supabase auth/database/storage setup guide
+  - `.gitignore` — Added Playwright artifacts, test results, blob reports
+  - `opencode.json` — Added Playwright MCP server
+  - `.agents/security-checklist.md` — 13-point security gate
+  - `.agents/code-hygiene.md` — Code quality rules
+  - `.agents/linear-history.md` — Git workflow + changelog
+  - `.agents/pre-commit-workflow.md` — Pre-commit checklist
+  - `.agents/documentation-standards.md` — Doc rules
+  - `.agents/product-development.md` — UX, accessibility, analytics
+  - `.agents/sessions.md` — Session log (this file)
+  - `.agents/handoff-current.md` — Current handoff state
+  - `.agents/primer.md` — Quick context for new agents
+  - `PRD.md` — Product requirements checklist (60+ items)
+  - `BUGS.md` — Issue tracker
+- **Tests status**: Playwright installed, tests written but not run
+- **Next session**: Run Playwright tests, verify CI passes, get Supabase credentials
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done
