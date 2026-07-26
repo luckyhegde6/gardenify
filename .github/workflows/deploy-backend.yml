@@ -5,16 +5,13 @@ on:
     branches: [main]
     paths:
       - api/**
-  pull_request:
-    branches: [main]
-    paths:
-      - api/**
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
+    if: ${{ secrets.VERCEL_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
