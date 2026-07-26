@@ -1,0 +1,16 @@
+# ruff config for Gardenify backend
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = [
+    "B008",  # FastAPI: File/Form in function defaults (idiomatic)
+    "BLE001",  # Blind except OK for resilience in API client + EXIF parser
+]
+
+[lint.isort]
+known-first-party = ["api"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101"]  # assert OK in tests
