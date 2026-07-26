@@ -128,6 +128,29 @@ For comprehensive architecture, phase TODOs, security guidelines, and agentic wo
 - `.agents/security-harness.md` — Security checklist
 - `.agents/self-improvement-loop.md` — Agent learning protocol
 - `.agents/agentic-handoff.md` — Cross-session handoff protocol
+- `.agents/sessions.md` — Session log (update before each commit)
+- `.agents/handoff-current.md` — Current state for next agent
+- `.agents/primer.md` — Quick context for new agents
+- `.agents/pre-commit-workflow.md` — Pre-commit checklist
+- `.agents/security-checklist.md` — Detailed security checks
+- `.agents/code-hygiene.md` — Code quality rules
+- `.agents/linear-history.md` — Git workflow and changelog
+- `.agents/documentation-standards.md` — Documentation rules
+- `.agents/product-development.md` — Product thinking and UX
+
+## Pre-Commit Workflow
+
+Before EVERY commit, update these files:
+
+```
+□ .agents/sessions.md — log what was done
+□ .agents/handoff-current.md — next steps for next agent
+□ MEMORY.md — current state + what's not done
+□ LESSONS.md — any new discoveries
+□ PRD.md — check off completed items
+□ .agents/primer.md — quick context for new agents
+□ BUGS.md — log any bugs found or fixed
+```
 
 ## External References
 
