@@ -45,11 +45,9 @@ Expo App → FastAPI Backend → PlantNet API
 - [ ] Expo mobile UI screens
 - [ ] Supabase/PlantNet credentials (need from user)
 - [ ] Vercel deployment
-- [ ] ENVIRONMENT/USE_REMOTE env vars
-- [ ] Seed data scripts
+- [x] ENVIRONMENT/USE_REMOTE env vars
+- [x] Seed data scripts
 - [ ] Testing framework (TDD, e2e, integration)
-- [ ] PRD.md (product requirements)
-- [ ] BUGS.md (issue tracker)
 - [ ] LSP/MCP rules
 - [ ] AI guardrails
 

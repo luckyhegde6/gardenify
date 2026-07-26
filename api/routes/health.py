@@ -33,8 +33,11 @@ async def debug_info():
         "timestamp": datetime.now(UTC).isoformat(),
         "config": {
             "debug": settings.debug,
+            "environment": settings.environment,
+            "use_remote": settings.use_remote,
             "plantnet_configured": bool(settings.plantnet_api_key),
             "supabase_configured": bool(settings.supabase_url),
+            "supabase_url": settings.supabase_url[:30] + "..." if settings.supabase_url else "",
             "max_images": settings.max_images,
             "cors_origins": settings.cors_origins,
         },

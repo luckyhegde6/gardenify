@@ -67,14 +67,15 @@
 - [ ] CORS configured for Expo dev
 
 ### Database
-- [ ] Supabase project created
+- [x] Supabase project created
 - [ ] `users` table exists
 - [ ] `identifications` table exists
 - [ ] `favorites` table exists
 - [ ] `user_settings` table exists
-- [ ] RLS policies on all tables
-- [ ] Indexes for query performance
+- [x] RLS policies on all tables
+- [x] Indexes for query performance
 - [ ] Storage bucket for plant images
+- [x] Seed data scripts (make seed)
 
 ### Mobile
 - [ ] Expo project builds for Android

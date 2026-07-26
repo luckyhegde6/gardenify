@@ -4,6 +4,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Environment
+    environment: str = "local"  # local | production
+    use_remote: bool = False  # True = connect to prod Supabase from local backend
+
     # PlantNet
     plantnet_api_key: str = ""
     plantnet_api_url: str = "https://my-api.plantnet.org/v2"
@@ -25,6 +29,20 @@ class Settings(BaseSettings):
     ]
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
+
+    @property
+    def supabase_effective_url(self) -> str:
+        """When USE_REMOTE=true, always use prod Supabase URL."""
+        if self.use_remote and self.supabase_url.startswith("http://localhost"):
+            raise ValueError(
+                "USE_REMOTE=true but SUPABASE_URL is localhost. "
+                "Set SUPABASE_URL to your production Supabase project URL."
+            )
+        return self.supabase_url
 
 
 settings = Settings()
