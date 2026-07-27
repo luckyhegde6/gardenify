@@ -16,7 +16,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import get_connection, init_db, insert_species
+from api.services.local_db import init_db, insert_species
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def populate_species(species_names: dict[str, str], metadata: dict) -> int:
     # Group metadata by species
     species_obs: dict[str, dict] = {}
 
-    for img_id, img_meta in metadata.items():
+    for img_meta in metadata.values():
         species_id = img_meta.get("species_id", "")
         if not species_id or species_id not in species_names:
             continue

@@ -1,11 +1,8 @@
 """Tests for GBIF importer."""
 
-import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -17,7 +14,6 @@ class TestGBIFDownload:
     @patch("api.data.importers.import_gbif.requests.get")
     def test_download_creates_file(self, mock_get, tmp_path):
         """Test download saves zip file."""
-        from api.data.importers.import_gbif import GBIF_CACHE_DIR
 
         # Mock response
         mock_response = MagicMock()
@@ -126,16 +122,13 @@ class TestGBIFImport:
 
     def test_import_to_database(self, tmp_path):
         """Test species are inserted into database."""
-        import sqlite3
 
-        from api.services.local_db import DB_DIR, DB_PATH
 
         # Use temp database
         test_db = tmp_path / "test.db"
-        test_schema = DB_DIR / "schema.sql"
 
         with patch("api.services.local_db.DB_PATH", test_db):
-            from api.services.local_db import init_db, get_connection
+            from api.services.local_db import get_connection, init_db
 
             init_db()
 

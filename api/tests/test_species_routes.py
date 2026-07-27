@@ -6,10 +6,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import pytest
-from fastapi.testclient import TestClient
-
 from api.main import app
 from api.services import local_db
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture

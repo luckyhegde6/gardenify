@@ -13,7 +13,7 @@ from api.services.local_db import (
     get_species_by_name,
     search_species,
 )
-from api.services.perceptual_hash import compute_dhash, compute_phash
+from api.services.perceptual_hash import compute_phash
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,6 @@ async def local_identify(
         # Compute hashes
         try:
             phash = compute_phash(data_bytes)
-            dhash = compute_dhash(data_bytes)
         except Exception as e:
             logger.warning("Hash computation failed for %s: %s", fn, e)
             continue

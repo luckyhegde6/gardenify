@@ -14,7 +14,6 @@ import csv
 import json
 import logging
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
@@ -23,7 +22,7 @@ import requests
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import get_connection, init_db, insert_species
+from api.services.local_db import get_connection, init_db
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,6 @@
 
 import os
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -46,8 +45,9 @@ def sample_species():
 def sample_image_bytes():
     """Create a minimal valid JPEG image for testing."""
     # Minimal JPEG: SOI marker + APP0 + image data
-    from PIL import Image
     from io import BytesIO
+
+    from PIL import Image
 
     img = Image.new("RGB", (64, 64), color=(128, 200, 128))
     buf = BytesIO()

@@ -11,8 +11,13 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from api.config import settings
 from api.routes.health import router as health_router
-from api.routes.identify import router as identify_router
 from api.routes.species import router as species_router
+
+try:
+    from api.routes.identify import router as identify_router
+    _has_identify = True
+except ImportError:
+    _has_identify = False
 
 # Structured logging: JSON in production, readable in dev
 log_level = logging.DEBUG if settings.debug else logging.INFO
@@ -73,7 +78,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(health_router, prefix="/api")
-app.include_router(identify_router, prefix="/api")
+if _has_identify:
+    app.include_router(identify_router, prefix="/api")
 app.include_router(species_router, prefix="/api")
 
 
@@ -84,7 +90,6 @@ async def landing_page():
     return HTMLResponse(content=LANDING_PAGE_HTML)
 
 # Initialize local database on startup (skip on Vercel serverless)
-import os
 if not os.environ.get("VERCEL"):
     try:
         from api.services.local_db import init_db

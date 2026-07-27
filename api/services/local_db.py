@@ -134,7 +134,7 @@ def _hamming_distance(h1: str, h2: str) -> int:
     dist = 0
     for c1, c2 in zip(h1, h2):
         xor = int(c1, 16) ^ int(c2, 16)
-        dist += bin(xor).count("1")
+        dist += xor.bit_count()
     return dist
 
 

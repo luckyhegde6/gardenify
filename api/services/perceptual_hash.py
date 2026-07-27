@@ -68,7 +68,7 @@ def hamming_distance(hash1: str, hash2: str) -> int:
     dist = 0
     for c1, c2 in zip(hash1, hash2):
         xor = int(c1, 16) ^ int(c2, 16)
-        dist += bin(xor).count("1")
+        dist += xor.bit_count()
     return dist
 
 

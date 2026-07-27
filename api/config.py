@@ -1,6 +1,5 @@
 """App configuration — reads from environment variables."""
 
-import os
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings

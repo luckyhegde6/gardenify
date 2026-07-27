@@ -5,18 +5,18 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-import pytest
-from PIL import Image
 from io import BytesIO
 
+import pytest
 from api.services.perceptual_hash import (
+    _bits_to_hex,
+    _dct1d,
     compute_dhash,
     compute_phash,
     hamming_distance,
     match_hash,
-    _bits_to_hex,
-    _dct1d,
 )
+from PIL import Image
 
 
 def _make_image(color=(128, 128, 128), size=(64, 64)) -> bytes:

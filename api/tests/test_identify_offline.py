@@ -5,13 +5,16 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-import pytest
 from io import BytesIO
-from PIL import Image
 
+import pytest
+from api.services.local_db import (
+    insert_image_hash,
+    insert_species,
+)
 from api.services.local_identify import local_identify, search_local_species
-from api.services.local_db import init_db, insert_species, insert_image_hash, get_species_count
-from api.services.perceptual_hash import compute_dhash, compute_phash
+from api.services.perceptual_hash import compute_phash
+from PIL import Image
 
 
 def _make_image_bytes(color=(128, 200, 128)) -> bytes:

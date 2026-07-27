@@ -16,11 +16,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.data.importers.seed_species import seed_database
+from api.data.importers.build_hash_index import build_index
 from api.data.importers.import_gbif import run_import as import_gbif
 from api.data.importers.import_plantnet300k import run_import as import_plantnet300k
-from api.data.importers.build_hash_index import build_index
-from api.services.local_db import get_species_count, get_hash_count
+from api.data.importers.seed_species import seed_database
+from api.services.local_db import get_hash_count, get_species_count
 
 logger = logging.getLogger(__name__)
 

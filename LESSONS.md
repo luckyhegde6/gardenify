@@ -587,3 +587,98 @@ This ensures:
 **Applies to:** backend
 **Severity:** important
 **Status:** active
+
+---
+
+### Lesson: package-lock.json Must Be Committed for npm ci to Work
+
+**Context:** CI workflow runs `npm ci` which requires `package-lock.json` to be in sync with `package.json`.
+
+**What went wrong:**
+- Merged stashed changes from `develop` branch which had different package versions
+- `package-lock.json` was not regenerated after merge
+- CI failed with "Missing: eslint@9.39.5 from lock file" and 200+ more missing packages
+
+**Fix:** Run `npm install` to regenerate `package-lock.json` and commit it.
+
+**Pattern:** After any merge or rebase that changes `package.json`, always run `npm install` to sync the lock file. Never edit `package-lock.json` manually.
+
+**Applies to:** CI/CD, frontend
+**Severity:** critical
+**Status:** active
+
+---
+
+### Lesson: requirements.txt Must Exist for Python CI
+
+**Context:** CI workflow runs `pip install -r requirements.txt` in the `api/` directory.
+
+**What went wrong:**
+- No `requirements.txt` file existed — dependencies were only listed informally
+- CI failed with "Could not open requirements file: No such file or directory"
+
+**Fix:** Create `api/requirements.txt` with all Python dependencies (fastapi, uvicorn, pydantic, supabase, pillow, pytest, ruff, etc.).
+
+**Pattern:** Always create and maintain `requirements.txt` alongside Python projects. Include both runtime and dev dependencies (pytest, ruff).
+
+**Applies to:** CI/CD, backend
+**Severity:** critical
+**Status:** active
+
+---
+
+### Lesson: CSS Module Imports Need TypeScript Declarations
+
+**Context:** Web-specific `.web.tsx` file imports a CSS module (`*.module.css`).
+
+**What went wrong:**
+- `animated-icon.web.tsx` imports `./animated-icon.module.css`
+- TypeScript error: "Cannot find module './animated-icon.module.css' or its corresponding type declarations"
+- CI failed on `npx tsc --noEmit`
+
+**Fix:** Create `src/types/css-module.d.ts` with `declare module '*.module.css'` and add to `tsconfig.json` includes.
+
+**Pattern:** When using CSS modules in Expo/React Native web builds, always add a TypeScript declaration file for `*.module.css`.
+
+**Applies to:** frontend, CI/CD
+**Severity:** important
+**Status:** active
+
+---
+
+### Lesson: Missing Modules Cause Chain Import Failures
+
+**Context:** `main.py` imports `identify_router` which imports `cache`, `plantnet`, `plant_care` services.
+
+**What went wrong:**
+- These services don't exist yet (planned for future phases)
+- Import failure cascaded: main.py → identify.py → cache.py (not found)
+- All tests failed because they import `app` from `main.py`
+
+**Fix:** Use `try/except ImportError` for optional route imports. Only include routers when their dependencies exist.
+
+**Pattern:** When routes have unimplemented dependencies, guard the import with try/except rather than importing unconditionally.
+
+**Applies to:** backend
+**Severity:** important
+**Status:** active
+
+---
+
+### Lesson: Branch Divergence Causes Massive Merge Conflicts
+
+**Context:** Merging stashed changes from `develop` (which diverged significantly from `main`) into a new branch from `main`.
+
+**What went wrong:**
+- `develop` had hundreds of commits ahead of `main`
+- Files existed on one branch but not the other
+- 15+ merge conflicts on stash pop
+- Had to manually resolve by accepting "ours" (stashed) versions
+
+**Fix:** Use `git stash` then `git checkout main && git checkout -b feat/... && git stash pop`. Resolve conflicts by accepting stashed versions for files that should exist.
+
+**Pattern:** When bringing work from a diverged branch, create a fresh branch from the target and apply changes. Use squash-merge or cherry-pick instead of merge for large divergences.
+
+**Applies to:** git workflow
+**Severity:** important
+**Status:** active
