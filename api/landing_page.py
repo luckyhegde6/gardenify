@@ -1,0 +1,140 @@
+"""Landing page HTML for sasyakashi.vercel.app."""
+
+LANDING_PAGE_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gardenify — Identify Any Plant</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <style>
+        :root {
+            --green-50: #f0fdf4; --green-100: #dcfce7; --green-500: #22c55e;
+            --green-600: #16a34a; --green-700: #15803d; --green-800: #166534;
+            --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+            --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563;
+            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--gray-800); background: var(--gray-50); line-height: 1.6; }
+        .hero { background: linear-gradient(135deg, var(--green-800), var(--green-600)); color: white; text-align: center; padding: 5rem 1.5rem 4rem; }
+        .hero h1 { font-size: 2.75rem; font-weight: 800; margin-bottom: 0.75rem; }
+        .hero .tagline { font-size: 1.25rem; opacity: 0.9; max-width: 520px; margin: 0 auto 2rem; }
+        .hero .badges { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+        .hero .badges a { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); padding: 0.5rem 1rem; border-radius: 999px; color: white; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: background 0.2s; }
+        .hero .badges a:hover { background: rgba(255,255,255,0.25); }
+        .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+        section { padding: 3.5rem 0; }
+        section h2 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--green-800); }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
+        .card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.5rem; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--gray-900); }
+        .card p { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 0.75rem; }
+        .card a { color: var(--green-600); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .card a:hover { text-decoration: underline; }
+        .method { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; font-family: monospace; margin-right: 0.4rem; }
+        .method-get { background: #dbeafe; color: #1e40af; }
+        .method-post { background: #d1fae5; color: #065f46; }
+        .endpoint-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--gray-200); }
+        .endpoint-table th, .endpoint-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--gray-100); }
+        .endpoint-table th { background: var(--green-50); font-weight: 600; font-size: 0.85rem; color: var(--gray-700); }
+        .endpoint-table td { font-size: 0.9rem; }
+        .endpoint-table code { font-size: 0.85rem; background: var(--gray-100); padding: 0.15rem 0.4rem; border-radius: 4px; }
+        .qr-section { text-align: center; background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 2.5rem; }
+        .qr-section img { width: 180px; height: 180px; margin-bottom: 1rem; border-radius: 8px; }
+        .qr-section p { color: var(--gray-500); font-size: 0.9rem; }
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .tech-item { background: white; border: 1px solid var(--gray-200); border-radius: 8px; padding: 1rem; text-align: center; }
+        .tech-item .label { font-size: 0.8rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; }
+        .tech-item .value { font-size: 1rem; font-weight: 600; color: var(--gray-800); margin-top: 0.25rem; }
+        footer { text-align: center; padding: 2rem; color: var(--gray-400); font-size: 0.85rem; border-top: 1px solid var(--gray-200); }
+        footer a { color: var(--green-600); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<header class="hero">
+    <h1>Gardenify</h1>
+    <p class="tagline">Identify any plant, flower, leaf, or fruit with your camera. Powered by PlantNet AI and 50,000+ species.</p>
+    <div class="badges">
+        <a href="/docs">Swagger API Docs</a>
+        <a href="https://github.com/luckyhegde6/gardenify" target="_blank">GitHub</a>
+        <a href="https://github.com/luckyhegde6/gardenify/actions" target="_blank">CI Status</a>
+    </div>
+</header>
+<section class="container">
+    <h2>Quick Start</h2>
+    <div class="cards">
+        <div class="card">
+            <h3>Interactive API Docs</h3>
+            <p>Explore and test every endpoint directly from your browser with Swagger UI.</p>
+            <a href="/docs">Open Swagger UI &rarr;</a>
+        </div>
+        <div class="card">
+            <h3>Identify a Plant</h3>
+            <p>Send a photo and get species identification with confidence scores.</p>
+            <a href="/docs/#/default/identify_plant_identify_post">Try it &rarr;</a>
+        </div>
+        <div class="card">
+            <h3>Species Database</h3>
+            <p>Search 10,000+ species by name, genus, family, or common name.</p>
+            <a href="/docs/#/default/list_species_species_get">Explore &rarr;</a>
+        </div>
+    </div>
+</section>
+<section class="container">
+    <h2>API Endpoints</h2>
+    <table class="endpoint-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><span class="method method-get">GET</span></td><td><code>/api/health</code></td><td>Health check and version info</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td><code>/api/identify</code></td><td>Identify plant from images (multipart/form-data)</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td><code>/api/species?q={query}&amp;limit={n}</code></td><td>Search species database</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td><code>/api/species/{id}</code></td><td>Species details by ID</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td><code>/api/species/by-name/{name}</code></td><td>Species by scientific name</td></tr>
+        </tbody>
+    </table>
+</section>
+<section class="container">
+    <h2>Example Usage</h2>
+    <div class="cards">
+        <div class="card">
+            <h3>Health Check</h3>
+            <p><code>curl https://sasyakashi.vercel.app/api/health</code></p>
+        </div>
+        <div class="card">
+            <h3>Identify Plant</h3>
+            <p><code>curl -X POST /api/identify -F "images=@photo.jpg"</code></p>
+        </div>
+        <div class="card">
+            <h3>Search Species</h3>
+            <p><code>curl "/api/species?q=rose&amp;limit=5"</code></p>
+        </div>
+    </div>
+</section>
+<section class="container">
+    <h2>Download the App</h2>
+    <div class="qr-section">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sasyakashi.vercel.app&bgcolor=f0fdf4&color=166534" alt="QR Code linking to Gardenify">
+        <p>Scan to open Gardenify on your phone</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #9ca3af;">Android app coming soon &mdash; iOS in Phase 3</p>
+    </div>
+</section>
+<section class="container">
+    <h2>Technology</h2>
+    <div class="tech-grid">
+        <div class="tech-item"><div class="label">Mobile</div><div class="value">Expo SDK 55</div></div>
+        <div class="tech-item"><div class="label">Backend</div><div class="value">FastAPI + Vercel</div></div>
+        <div class="tech-item"><div class="label">Database</div><div class="value">Supabase</div></div>
+        <div class="tech-item"><div class="label">Plant AI</div><div class="value">PlantNet 50K+</div></div>
+        <div class="tech-item"><div class="label">Build</div><div class="value">EAS Build</div></div>
+        <div class="tech-item"><div class="label">CI/CD</div><div class="value">GitHub Actions</div></div>
+    </div>
+</section>
+<footer>
+    <p>Gardenify &copy; 2026 &mdash; Built with love for plant lovers everywhere</p>
+    <p style="margin-top: 0.5rem;"><a href="https://github.com/luckyhegde6/gardenify" target="_blank">GitHub</a> &middot; <a href="/docs">API Docs</a> &middot; <a href="/api/health">API Status</a></p>
+</footer>
+</body>
+</html>"""
