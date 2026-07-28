@@ -682,3 +682,49 @@ This ensures:
 **Applies to:** git workflow
 **Severity:** important
 **Status:** active
+
+---
+
+### Lesson: Always Check Open PRs Before Starting New Work
+
+**Context:** Starting a new feature branch without checking if other PRs are open.
+
+**What went wrong:**
+- PR #1 (`develop`) was open with 100 files changed
+- PR #2 (`feat/ci-cd-release-workflow`) was created from `main` independently
+- Both branches modified the same core files (api/main.py, package.json, etc.)
+- Merging either PR would conflict with the other
+- Wasted hours resolving 15+ merge conflicts between two branches
+
+**Fix:** Before creating any new branch, always run `gh pr list` to check for open PRs. If an existing PR touches overlapping files, either:
+1. Branch from that PR's branch instead of `main`
+2. Or coordinate with the existing PR to avoid overlap
+
+**Pattern:** `gh pr list` → check file overlap → branch from the right base. Never start from `main` blindly when other PRs are in flight.
+
+**Applies to:** git workflow
+**Severity:** critical
+**Status:** active
+
+---
+
+### Lesson: Don't Branch From Main When Other PRs Target Main
+
+**Context:** Two PRs both branching from `main` that modify overlapping files.
+
+**What went wrong:**
+- Both PRs had the same merge base (`main` = initial commit)
+- Both modified api/main.py, package.json, eas.json, workflows, etc.
+- Cherry-picking or merging between them caused 15+ conflicts on every overlapping file
+- Had to use `git merge --ours` to resolve, losing some unique content from PR #1
+
+**Fix:** When multiple PRs are in flight:
+1. Identify which PR is the "base" PR (larger scope, foundational changes)
+2. Branch new work from that PR's branch, not from `main`
+3. This makes the second PR a clean superset — no conflicts on merge
+
+**Pattern:** If PR A exists and PR B needs overlapping files, branch PR B from PR A's branch. PR B becomes: `PR_A_commits + PR_B_commits` with zero conflicts.
+
+**Applies to:** git workflow
+**Severity:** critical
+**Status:** active
