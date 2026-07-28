@@ -1,24 +1,23 @@
 # Local Supabase stack — run `docker compose up -d`
+# All secrets loaded from .env.local (see .env.local.example)
+#
+# Prerequisites:
+#   1. cp .env.local.example .env.local
+#   2. Edit .env.local with your keys
+#   3. docker compose up -d
+#
 # Dashboard: http://localhost:54323
 # API:       http://localhost:54321
-# DB:        postgresql://postgres:postgres@localhost:54322/postgres
-#
-# After first start, grab keys from:
-#   docker compose exec meta psql -U postgres -c "select ... from auth.jwt_keys"
-# Or open Studio at http://localhost:54323 → Settings → API
-#
-# ENVIRONMENT=local (default)
-# USE_REMOTE=false  (set to true to use prod Supabase from local backend)
+# DB:        postgresql://postgres:${POSTGRES_PASSWORD}@localhost:54322/postgres
 
 services:
   studio:
     image: supabase/studio:latest
     ports: ["54323:3000"]
+    env_file: .env.local
     environment:
       STUDIO_PG_META_URL: http://meta:8080
       SUPABASE_URL: http://localhost:54321
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?Run 'supabase start' or set SUPABASE_ANON_KEY}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?Run 'supabase start' or set SUPABASE_SERVICE_ROLE_KEY}
     depends_on:
       meta:
         condition: service_healthy
@@ -26,12 +25,12 @@ services:
   meta:
     image: supabase/postgres-meta:latest
     ports: ["8080:8080"]
+    env_file: .env.local
     environment:
       PG_META_DB_HOST: db
       PG_META_DB_PORT: 5432
       PG_META_DB_NAME: postgres
       PG_META_DB_USER: postgres
-      PG_META_DB_PASSWORD: postgres
     depends_on:
       db:
         condition: service_healthy
@@ -39,9 +38,7 @@ services:
   db:
     image: supabase/postgres:15.6.1
     ports: ["54322:5432"]
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+    env_file: .env.local
     volumes:
       - supabase_data:/var/lib/postgresql/data
       - ./supabase/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql
@@ -54,10 +51,10 @@ services:
   auth:
     image: supabase/gotrue:latest
     ports: ["9999:9999"]
+    env_file: .env.local
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
-      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
       GOTRUE_SITE_URL: http://localhost:8081
       GOTRUE_URI_ALLOW_LIST: ""
       GOTRUE_DISABLE_SIGNUP: "false"
@@ -70,11 +67,10 @@ services:
   rest:
     image: postgrest/postgrest:v12.2.3
     ports: ["3000:3000"]
+    env_file: .env.local
     environment:
-      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
       PGRST_DB_SCHEMAS: public,storage,graphql_public
       PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a random 32+ char string}
     depends_on:
       db:
         condition: service_healthy
@@ -82,11 +78,9 @@ services:
   storage:
     image: supabase/storage-api:v1.11.13
     ports: ["5000:5000"]
+    env_file: .env.local
     environment:
-      ANON_KEY: ${SUPABASE_ANON_KEY:?Run 'supabase start' or set SUPABASE_ANON_KEY}
-      SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?Run 'supabase start' or set SUPABASE_SERVICE_ROLE_KEY}
       POSTGREST_URL: http://rest:3000
-      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
       FILE_SIZE_LIMIT: 52428800
       STORAGE_BACKEND: file
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage

@@ -9,6 +9,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -31,12 +32,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it — don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -47,13 +50,14 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multi-step tasks, state a brief plan:
 
-```
+```text
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 3. [Step] → verify: [check]
@@ -84,6 +88,41 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Use `auth.uid()` in RLS policies for user-scoped data
 - Create database indexes for frequently queried columns
 - Use Supabase migrations for schema changes — never manual SQL in production
+
+---
+
+## 8. Opencode Agents & Commands
+
+This project uses opencode with the following specialized agents and commands (defined in `opencode.json`):
+
+### Agents (subagent mode)
+
+| Agent | Description | Use When |
+| :--- | :--- | :--- |
+| `build` | Primary coding agent for Expo + FastAPI development | General implementation tasks |
+| `planner` | Implementation planning for complex features, refactoring, architecture decisions | Before starting multi-file changes |
+| `code-reviewer` | Code review for quality, security, maintainability | After writing/modifying code |
+| `security-reviewer` | Security vulnerability detection (auth, API, RLS, sensitive data) | Auth, API endpoints, RLS policies, sensitive data |
+| `tdd-guide` | Test-Driven Development specialist (write tests first, 80%+ coverage) | New features, bug fixes |
+| `build-error-resolver` | Fix TypeScript, Python, Expo build errors with minimal diffs | Build failures |
+| `database-reviewer` | PostgreSQL/Supabase specialist (RLS, schema, migrations, queries) | Schema changes, RLS policies, migrations |
+| `doc-updater` | Update AGENTS.md, LESSONS.md, PRD.md, API docs after changes | After code changes |
+| `refactor-cleaner` | Remove dead code, consolidate duplicates, enforce hygiene | Periodic cleanup |
+
+### Commands (slash commands)
+
+| Command | Agent | Description |
+| :--- | :--- | :--- |
+| `/plan` | planner | Create detailed implementation plan |
+| `/tdd` | tdd-guide | Enforce TDD workflow (tests first, 80%+ coverage) |
+| `/review` | code-reviewer | Review code for quality, security, maintainability |
+| `/security` | security-reviewer | Security review on auth, API, RLS, sensitive code |
+| `/build-fix` | build-error-resolver | Fix TypeScript/Python/Expo build errors |
+| `/db-review` | database-reviewer | Review schema, RLS, migrations |
+| `/update-docs` | doc-updater | Update AGENTS.md, LESSONS.md, PRD.md |
+| `/refactor-clean` | refactor-cleaner | Remove dead code, consolidate duplicates |
+| `/verify` | — | Run full verification: lint, typecheck, tests, security |
+| `/checkpoint` | — | Save progress and update session files before commit |
 
 ---
 
