@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gardenify — Auth Flow Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.6; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 1rem; font-size: 2rem; }
+        h2 { color: #79c0ff; margin: 2rem 0 1rem; font-size: 1.5rem; }
+        .diagram { background: #161b22; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; overflow-x: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        code { background: #1f2937; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Gardenify Auth Flow</h1>
+
+        <h2>Supabase Auth Integration</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+graph TB
+    subgraph Client["Mobile App"]
+        Login["Login Screen"]
+        Register["Register Screen"]
+        AuthCtx["AuthContext"]
+        SecureStore["expo-secure-store"]
+    end
+
+    subgraph Supabase["Supabase"]
+        Auth["Auth Service"]
+        RLS["Row Level Security"]
+        DB["PostgreSQL"]
+    end
+
+    Login -->|Email + Password| Auth
+    Register -->|Email + Password + Name| Auth
+    Auth -->|JWT Token| AuthCtx
+    AuthCtx -->|Store tokens| SecureStore
+    SecureStore -->|Load on startup| AuthCtx
+
+    AuthCtx -->|Set auth header| RLS
+    RLS -->|Filter by user_id| DB
+
+    style Client fill:#1a365d,stroke:#2563eb
+    style Supabase fill:#238636,stroke:#2ea043
+            </pre>
+        </div>
+
+        <h2>Session Lifecycle</h2>
+        <div class="diagram">
+            <pre class="mermaid">
+stateDiagram-v2
+    [*] --> CheckingSession
+    CheckingSession --> LoggedIn: Valid JWT found
+    CheckingSession --> LoginScreen: No session
+
+    LoginScreen --> Authenticating: Submit credentials
+    Authenticating --> LoggedIn: Success
+    Authenticating --> LoginScreen: Error
+
+    LoggedIn --> Refreshing: Token expires
+    Refreshing --> LoggedIn: Refresh success
+    Refreshing --> LoginScreen: Refresh failed
+
+    LoggedIn --> LoggingOut: User clicks logout
+    LoggingOut --> LoginScreen: Session cleared
+
+    Note right of CheckingSession: Checks SecureStore on app start
+    Note right of Refreshing: Auto-refresh before expiry
+            </pre>
+        </div>
+
+        <h2>RLS Policies</h2>
+        <div class="card">
+            <pre>
+-- Users can only read their own data
+CREATE POLICY "users_select_own"
+    ON public.users FOR SELECT
+    USING (auth.uid() = id);
+
+-- Users can only insert their own identifications
+CREATE POLICY "identifications_insert_own"
+    ON public.identifications FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- Users can only view their own history
+CREATE POLICY "identifications_select_own"
+    ON public.identifications FOR SELECT
+    USING (auth.uid() = user_id);
+
+-- Users can only manage their own favorites
+CREATE POLICY "favorites_select_own"
+    ON public.favorites FOR SELECT
+    USING (auth.uid() = user_id);
+            </pre>
+        </div>
+
+        <h2>Security Rules</h2>
+        <div class="card">
+            <ul style="margin-left: 1.5rem;">
+                <li><strong>Never</strong> store tokens in AsyncStorage (use expo-secure-store)</li>
+                <li><strong>Never</strong> expose service_role key to client</li>
+                <li><strong>Always</strong> use RLS on every table</li>
+                <li><strong>Always</strong> validate JWT on server-side operations</li>
+                <li><strong>Always</strong> use HTTPS in production</li>
+                <li><strong>Always</strong> hash sensitive data (passwords handled by Supabase)</li>
+            </ul>
+        </div>
+
+        <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.9rem;">
+            <p>Gardenify Auth Flow Documentation</p>
+        </footer>
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

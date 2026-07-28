@@ -4,6 +4,8 @@ import logging
 import uuid
 from io import BytesIO
 
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+
 from api.models.schemas import (
     CareInfo,
     DiseaseResult,
@@ -27,7 +29,6 @@ from api.services.plantnet import (
     parse_disease,
     parse_species,
 )
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

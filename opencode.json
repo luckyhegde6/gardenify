@@ -1,0 +1,131 @@
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+  "rules": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "MEMORY.md",
+    "SOUL.md",
+    "RULES.md",
+    ".opencode/instructions/INSTRUCTIONS.md",
+    ".opencode/rules/gardenify.md"
+  ],
+  "mcp": {
+    "servers": {
+      "expo": {
+        "type": "streamable-http",
+        "url": "https://mcp.expo.dev/mcp",
+        "authorization": {
+          "type": "oauth"
+        }
+      },
+      "supabase": {
+        "command": "npx",
+        "args": ["-y", "@supabase/mcp-utils@latest"],
+        "env": {
+          "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+        }
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest"]
+      }
+    }
+  },
+  "plugin": [
+    "./.opencode/plugins"
+  ],
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "agent": {
+    "build": {
+      "description": "Primary coding agent for Expo + FastAPI development",
+      "mode": "primary"
+    },
+    "planner": {
+      "description": "Implementation planning for complex features, refactoring, and architecture decisions. Use before starting multi-file changes.",
+      "mode": "subagent"
+    },
+    "code-reviewer": {
+      "description": "Code review for quality, security, and maintainability. Use after writing or modifying code.",
+      "mode": "subagent"
+    },
+    "security-reviewer": {
+      "description": "Security vulnerability detection. Use for auth, API endpoints, RLS policies, or sensitive data handling.",
+      "mode": "subagent"
+    },
+    "tdd-guide": {
+      "description": "Test-Driven Development specialist. Enforces write-tests-first methodology and 80%+ coverage.",
+      "mode": "subagent"
+    },
+    "build-error-resolver": {
+      "description": "Fix TypeScript, Python, and Expo build errors with minimal diffs.",
+      "mode": "subagent"
+    },
+    "database-reviewer": {
+      "description": "PostgreSQL/Supabase specialist for RLS, schema design, migrations, and query optimization.",
+      "mode": "subagent"
+    },
+    "doc-updater": {
+      "description": "Update AGENTS.md, LESSONS.md, PRD.md, and API documentation after code changes.",
+      "mode": "subagent"
+    },
+    "refactor-cleaner": {
+      "description": "Remove dead code, consolidate duplicates, and enforce code hygiene.",
+      "mode": "subagent"
+    }
+  },
+  "command": {
+    "plan": {
+      "description": "Create a detailed implementation plan for a feature or refactoring",
+      "agent": "planner",
+      "subtask": true
+    },
+    "tdd": {
+      "description": "Enforce TDD workflow: write tests first, implement, verify 80%+ coverage",
+      "agent": "tdd-guide",
+      "subtask": true
+    },
+    "review": {
+      "description": "Review code for quality, security, and maintainability",
+      "agent": "code-reviewer",
+      "subtask": true
+    },
+    "security": {
+      "description": "Run security review on auth, API, RLS, or sensitive code",
+      "agent": "security-reviewer",
+      "subtask": true
+    },
+    "build-fix": {
+      "description": "Fix TypeScript, Python, or Expo build errors",
+      "agent": "build-error-resolver",
+      "subtask": true
+    },
+    "db-review": {
+      "description": "Review database schema, RLS policies, and migrations",
+      "agent": "database-reviewer",
+      "subtask": true
+    },
+    "update-docs": {
+      "description": "Update AGENTS.md, LESSONS.md, PRD.md after changes",
+      "agent": "doc-updater",
+      "subtask": true
+    },
+    "refactor-clean": {
+      "description": "Remove dead code and consolidate duplicates",
+      "agent": "refactor-cleaner",
+      "subtask": true
+    },
+    "verify": {
+      "description": "Run full verification: lint, typecheck, tests, security checks"
+    },
+    "checkpoint": {
+      "description": "Save progress and update session files before commit"
+    }
+  },
+  "permission": {
+    "mcp_*": "ask"
+  }
+}
