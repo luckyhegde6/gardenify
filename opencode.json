@@ -1,0 +1,110 @@
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+  "plugin": [
+    "./.opencode/plugins"
+  ],
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "agent": {
+    "build": {
+      "description": "Primary coding agent for Expo + FastAPI development",
+      "mode": "primary"
+    },
+    "planner": {
+      "description": "Implementation planning for complex features, refactoring, and architecture decisions. Use before starting multi-file changes.",
+      "mode": "subagent"
+    },
+    "code-reviewer": {
+      "description": "Code review for quality, security, and maintainability. Use after writing or modifying code.",
+      "mode": "subagent"
+    },
+    "security-reviewer": {
+      "description": "Security vulnerability detection. Use for auth, API endpoints, RLS policies, or sensitive data handling.",
+      "mode": "subagent"
+    },
+    "tdd-guide": {
+      "description": "Test-Driven Development specialist. Enforces write-tests-first methodology and 80%+ coverage.",
+      "mode": "subagent"
+    },
+    "build-error-resolver": {
+      "description": "Fix TypeScript, Python, and Expo build errors with minimal diffs.",
+      "mode": "subagent"
+    },
+    "database-reviewer": {
+      "description": "PostgreSQL/Supabase specialist for RLS, schema design, migrations, and query optimization.",
+      "mode": "subagent"
+    },
+    "doc-updater": {
+      "description": "Update AGENTS.md, LESSONS.md, PRD.md, and API documentation after code changes.",
+      "mode": "subagent"
+    },
+    "refactor-cleaner": {
+      "description": "Remove dead code, consolidate duplicates, and enforce code hygiene.",
+      "mode": "subagent"
+    }
+  },
+  "command": {
+    "plan": {
+      "description": "Create a detailed implementation plan for a feature or refactoring",
+      "agent": "planner",
+      "subtask": true,
+      "template": "plan"
+    },
+    "tdd": {
+      "description": "Enforce TDD workflow: write tests first, implement, verify 80%+ coverage",
+      "agent": "tdd-guide",
+      "subtask": true,
+      "template": "tdd"
+    },
+    "review": {
+      "description": "Review code for quality, security, and maintainability",
+      "agent": "code-reviewer",
+      "subtask": true,
+      "template": "review"
+    },
+    "security": {
+      "description": "Run security review on auth, API, RLS, or sensitive code",
+      "agent": "security-reviewer",
+      "subtask": true,
+      "template": "security"
+    },
+    "build-fix": {
+      "description": "Fix TypeScript, Python, or Expo build errors",
+      "agent": "build-error-resolver",
+      "subtask": true,
+      "template": "build-fix"
+    },
+    "db-review": {
+      "description": "Review database schema, RLS policies, and migrations",
+      "agent": "database-reviewer",
+      "subtask": true,
+      "template": "db-review"
+    },
+    "update-docs": {
+      "description": "Update AGENTS.md, LESSONS.md, PRD.md after changes",
+      "agent": "doc-updater",
+      "subtask": true,
+      "template": "update-docs"
+    },
+    "refactor-clean": {
+      "description": "Remove dead code and consolidate duplicates",
+      "agent": "refactor-cleaner",
+      "subtask": true,
+      "template": "refactor-clean"
+    },
+    "verify": {
+      "description": "Run full verification: lint, typecheck, tests, security checks",
+      "template": "verify"
+    },
+    "checkpoint": {
+      "description": "Save progress and update session files before commit",
+      "template": "checkpoint"
+    }
+  },
+  "permission": {
+    "mcp_*": "ask"
+  }
+}

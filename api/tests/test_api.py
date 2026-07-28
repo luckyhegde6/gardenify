@@ -1,0 +1,32 @@
+import os
+import sys
+
+# Add parent directory to path so 'api' package is importable
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+import pytest
+from api.main import app
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_health_check(client):
+    response = client.get("/api/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "version" in data
+
+
+def test_identify_no_images(client):
+    response = client.post("/api/identify")
+    assert response.status_code == 422  # Validation error
+
+
+def test_identify_empty_images(client):
+    response = client.post("/api/identify", files=[])
+    assert response.status_code == 422

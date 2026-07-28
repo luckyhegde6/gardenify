@@ -1,0 +1,50 @@
+# Pre-commit hooks — run `pip install pre-commit && pre-commit install`
+# Manual run: pre-commit run --all-files
+repos:
+  # Secret detection — blocks commits with hardcoded secrets
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+        args: ['--config', '.gitleaks.toml']
+
+  # Generic secrets / credentials pattern
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # TypeScript type checking (runs npx tsc --noEmit)
+  - repo: local
+    hooks:
+      - id: typecheck
+        name: TypeScript typecheck
+        entry: npx tsc --noEmit
+        language: system
+        files: '\.(ts|tsx)$'
+        pass_filenames: false
+
+  # Python tests
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Python tests
+        entry: cd api && python -m pytest tests/ -x -q
+        language: system
+        files: '\.py$'
+        pass_filenames: false

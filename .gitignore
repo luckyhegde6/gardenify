@@ -1,6 +1,4 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies
 node_modules/
 
 # Expo
@@ -21,7 +19,7 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -30,14 +28,79 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Environment files (NEVER commit these)
+.env
+.env.*
+!.env.example
+!.env.test
+!.env.local.example
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 
+# Example code
 app-example
 
-# generated native folders
+# Generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Vercel
+.vercel/
+
+# Supabase
+supabase/.temp/
+
+# Testing
+coverage/
+.pytest_cache/
+playwright-report/
+test-results/
+e2e/report/
+e2e/results/
+
+# Playwright
+blob-report/
+playwright/.cache/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+
+# OS
+Thumbs.db
+
+# Agent artifacts
+.agents/handoff-current.md
+
+# Pre-commit
+.pre-commit-cache/
+
+# Local plant database (large, local-only)
+api/data/gardenify.db
+api/data/gardenify.db-journal
+api/data/gardenify.db-wal
+api/data/plantnet-300k/
+api/data/hashes/
+api/data/gbif/
+api/data/geoplant/
+
+# Cloned analysis repos (temp, not for production)
+plantnet-ai-taxonomist/
+plantnet-300k/
+
+.vercel

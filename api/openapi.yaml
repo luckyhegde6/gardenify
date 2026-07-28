@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: Gardenify API
+  description: Plant identification backend powered by PlantNet API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-app.vercel.app/api
+    description: Production
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /identify:
+    post:
+      summary: Identify plant species
+      operationId: identifyPlant
+      description: |
+        Identify a plant from 1-5 images. Each image can be tagged
+        with an organ type (leaf, flower, fruit, bark) or auto-detect.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 5
+                  description: Plant images (JPEG/PNG)
+                organs:
+                  type: array
+                  items:
+                    type: string
+                    enum: [leaf, flower, fruit, bark, auto]
+                  description: Plant organ per image
+                lang:
+                  type: string
+                  default: en
+                  description: Response language
+      responses:
+        "200":
+          description: Identification results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentificationResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: PlantNet API error
+
+components:
+  schemas:
+    IdentificationResponse:
+      type: object
+      properties:
+        best_match:
+          type: string
+          description: Top matched species scientific name
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/IdentificationResult"
+        remaining_quota:
+          type: integer
+          nullable: true
+          description: Remaining API calls today
+        version:
+          type: string
+
+    IdentificationResult:
+      type: object
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score
+        species:
+          $ref: "#/components/schemas/SpeciesInfo"
+
+    SpeciesInfo:
+      type: object
+      properties:
+        scientific_name:
+          type: string
+        common_names:
+          type: array
+          items:
+            type: string
+        family:
+          type: string
+        genus:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
