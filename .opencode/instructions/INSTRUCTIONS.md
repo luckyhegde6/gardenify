@@ -9,6 +9,7 @@ Consolidated rules and guidelines for OpenCode agents working on Gardenify.
 ### Mandatory Security Checks
 
 Before ANY commit:
+
 - [ ] No hardcoded secrets (API keys, passwords, tokens)
 - [ ] All user inputs validated (Pydantic on backend, Zod on mobile)
 - [ ] SQL injection prevention (parameterized queries only)
@@ -33,6 +34,7 @@ if not API_KEY:
 ### Security Response Protocol
 
 If security issue found:
+
 1. STOP immediately
 2. Use **security-reviewer** agent
 3. Fix CRITICAL issues before continuing
@@ -44,6 +46,7 @@ If security issue found:
 ## Coding Style
 
 ### TypeScript Rules
+
 - Strict mode enabled — no `any` types
 - Explicit return types on exported functions
 - Use `const` by default, `let` when reassignment is needed, never `var`
@@ -51,6 +54,7 @@ If security issue found:
 - Use optional chaining `?.` and nullish coalescing `??`
 
 ### Python Rules
+
 - Type hints on ALL functions — no exceptions
 - Pydantic models for every request and response
 - Use `logging` module — never `print()`
@@ -58,6 +62,7 @@ If security issue found:
 - f-strings for string formatting
 
 ### React Native Rules
+
 - Functional components only — no class components
 - Hooks for state management
 - Use `expo-secure-store` — never `AsyncStorage` for sensitive data
@@ -68,17 +73,18 @@ If security issue found:
 ```typescript
 // WRONG: Mutation
 function updateUser(user, name) {
-  user.name = name  // MUTATION!
-  return user
+  user.name = name; // MUTATION!
+  return user;
 }
 
 // CORRECT: Immutability
 function updateUser(user, name) {
-  return { ...user, name }
+  return { ...user, name };
 }
 ```
 
 ### File Organization
+
 - Many small files > few large files
 - 200-400 lines typical, 800 max
 - Organize by feature/domain, not by type
@@ -116,6 +122,7 @@ cd api && python -m ruff check .
 ```
 
 ### Test Types Required
+
 1. **Unit Tests** — Individual functions, utilities, components
 2. **Integration Tests** — API endpoints, database operations
 3. **E2E Tests** — Critical user flows (Playwright)
@@ -137,6 +144,7 @@ Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`
 ### Pre-Commit Checklist
 
 Before EVERY commit:
+
 ```
 □ npm run lint passes
 □ npx tsc --noEmit passes
@@ -156,18 +164,19 @@ Before EVERY commit:
 
 ### Available Agents
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| planner | Implementation planning | Complex features, refactoring |
-| code-reviewer | Code review | After writing code |
-| security-reviewer | Security analysis | Auth, API, RLS, sensitive data |
-| tdd-guide | Test-driven development | New features, bug fixes |
-| build-error-resolver | Fix build errors | When build fails |
-| database-reviewer | Database optimization | SQL, schema, RLS |
-| doc-updater | Documentation | Updating docs |
-| refactor-cleaner | Dead code cleanup | Code maintenance |
+| Agent                | Purpose                 | When to Use                    |
+| -------------------- | ----------------------- | ------------------------------ |
+| planner              | Implementation planning | Complex features, refactoring  |
+| code-reviewer        | Code review             | After writing code             |
+| security-reviewer    | Security analysis       | Auth, API, RLS, sensitive data |
+| tdd-guide            | Test-driven development | New features, bug fixes        |
+| build-error-resolver | Fix build errors        | When build fails               |
+| database-reviewer    | Database optimization   | SQL, schema, RLS               |
+| doc-updater          | Documentation           | Updating docs                  |
+| refactor-cleaner     | Dead code cleanup       | Code maintenance               |
 
 ### Immediate Agent Usage (No user prompt needed)
+
 1. Complex feature requests → Use **planner** agent
 2. Code just written/modified → Use **code-reviewer** agent
 3. Bug fix or new feature → Use **tdd-guide** agent
@@ -211,11 +220,13 @@ Before EVERY commit:
 ## Performance Tips
 
 ### Context Window Management
+
 - Avoid last 20% of context window for large refactoring
 - Use subagents for complex multi-file tasks
 - Keep instructions concise — load skills on-demand
 
 ### Model Selection
+
 - Use primary model for most coding tasks
 - Use subagents for specialized review and planning
 - Delegate to domain experts (database-reviewer, security-reviewer) early
@@ -225,6 +236,7 @@ Before EVERY commit:
 ## Success Metrics
 
 You are successful when:
+
 - All tests pass (80%+ coverage)
 - No security vulnerabilities
 - Code is readable and maintainable
@@ -237,27 +249,39 @@ You are successful when:
 ## Non-Blocking Service Management
 
 ### Problem
+
 Long-running commands like `uvicorn`, `npx expo start`, or `adb logcat` block the bash tool. They must be launched as detached processes so the agent can continue working.
 
-### Non-Blocking Patterns
+### Critical Constraint
 
-Use Python `subprocess.DETACHED_PROCESS` (Windows) to start long-running services:
+**The bash tool blocks until the command exits.** Any approach that doesn't cause the _parent cmd.exe_ to exit quickly will block the agent. This rules out:
 
-```python
-# Start backend (non-blocking)
-python -c "import subprocess; subprocess.Popen(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'], creationflags=subprocess.DETACHED_PROCESS, cwd='api')"
+- `npx expo start` — never exits ❌
+- `python -c "subprocess.Popen(...)"` — parent python.exe blocks waiting for Popen'd children on Windows ❌
+- `start /B cmd /c "..."` — same process group, tool waits ❌
+- Subagent `task` wrapping any of the above — subagent's own bash tool blocks ❌
 
-# Start Expo dev server (non-blocking)
-python -c "import subprocess; subprocess.Popen(['npx', 'expo', 'start'], creationflags=subprocess.DETACHED_PROCESS)"
+### Working Patterns (Windows)
 
-# Start Android emulator (non-blocking)
-python -c "import subprocess; subprocess.Popen(['emulator', '-avd', 'Pixel_7_API_34'], creationflags=subprocess.DETACHED_PROCESS)"
+```bash
+# ✅ start "Title" cmd /c "..." — opens new window, returns immediately
+start "Gardenify-Backend" cmd /c "cd /d F:\Local_git\gardenify && python -m uvicorn api.main:app --reload --port 8000"
+
+# ✅ powershell Start-Process — truly detached, returns immediately
+powershell -Command "Start-Process -FilePath 'cmd' -ArgumentList '/c cd /d F:\Local_git\gardenify && python -m uvicorn api.main:app --reload --port 8000' -WindowStyle Normal"
 ```
 
-For ADB commands that might hang:
-```python
-import subprocess
-subprocess.run(['adb', '-s', 'emulator-5554', 'shell', 'input', 'tap', 'x', 'y'], timeout=10)
+### Non-Working Patterns (Windows)
+
+```bash
+# ❌ Blocks — /B keeps process in same console group
+start /B python -m uvicorn api.main:app --reload --port 8000
+
+# ❌ Blocks — Python parent waits for child
+python -c "import subprocess; subprocess.Popen(['uvicorn', 'api.main:app'], creationflags=subprocess.DETACHED_PROCESS)"
+
+# ❌ Blocks — subagent's bash tool inherits same issue
+# (task with debug subagent → bash → blocked)
 ```
 
 ### Service State Tracking
@@ -265,7 +289,8 @@ subprocess.run(['adb', '-s', 'emulator-5554', 'shell', 'input', 'tap', 'x', 'y']
 The `superpower-hooks.ts` plugin tracks running services across session compactions. Use the `debug` agent to manage service lifecycle.
 
 ### Important Caveats
-- Detached processes inherit current working directory - use `cwd=` parameter
-- No stdout/stderr from detached processes - redirect to file if logs needed
-- Use `taskkill /F /PID <pid>` to stop services
-- PIDs are not persisted across reboots - verify service is running before use
+
+- Detached processes inherit current working directory — always use `cd /d` in `cmd /c`
+- No stdout/stderr captured from detached processes — redirect to file if logs needed
+- Use `taskkill /f /im uvicorn.exe` or `taskkill /F /PID <pid>` to stop services
+- Verify with `curl http://localhost:8000/api/health` before using

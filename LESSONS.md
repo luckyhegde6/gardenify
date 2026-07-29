@@ -431,7 +431,7 @@ Running log of lessons learned during Gardenify development. Agents read this fi
 
 **Applies to:** all
 **Severity:** minor
-**Status:** active
+**Status:** superseded (see 2026-07-29 corrected lesson)
 
 ---
 
@@ -506,6 +506,7 @@ This ensures:
 
 **Applies to:** all
 **Severity:** minor
+**Status:** superseded (see 2026-07-29 corrected lesson)
 **Status:** active
 
 ---
@@ -886,6 +887,25 @@ netstat -ano | findstr :8083            # Expo listening?
 
 ---
 
+## 2026-07-29: Verified — `start "Title" cmd /c` Returns Immediately; `start /B` Blocks
+
+**Context:** Testing all patterns for launching long-running processes without blocking the bash tool.
+
+**Findings (verified with both approaches):**
+
+- `start "Title" cmd /c "command"` — returns immediately ✅, agent can continue working, but background process may be killed when bash tool timeout expires
+- `powershell Start-Process` — returns immediately ✅, process truly detached and survives bash tool timeout ✅
+- `start /B command` — blocks ❌ (same console group)
+- `python -c "subprocess.Popen(..., DETACHED_PROCESS)"` — blocks ❌ (cmd.exe waits for python.exe)
+
+**Recommendation:** Always use `powershell Start-Process` for long-running daemons that need to outlive the bash tool session. Use `start "Title" cmd /c` only for short-lived background tasks.
+
+**Applies to:** all
+**Severity:** critical
+**Status:** active
+
+---
+
 ## 2026-07-29: Windows Detached Process Launch — PowerShell `Start-Process` + Direct `.cmd` Paths
 
 **Context:** Started earlier in the session. Final working approach documented here.
@@ -1097,13 +1117,27 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --no-server-header
 
 ---
 
-## 2026-07-29: `start /B` Blocks Agent Shell — Use Task Subagent for Background Services
+## 2026-07-29: `start /B` and `task` Subagent Both Block — Use `start "Title" cmd /c` or PowerShell `Start-Process`
 
 **Context:** Starting uvicorn backend with `start /B python -m uvicorn ...` inside the bash tool.
 
-**Issue:** `start /B` runs the process in the same console group. The bash tool captures stdout/stderr and doesn't return control until the process exits or tool timeout expires. Agent is blocked from making further tool calls.
+**Issue:** `start /B` runs the process in the same console group — the bash tool never returns. Tried delegating to a `task` subagent (`debug` type), but the subagent's own bash tool also blocks for the same reason — the problem is fundamental, not fixable by delegation.
 
-**Fix:** Launch background servers via `task` tool with `subagent_type="debug"`, which runs in a separate agent context. Or use `start "Title" cmd /c "command"` to open a new window (non-blocking on Windows).
+**Verified working patterns (tested 2026-07-29):**
+
+```bash
+# ✅ Returns immediately — opens new window
+start "Gardenify-Backend" cmd /c "python -m uvicorn api.main:app --reload --port 8000"
+
+# ✅ Returns immediately — truly detached
+powershell -Command "Start-Process -FilePath 'cmd' -ArgumentList '/c python -m uvicorn api.main:app --reload --port 8000' -WindowStyle Normal"
+```
+
+Patterns confirmed to block:
+
+- `start /B python -m uvicorn ...` ❌
+- `python -c "subprocess.Popen(..., DETACHED_PROCESS)"` ❌ (python.exe parent waits)
+- `task` subagent wrapping any of the above ❌ (subagent's bash tool blocks)
 
 **Applies to:** all
 **Severity:** important
