@@ -6,6 +6,7 @@ Track all agent sessions for continuity. Update before each commit.
 
 ```markdown
 ### YYYY-MM-DD: Session Title
+
 - **Duration**: [time]
 - **Goal**: [what was accomplished]
 - **Files modified**: [list]
@@ -16,6 +17,7 @@ Track all agent sessions for continuity. Update before each commit.
 ---
 
 ### 2026-07-27: Initial Project Setup + Bug Fixes
+
 - **Duration**: ~2 hours
 - **Goal**: Fix CI failures (TypeScript + Python ruff), clean up stale template code, document mistakes
 - **Files modified**:
@@ -29,6 +31,7 @@ Track all agent sessions for continuity. Update before each commit.
 ---
 
 ### 2026-07-27: Pre-Commit Workflow Established
+
 - **Duration**: ~30 min
 - **Goal**: Create pre-commit workflow: sessions, memory, handoffs, lessons, primer, PRD check
 - **Files modified**:
@@ -42,7 +45,24 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
-### 2026-07-27: Fix Ruff CI Errors (9 issues)
+### 2026-07-29: Session 4 — Gallery Flow Fix + Agent/Plugin Overhaul
+
+- **Duration**: ~2 hours
+- **Goal**: Fix gallery crop step, test identification flow on emulator, add LSP/formatter/superpower plugins
+- **Files modified**:
+  - `src/app/(tabs)/index.tsx` — removed `allowsEditing` from gallery picker
+  - `.opencode/plugins/gardenify-hooks.ts` — fixed tsc error parsing, removed redundant prettier formatting
+  - `.opencode/plugins/superpower-hooks.ts` — created superpower plugin (service tracking, blocking cmd detection, compaction context)
+  - `.opencode/instructions/INSTRUCTIONS.md` — added non-blocking service management section
+  - `opencode.json` — added LSP (ts + pyright), formatters (prettier + ruff), testing/supabase/debug agents, new commands
+  - `api/pyproject.toml` — created ruff config for Python formatting
+  - `package.json` — added `pyright` + `prettier` as devDependencies
+- **Tests status**: 73 Python passed, 21 Playwright API tests pass, lint clean
+- **Gallery → identify flow verified on emulator**: gallery picker, crop removed, image preview, identify button all working
+- **Next session**: Create PR, get Supabase credentials, deploy backend to Vercel
+
+---
+
 - **Duration**: ~15 min
 - **Goal**: Fix all 9 ruff errors from GitHub Actions CI
 - **Files modified**:
@@ -57,6 +77,7 @@ Track all agent sessions for continuity. Update before each commit.
 ---
 
 ### 2026-07-27: Add ENVIRONMENT/USE_REMOTE env vars + seed scripts
+
 - **Duration**: ~30 min
 - **Goal**: Add environment mode switching and database seed scripts
 - **Files modified**:
@@ -75,6 +96,7 @@ Track all agent sessions for continuity. Update before each commit.
 ---
 
 ### 2026-07-27: Playwright + Deployment Guides + Dev Workflow
+
 - **Duration**: ~45 min
 - **Goal**: Complete testing framework, deployment guides, dev workflow docs
 - **Files modified**:
@@ -104,6 +126,7 @@ Track all agent sessions for continuity. Update before each commit.
 ---
 
 ### 2026-07-27: OpenCode + Claude ECC Integration
+
 - **Duration**: ~45 min
 - **Goal**: Integrate opencode best practices (rules, plugins, skills, tools) + ECC patterns from affaan-m/ECC
 - **Files modified**:
@@ -181,6 +204,159 @@ Track all agent sessions for continuity. Update before each commit.
 - **Next session**: Download GBIF data, populate real species, reconcile docs
 
 ---
+
+### 2026-07-28: Phase 1 Mobile UI + Phase 2 Features
+
+- **Duration**: ~2 hours
+- **Goal**: Build complete Phase 1 mobile app (auth, scan, history, profile, results) + Phase 2 features (disease UI, favorites, species details, caching, sharing, multi-language)
+- **Branch**: `feat/mobile-ui-phase-1-2`
+- **Files created**:
+  - `src/lib/types.ts` — All TypeScript types matching backend schemas
+  - `src/lib/supabase.ts` — Supabase client with SecureStore adapter
+  - `src/lib/api-client.ts` — Backend API client (identify, species search, health)
+  - `src/lib/cache.ts` — AsyncStorage result cache with 24h TTL
+  - `src/lib/share.ts` — Share module (react-native Share + expo-sharing)
+  - `src/constants/theme.ts` — Colors, spacing, typography, shadows
+  - `src/hooks/use-auth.tsx` — Auth context/provider with signup, login, logout
+  - `src/hooks/use-identification.ts` — Plant identification hook
+  - `src/hooks/use-camera.ts` — Camera + gallery picker hook
+  - `src/hooks/use-settings.ts` — Language/theme settings hook
+  - `src/components/button.tsx` — Reusable button (5 variants, 3 sizes)
+  - `src/components/plant-card.tsx` — Plant result card with confidence bar
+  - `src/components/loading.tsx` — Loading spinner + overlay
+  - `src/components/index.ts` — Barrel exports
+  - `src/app/_layout.tsx` — Root layout with auth check (AuthProvider + Stack navigator)
+  - `src/app/(auth)/_layout.tsx` — Auth group stack layout
+  - `src/app/(auth)/login.tsx` — Login screen with email/password
+  - `src/app/(auth)/register.tsx` — Register screen with validation
+  - `src/app/(tabs)/_layout.tsx` — 4-tab bottom navigator (Scan, Saved, History, Profile)
+  - `src/app/(tabs)/index.tsx` — Scan screen with camera/gallery + organ selector
+  - `src/app/(tabs)/favorites.tsx` — Favorites list with remove + species detail link
+  - `src/app/(tabs)/history.tsx` — Past identifications list with pull-to-refresh
+  - `src/app/(tabs)/profile.tsx` — Profile screen with user info + sign out
+  - `src/app/identification/[id].tsx` — Results detail with disease detection UI, favorites button, care info, species detail link
+  - `src/app/species/[name].tsx` — Species detail screen with taxonomy + Wikipedia/GBIF links
+- **Files modified**:
+  - `app.json` — Added plugins: expo-secure-store, expo-sharing, expo-localization
+  - `package.json` — Added deps: @supabase/supabase-js, expo-image-picker, expo-secure-store, expo-sharing, expo-localization, @react-native-async-storage/async-storage, react-native-view-shot
+  - `src/app/_layout.tsx` — Rewrote with AuthProvider + conditional auth/tabs routing + species route
+  - `.agents/sessions.md` — This entry
+  - `.agents/handoff-current.md` — Updated
+  - `MEMORY.md` — Updated
+  - `PRD.md` — Checked off completed items
+  - `.agents/primer.md` — Updated
+- **Dependencies installed**: expo-secure-store, expo-image-picker, expo-sharing, expo-localization, @supabase/supabase-js, @react-native-async-storage/async-storage, react-native-view-shot
+- **Tests status**: 73 passed, TypeScript clean, lint clean
+- **Next session**: Run Expo dev server to verify screens render, then create PR to main
+
+### 2026-07-28: Testing Infrastructure + Jest Setup
+
+- **Duration**: ~15 min
+- **Goal**: Set up Jest testing infrastructure, write 41 frontend tests, fix TypeScript/lint CI
+- **Files created**:
+  - `jest.config.js` — Jest config with jest-expo preset, moduleNameMapper for @/ alias + AsyncStorage mock
+  - `__mocks__/async-storage.js` — Manual mock for @react-native-async-storage/async-storage
+  - `src/__tests__/theme.test.ts` — 8 tests (colors, spacing, borderRadius, typography)
+  - `src/__tests__/cache.test.ts` — 8 tests (set/get, getRecent, clear, expiry)
+  - `src/__tests__/api-client.test.ts` — 7 tests (health, identify, searchSpecies, getSpeciesByName)
+  - `src/__tests__/button.test.tsx` — 6 tests (render, onPress, loading, disabled, variants)
+  - `src/__tests__/loading.test.tsx` — 4 tests (Loading + LoadingOverlay)
+  - `src/__tests__/plant-card.test.tsx` — 6 tests (names, confidence, empty commonNames, onPress)
+  - `src/__tests__/helpers.ts` — Shared test fixtures (mock result, species, identification)
+- **Files modified**:
+  - `src/app/_layout.tsx` — Fixed: async functions passed as direct children to `<Stack>` (React 19 warning)
+  - `src/app/(tabs)/favorites.tsx` — Fixed: added missing `useCallback` import
+  - `src/app/(tabs)/history.tsx` — Fixed: wrapped `onRefresh` in `useCallback`
+  - `src/app/(tabs)/profile.tsx` — Fixed: wrapped `handleSignOut` in `useCallback`
+  - `src/__tests__/loading.test.tsx` — Fixed: `container` → `root` (v12 API rename)
+  - `package.json` — Added test scripts
+  - `.gitignore` — Added `__mocks__/@react-native-async-storage/*.ts`
+- **Dependencies installed**: jest-expo@55.0.0, @testing-library/react-native@12, @types/jest
+- **Lessons learned**:
+  1. Jest 30 is incompatible with jest-expo — must use Jest 29 (bundled with jest-expo)
+  2. `@testing-library/react-native` v12 renamed `container` → `UNSAFE_root` / `root`
+  3. Mock files in `__mocks__/` should be `.js` not `.ts` to avoid TypeScript compilation
+- **Tests status**: 41 passed (frontend), 73 passed (Python), TypeScript clean, lint clean
+- **Next session**: Create PR to main, then get Supabase/PlantNet credentials for production
+
+---
+
+### 2026-07-29: Admin User Management + Supabase RLS Fixes
+
+- **Duration**: ~3 hours
+- **Goal**: Build admin user management (backend API + mobile screen), fix Supabase seed SQL + RLS policies, verify auth/RLS flow
+- **Files created**:
+  - `api/routes/admin.py` — 4 admin API endpoints (GET/PATCH/DELETE /api/admin/users)
+  - `src/app/admin.tsx` — Admin user management screen (search, toggle admin, cycle tier, soft-delete)
+  - `supabase/migrations/003_admin_users.sql` — Admin role support, RLS recursion fix via security definer, table GRANTs
+- **Files modified**:
+  - `supabase/seed.sql` — Rewritten: added aud='authenticated', role='authenticated', auth.identities records, fixed null confirmed_at (generated column)
+  - `api/models/schemas.py` — Added AdminUserResponse, AdminUserListResponse, AdminUserUpdate schemas
+  - `api/main.py` — Registered admin router with "Admin" tag; added tags to all existing routers for Swagger
+  - `src/app/_layout.tsx` — Registered admin screen route
+  - `src/app/(tabs)/profile.tsx` — Added admin link (conditional on isAdmin)
+  - `src/hooks/use-auth.tsx` — Added isAdmin field from public.users table
+  - `src/lib/api-client.ts` — Added adminGetUsers, adminUpdateUser, adminDeleteUser methods
+  - `src/lib/types.ts` — Added AdminUser, AdminUserListResponse, AdminUserUpdate types
+- **Flow verified**:
+  - All 3 seeded users log in via auth endpoint (admin@gardenify.app, test@gardenify.app, user2@gardenify.app)
+  - Admin user lists 3 users via API; non-admin sees only their own profile (RLS enforced)
+  - Admin can PATCH another user's is_admin field
+  - DELETE returns 204 with correct RLS behavior (non-admin gets 403)
+- **Tests status**: 73/73 Python tests pass, ruff clean, TypeScript clean (0 errors in app code), ESLint clean (0 warnings in app code)
+- **Blocked**: Expo dev server couldn't start (port 8081 held by stale process; port 8082 timed out in non-interactive shell)
+- **Next session**: Start Expo dev server and verify login on emulator; create PR
+
+---
+
+### 2026-07-29: UX Improvements + Playwright Fixes + Debug Endpoint
+
+- **Duration**: ~45 min
+- **Goal**: Fix Share button, add haptic feedback, add retry to no-match screen, fix backend server header, add debug endpoint, fix all Playwright tests
+- **Files modified**:
+  - `src/app/(tabs)/index.tsx` — Added `expo-haptics` import + haptic feedback on all buttons
+  - `src/app/identification/[id].tsx` — Fixed Share button (uses `Share.share` with plant info), added retry+home buttons to no-match, added haptic to save/share
+  - `api/main.py` — Removed `server` header `.pop()` that caused 500 errors; uvicorn uses `--no-server-header` flag
+  - `api/routes/health.py` — Added `/api/debug` endpoint (version, python, uptime, config info)
+  - `e2e/api-tests/health.spec.ts` — Rewrote >5 images test (Playwright multipart array bug → individual fields)
+  - `e2e/api-tests/integration.spec.ts` — Added `uniqueJpeg()` to fix cache collision between tests
+- **Dependencies installed**: expo-haptics
+- **Key fix learned**: `response.headers.pop("server", None)` crashes in Starlette middleware — use `--no-server-header` uvicorn flag instead
+- **Tests status**: 21/21 Playwright tests pass, backend healthy
+- **Blocked**: Expo dev server started but port 8081 not reachable via tool; emulator started but UI testing deferred
+- **Next session**: Test gallery picker → identification flow on emulator; create PR
+
+---
+
+### 2026-07-29: OpenCV Gate + Perceptual Hash Index + GBIF Download
+
+- **Duration**: ~3 hours
+- **Goal**: Add OpenCV image validation to backend, build perceptual hash index from GBIF images for offline matching
+- **Files created**:
+  - `api/services/image_processor.py` — OpenCV pipeline (edge detection, k-means color clustering, compression, thumbnail)
+  - `api/routes/history.py` — History endpoints (GET /api/history, GET /api/history/{id}, GET /api/history/{id}/thumbnail/{index})
+  - `api/services/local_identify.py` — Local identification matching using pHash from DB
+  - `api/routes/admin.py` — (from previous session, now finalized)
+  - `e2e/api-tests/fixtures/` — `leaf.jpg`, `flower.jpg` synthetic plant JPEGs
+  - `scripts/build_hash_index.py` — GBIF image downloader + hash index builder
+  - `scripts/generate-test-fixtures.py` — Synthetic plant JPEG generator
+  - `.opencode/plugins/superpower-hooks.ts` — Service tracking, blocking detection
+- **Files modified**:
+  - `api/routes/identify.py` — Rewritten: OpenCV gate → local DB lookup → PlantNet only if local match
+  - `api/services/perceptual_hash.py` — `getdata()` → `get_flattened_data()` (Pillow 12 compat)
+  - `api/main.py` — Added PIL logging suppression
+  - `api/models/schemas.py` — Added OpenCVResult, ImageStorage, History schemas
+  - `e2e/api-tests/integration.spec.ts` — Uses fixture images, validates opencv/storage/exif/source fields
+  - `e2e/api-tests/health.spec.ts` — Uses fixture images for JPEG test
+  - `.gitignore` — Added uploads, logs, agent artifacts, samples
+  - `opencode.json` — LSP/formatter/superpower plugin config
+- **Key features**:
+  - OpenCV `is_plant_like` gate rejects non-plant images (edge detection + color analysis)
+  - `source: "local" | "plantnet"` in response — skips PlantNet when local DB has matches
+  - Perceptual hash index: 1,960 species indexed (19.6% coverage), 0 download errors
+  - Synthetic plant JPEGs pass OpenCV gate for E2E testing
+  - `--no-server-header` uvicorn flag, PIL debug log suppression
+- **Tests status**: 73/73 Python, 21/21 Playwright, 0 deprecation warnings
 
 ## Session Rules
 

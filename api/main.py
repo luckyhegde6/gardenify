@@ -1,4 +1,12 @@
-"""Gardenify API — Plant identification backend."""
+"""Gardenify API — Plant identification backend.
+
+Endpoints:
+- /api/identify — Upload plant images for species + disease identification
+- /api/history — Retrieve past identification records with image metadata
+- /api/species — Browse and search plant species database
+- /api/health — Health check and debug info
+- /api/admin — User management (admin only)
+"""
 
 import logging
 import os
@@ -10,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from api.config import settings
+from api.routes.admin import router as admin_router
 from api.routes.health import router as health_router
 from api.routes.species import router as species_router
 
@@ -19,20 +28,57 @@ try:
 except ImportError:
     _has_identify = False
 
-# Structured logging: JSON in production, readable in dev
+try:
+    from api.routes.history import router as history_router
+    _has_history = True
+except ImportError:
+    _has_history = False
+
 log_level = logging.DEBUG if settings.debug else logging.INFO
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
     datefmt="%H:%M:%S",
 )
+logging.getLogger("PIL.TiffImagePlugin").setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
 logger = logging.getLogger("gardenify")
 
 app = FastAPI(
     title="Gardenify API",
+    description="Plant identification API with species matching, disease detection, and plant care guidance. Upload plant photos to receive instant identification results with taxonomy, confidence scores, and rich image processing metadata.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    contact={
+        "name": "Gardenify Support",
+        "url": "https://github.com/anomalyco/gardenify",
+    },
+    license_info={
+        "name": "MIT",
+    },
+    openapi_tags=[
+        {
+            "name": "Health",
+            "description": "Service health check and debug information",
+        },
+        {
+            "name": "Identification",
+            "description": "Upload plant images for species and disease identification with full image processing pipeline (magic byte validation, OpenCV edge detection, EXIF extraction, compression, thumbnails)",
+        },
+        {
+            "name": "History",
+            "description": "Retrieve past identification records with processed image metadata and thumbnails",
+        },
+        {
+            "name": "Species",
+            "description": "Browse and search the plant species database by name, genus, or family",
+        },
+        {
+            "name": "Admin",
+            "description": "User management endpoints for administrators",
+        },
+    ],
 )
 
 app.add_middleware(
@@ -77,10 +123,13 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-app.include_router(health_router, prefix="/api")
+app.include_router(health_router, prefix="/api", tags=["Health"])
 if _has_identify:
-    app.include_router(identify_router, prefix="/api")
-app.include_router(species_router, prefix="/api")
+    app.include_router(identify_router, prefix="/api", tags=["Identification"])
+if _has_history:
+    app.include_router(history_router, prefix="/api", tags=["History"])
+app.include_router(species_router, prefix="/api", tags=["Species"])
+app.include_router(admin_router, prefix="/api", tags=["Admin"])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -89,12 +138,12 @@ async def landing_page():
     from api.landing_page import LANDING_PAGE_HTML
     return HTMLResponse(content=LANDING_PAGE_HTML)
 
+
 # Initialize local database on startup (skip on Vercel serverless)
 if not os.environ.get("VERCEL"):
     try:
         from api.services.local_db import init_db
         init_db()
-        # Seed if empty
         from api.data.importers.seed_species import seed_database
         seed_database()
     except Exception as e:

@@ -10,8 +10,9 @@ class IdentificationRequest(BaseModel):
     organs: list[str] = Field(
         default_factory=lambda: ["auto"],
         description="Plant organ for each image: leaf, flower, fruit, bark, or auto",
+        json_schema_extra={"example": ["leaf"]},
     )
-    lang: str = Field(default="en", description="Response language code")
+    lang: str = Field(default="en", description="Response language: en, fr, es", json_schema_extra={"example": "en"})
 
 
 class SpeciesInfo(BaseModel):
@@ -22,7 +23,7 @@ class SpeciesInfo(BaseModel):
 
 
 class IdentificationResult(BaseModel):
-    score: float = Field(ge=0.0, le=1.0)
+    score: float = Field(ge=0.0, le=1.0, description="Confidence score 0.0-1.0")
     species: SpeciesInfo
 
 
@@ -87,9 +88,31 @@ class CareInfo(BaseModel):
     general_tips: str = ""
 
 
+class OpenCVResult(BaseModel):
+    valid: bool = Field(description="Image decoded successfully by OpenCV")
+    width: int | None = Field(description="Image width in pixels")
+    height: int | None = Field(description="Image height in pixels")
+    edges_detected: int = Field(description="Number of edge pixels (Canny edge detection)")
+    total_pixels: int = Field(description="Total pixel count")
+    content_score: float = Field(description="Content complexity score 0.0-1.0 (higher = more structure)")
+    is_plant_like: bool = Field(description="Heuristic: image likely contains a plant subject")
+    mean_color: list[float] = Field(description="Mean BGR color values")
+    dominant_colors: list[dict] = Field(description="Top dominant BGR colors via k-means clustering")
+
+
+class ImageStorage(BaseModel):
+    upload_id: str = Field(description="Upload batch identifier")
+    original: str = Field(description="Path to original image on server")
+    compressed: str = Field(description="Path to compressed version")
+    thumbnail: str = Field(description="Path to thumbnail version (256x256)")
+
+
 class ImageMetadata(BaseModel):
     filename: str = ""
     size_bytes: int = 0
+    compressed_size_bytes: int | None = Field(default=None, description="Size after compression")
+    thumbnail_size_bytes: int | None = Field(default=None, description="Thumbnail file size")
+    compression_ratio: float | None = Field(default=None, description="compressed/original size ratio")
     width: int | None = None
     height: int | None = None
     format: str = ""
@@ -100,21 +123,77 @@ class ImageMetadata(BaseModel):
     gps_longitude: float | None = None
     device_platform: str = ""
     app_version: str = ""
+    exif: dict = Field(default_factory=dict, description="Full EXIF tag dump")
+    opencv: OpenCVResult | None = Field(default=None, description="OpenCV analysis results")
+    storage: ImageStorage | None = Field(default=None, description="Server-side file paths")
 
 
 class IdentificationResponse(BaseModel):
-    best_match: str
-    results: list[IdentificationResult]
-    disease: DiseaseResult | None = None
-    care: CareInfo | None = None
-    metadata: list[ImageMetadata] = Field(default_factory=list)
-    remaining_quota: int | None = None
+    best_match: str = Field(description="Top species scientific name")
+    results: list[IdentificationResult] = Field(description="Ranked identification results")
+    disease: DiseaseResult | None = Field(default=None, description="Disease detection result")
+    care: CareInfo | None = Field(default=None, description="Plant care instructions")
+    metadata: list[ImageMetadata] = Field(default_factory=list, description="Per-image processing metadata")
+    remaining_quota: int | None = Field(default=None, description="PlantNet API daily quota remaining")
     version: str = ""
     cached: bool = False
-    identification_id: str | None = None
-    source: str = "plantnet"
+    identification_id: str | None = Field(default=None, description="Unique ID for this identification")
+    source: str = Field(default="plantnet", description="Data source: plantnet, local, or cache")
 
 
 class ErrorResponse(BaseModel):
     detail: str
     code: str = "unknown"
+
+
+class HistoryRecord(BaseModel):
+    id: str
+    best_match: str
+    score: float
+    species_scientific_name: str
+    species_common_names: list[str] = []
+    species_family: str = ""
+    species_genus: str = ""
+    image_urls: list[str] = []
+    thumbnail_urls: list[str] = []
+    organs: list[str] = []
+    source: str = ""
+    created_at: str = ""
+
+
+class HistoryListResponse(BaseModel):
+    records: list[HistoryRecord]
+    total: int
+
+
+class HistoryDetailResponse(BaseModel):
+    id: str
+    best_match: str
+    results: list[IdentificationResult]
+    disease: DiseaseResult | None = None
+    care: CareInfo | None = None
+    metadata: list[ImageMetadata] = []
+    source: str = ""
+    created_at: str = ""
+
+
+# ── Admin schemas ─────────────────────────────────────────────
+
+class AdminUserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str = ""
+    subscription_tier: str = "free"
+    is_admin: bool = False
+    created_at: str = ""
+
+
+class AdminUserListResponse(BaseModel):
+    users: list[AdminUserResponse]
+    total: int
+
+
+class AdminUserUpdate(BaseModel):
+    full_name: str | None = None
+    subscription_tier: str | None = None
+    is_admin: bool | None = None

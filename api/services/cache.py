@@ -9,7 +9,7 @@ from api.config import settings
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/jpg"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/webp"}
 _CACHE_TTL = 3600  # 1 hour
 _cache: dict[str, dict] = {}
 
