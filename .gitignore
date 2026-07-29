@@ -104,3 +104,16 @@ plantnet-ai-taxonomist/
 plantnet-300k/
 
 .vercel
+
+# Runtime uploads
+api/data/uploads/
+
+# Log files
+*.log
+
+# Agent UI dump artifacts
+.agents/*.xml
+.agents/*.png
+
+# Sample images (not part of source)
+samples/

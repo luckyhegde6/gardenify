@@ -16,7 +16,8 @@ class Settings(BaseSettings):
 
     # Supabase
     supabase_url: str = ""
-    supabase_service_key: str = ""
+    supabase_service_role_key: str = ""
+    supabase_anon_key: str = ""
 
     # Limits
     max_images: int = 5
@@ -36,7 +37,7 @@ class Settings(BaseSettings):
         """Strip whitespace from all env values (fixes Windows echo trailing spaces)."""
         return {k: v.strip() if isinstance(v, str) else v for k, v in values.items()}
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": [".env", ".env.local"], "env_file_encoding": "utf-8", "extra": "ignore"}
 
     @property
     def is_production(self) -> bool:

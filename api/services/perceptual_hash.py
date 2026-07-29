@@ -23,7 +23,7 @@ def compute_dhash(data: bytes, hash_size: int = 8) -> str:
     """
     img = Image.open(BytesIO(data)).convert("L")
     img = img.resize((hash_size + 1, hash_size), Image.Resampling.LANCZOS)
-    pixels = list(img.getdata())
+    pixels = list(img.get_flattened_data())
 
     bits = []
     for row in range(hash_size):
@@ -42,7 +42,7 @@ def compute_phash(data: bytes, hash_size: int = 8) -> str:
     """
     img = Image.open(BytesIO(data)).convert("L")
     img = img.resize((32, 32), Image.Resampling.LANCZOS)
-    pixels = list(img.getdata())
+    pixels = list(img.get_flattened_data())
 
     # Fast DCT approximation via row-then-column 1D DCT
     dct = _dct2d_fast(pixels, 32)

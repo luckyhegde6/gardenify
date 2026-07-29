@@ -231,3 +231,41 @@ You are successful when:
 - Performance is acceptable
 - User requirements are met
 - CI/CD pipeline passes
+
+---
+
+## Non-Blocking Service Management
+
+### Problem
+Long-running commands like `uvicorn`, `npx expo start`, or `adb logcat` block the bash tool. They must be launched as detached processes so the agent can continue working.
+
+### Non-Blocking Patterns
+
+Use Python `subprocess.DETACHED_PROCESS` (Windows) to start long-running services:
+
+```python
+# Start backend (non-blocking)
+python -c "import subprocess; subprocess.Popen(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'], creationflags=subprocess.DETACHED_PROCESS, cwd='api')"
+
+# Start Expo dev server (non-blocking)
+python -c "import subprocess; subprocess.Popen(['npx', 'expo', 'start'], creationflags=subprocess.DETACHED_PROCESS)"
+
+# Start Android emulator (non-blocking)
+python -c "import subprocess; subprocess.Popen(['emulator', '-avd', 'Pixel_7_API_34'], creationflags=subprocess.DETACHED_PROCESS)"
+```
+
+For ADB commands that might hang:
+```python
+import subprocess
+subprocess.run(['adb', '-s', 'emulator-5554', 'shell', 'input', 'tap', 'x', 'y'], timeout=10)
+```
+
+### Service State Tracking
+
+The `superpower-hooks.ts` plugin tracks running services across session compactions. Use the `debug` agent to manage service lifecycle.
+
+### Important Caveats
+- Detached processes inherit current working directory - use `cwd=` parameter
+- No stdout/stderr from detached processes - redirect to file if logs needed
+- Use `taskkill /F /PID <pid>` to stop services
+- PIDs are not persisted across reboots - verify service is running before use

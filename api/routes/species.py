@@ -12,7 +12,6 @@ router = APIRouter()
 
 
 def _get_backend():
-    """Get the right backend (Supabase or local SQLite)."""
     from api.services import supabase_species
     if supabase_species.is_available():
         return supabase_species
@@ -20,12 +19,17 @@ def _get_backend():
     return local_db
 
 
-@router.get("/species")
+@router.get(
+    "/species",
+    summary="Search species database",
+    description="Search the plant species database by name, genus, or family. Supports fuzzy matching. Returns count metadata including total species and hash records.",
+    response_description="List of matching species with database stats",
+)
 async def list_species(
-    q: str = Query(default="", description="Search by name, genus, or family"),
-    limit: int = Query(default=20, ge=1, le=100),
+    q: str = Query(default="", description="Search query — matches scientific name, common name, genus, or family"),
+    limit: int = Query(default=20, ge=1, le=100, description="Max results to return (1-100)"),
 ):
-    """Search species database."""
+    """Search species database by name, genus, or family."""
     backend = _get_backend()
     if q:
         results = backend.search_species(q, limit)
@@ -39,9 +43,14 @@ async def list_species(
     }
 
 
-@router.get("/species/{species_id}")
+@router.get(
+    "/species/{species_id}",
+    summary="Get species by ID",
+    description="Retrieve full species detail including taxonomy, common names, and reference data using the internal database ID.",
+    response_description="Full species detail record",
+)
 async def get_species(species_id: int):
-    """Get species detail by ID."""
+    """Get species detail by internal database ID."""
     backend = _get_backend()
     species = backend.get_species_by_id(species_id)
     if not species:
@@ -49,9 +58,14 @@ async def get_species(species_id: int):
     return species
 
 
-@router.get("/species/by-name/{scientific_name:path}")
+@router.get(
+    "/species/by-name/{scientific_name:path}",
+    summary="Get species by scientific name",
+    description="Retrieve species detail by exact scientific name (e.g., 'Rosa damascena'). The name is case-sensitive and must match exactly.",
+    response_description="Full species detail record",
+)
 async def get_species_by_name(scientific_name: str):
-    """Get species by exact scientific name."""
+    """Get species by exact scientific name (case-sensitive)."""
     backend = _get_backend()
     species = backend.get_species_by_name(scientific_name)
     if not species:

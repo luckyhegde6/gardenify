@@ -8,6 +8,24 @@
       ".opencode/skills"
     ]
   },
+  "lsp": {
+    "typescript": {
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx"]
+    },
+    "pyright": {
+      "command": ["pyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyi"]
+    }
+  },
+  "formatter": {
+    "prettier": {
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".json", ".css", ".md"]
+    },
+    "ruff": {
+      "extensions": [".py", ".pyi"]
+    }
+  },
   "agent": {
     "build": {
       "description": "Primary coding agent for Expo + FastAPI development",
@@ -43,6 +61,18 @@
     },
     "refactor-cleaner": {
       "description": "Remove dead code, consolidate duplicates, and enforce code hygiene.",
+      "mode": "subagent"
+    },
+    "testing": {
+      "description": "Run Playwright API tests, E2E tests, and ADB emulator tests. Always use non-blocking patterns for long-running commands.",
+      "mode": "subagent"
+    },
+    "supabase": {
+      "description": "Manage Supabase migrations, seed data, and RLS policies. Review schema changes before applying.",
+      "mode": "subagent"
+    },
+    "debug": {
+      "description": "Manage development services: backend, Expo dev server, emulator. Uses detached/background processes to avoid blocking.",
       "mode": "subagent"
     }
   },
@@ -94,6 +124,30 @@
       "agent": "refactor-cleaner",
       "subtask": true,
       "template": "refactor-clean"
+    },
+    "test-api": {
+      "description": "Run Playwright API tests (non-blocking with timeout)",
+      "agent": "testing",
+      "subtask": true,
+      "template": "test-api"
+    },
+    "test-py": {
+      "description": "Run Python backend tests with pytest",
+      "agent": "testing",
+      "subtask": true,
+      "template": "test-py"
+    },
+    "supa-migrate": {
+      "description": "Run Supabase migrations",
+      "agent": "supabase",
+      "subtask": true,
+      "template": "supa-migrate"
+    },
+    "supa-seed": {
+      "description": "Seed Supabase database with test data",
+      "agent": "supabase",
+      "subtask": true,
+      "template": "supa-seed"
     },
     "verify": {
       "description": "Run full verification: lint, typecheck, tests, security checks",

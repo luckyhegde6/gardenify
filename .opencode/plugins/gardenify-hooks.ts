@@ -58,35 +58,25 @@ export const GardenifyHooksPlugin = async ({
   return {
     /**
      * File Edit Hook
-     * Tracks edited files and auto-formats TS/TSX on strict profile.
+     * Tracks edited files and warns about console.log.
+     * Formatting is handled by the built-in formatter (prettier/ruff).
      */
     "file.edited": async (event: { path: string }) => {
       editedFiles.add(event.path)
 
-      // Auto-format JS/TS files (strict profile only)
-      if (event.path.match(/\.(ts|tsx|js|jsx)$/)) {
-        try {
-          await $`npx prettier --write ${event.path} 2>/dev/null`
-          log("debug", `[Gardenify] Formatted: ${event.path}`)
-        } catch {
-          // Prettier not installed or failed - continue
-        }
-      }
+      if (!event.path.match(/\.(ts|tsx|js|jsx)$/)) return
 
-      // Console.log warning
-      if (event.path.match(/\.(ts|tsx|js|jsx)$/)) {
-        try {
-          const result = await $`grep -n "console\\.log" ${event.path} 2>/dev/null`.text()
-          if (result.trim()) {
-            const lines = result.trim().split("\n").length
-            log(
-              "warn",
-              `[Gardenify] console.log found in ${event.path} (${lines} occurrence${lines > 1 ? "s" : ""})`
-            )
-          }
-        } catch {
-          // No console.log found - good
+      try {
+        const result = await $`grep -n "console\\.log" ${event.path} 2>/dev/null`.text()
+        if (result.trim()) {
+          const lines = result.trim().split("\n").length
+          log(
+            "warn",
+            `[Gardenify] console.log found in ${event.path} (${lines} occurrence${lines > 1 ? "s" : ""})`
+          )
         }
+      } catch {
+        // No console.log found - good
       }
     },
 
@@ -104,12 +94,14 @@ export const GardenifyHooksPlugin = async ({
           await $`npx tsc --noEmit 2>&1`
           log("info", "[Gardenify] TypeScript check passed")
         } catch (error: unknown) {
-          const err = error as { stdout?: string }
-          log("warn", "[Gardenify] TypeScript errors detected:")
-          if (err.stdout) {
-            err.stdout.split("\n").slice(0, 5).forEach((line: string) =>
-              log("warn", `  ${line}`)
-            )
+          log("warn", "[Gardenify] TypeScript errors detected")
+          try {
+            const out = (error as { message?: string }).message || ""
+            out.split("\n").slice(0, 5).forEach((line: string) => {
+              if (line.trim()) log("warn", `  ${line}`)
+            })
+          } catch {
+            log("warn", "[Gardenify] Could not parse tsc output")
           }
         }
       }
