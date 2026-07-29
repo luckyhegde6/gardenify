@@ -1,2 +1,6 @@
-[lint]
-ignore = ["B008", "BLE001"]
+target-version = "py312"
+line-length = 100
+
+[format]
+quote-style = "double"
+indent-style = "space"
