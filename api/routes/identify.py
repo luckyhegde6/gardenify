@@ -25,10 +25,21 @@ from api.models.schemas import (
     OpenCVResult,
     SpeciesInfo,
 )
-from api.services.cache import cache_get, cache_key, cache_set, compute_hash, validate_image
+from api.services.cache import (
+    cache_get,
+    cache_key,
+    cache_set,
+    compute_hash,
+    validate_image,
+)
 from api.services.image_processor import ImageProcessor
 from api.services.plant_care import get_care_profile
-from api.services.plantnet import identify_disease, identify_plant, parse_disease, parse_species
+from api.services.plantnet import (
+    identify_disease,
+    identify_plant,
+    parse_disease,
+    parse_species,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

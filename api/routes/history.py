@@ -8,7 +8,7 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 
 from api.models.schemas import (
@@ -28,6 +28,7 @@ UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
 async def _get_user_id(authorization: str | None = None) -> str:
     """Extract user ID from JWT via Supabase."""
     from supabase import create_client
+
     from api.config import settings
 
     if not authorization:
@@ -66,6 +67,7 @@ async def list_history(
     Requires Supabase JWT in Authorization header.
     """
     from supabase import create_client
+
     from api.config import settings
 
     if not settings.supabase_url or not settings.supabase_anon_key:
@@ -116,6 +118,7 @@ async def list_history(
 async def get_history_detail(identification_id: str):
     """Get full identification detail by ID."""
     from supabase import create_client
+
     from api.config import settings
 
     if not settings.supabase_url or not settings.supabase_anon_key:
@@ -154,7 +157,7 @@ async def get_history_detail(identification_id: str):
         for r in parsed.get("results", [])
     ]
 
-    from api.models.schemas import DiseaseResult, CareInfo, ImageMetadata
+    from api.models.schemas import CareInfo, DiseaseResult, ImageMetadata
 
     disease = None
     if parsed.get("disease"):
@@ -190,6 +193,7 @@ async def get_history_detail(identification_id: str):
 async def serve_thumbnail(identification_id: str, image_index: int):
     """Serve a processed thumbnail image from upload storage."""
     from supabase import create_client
+
     from api.config import settings
 
     if not settings.supabase_url or not settings.supabase_anon_key:

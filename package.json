@@ -17,6 +17,7 @@
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",
     "@supabase/supabase-js": "^2.111.0",
+    "@testing-library/react-native": "13.3.3",
     "expo": "~55.0.28",
     "expo-constants": "~55.0.16",
     "expo-device": "~55.0.19",
@@ -48,7 +49,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.0",
-    "@testing-library/react-native": "^14.0.0",
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",

@@ -1,6 +1,5 @@
 """Health check and debug endpoints."""
 
-import os
 import sys
 import time
 

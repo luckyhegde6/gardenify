@@ -2,16 +2,12 @@
 
 import io
 import logging
-import os
 import uuid
-from datetime import datetime
 from pathlib import Path
 
 import cv2
 import numpy as np
 from PIL import Image
-
-from api.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +101,7 @@ def validate_with_opencv(data: bytes) -> dict:
         if len(pixels) > 0:
             k = min(5, len(pixels))
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-            _, labels, centers = cv2.kmeans(
+            _, _labels, centers = cv2.kmeans(
                 pixels.astype(np.float32),
                 k,
                 None,
@@ -158,7 +154,7 @@ def generate_thumbnail(data: bytes, size: tuple[int, int] = THUMBNAIL_SIZE) -> b
 
 def extract_enhanced_metadata(data: bytes, filename: str, content_type: str) -> dict:
     """Extract rich metadata including EXIF, GPS, and format info."""
-    from api.services.cache import compute_hash, extract_metadata
+    from api.services.cache import extract_metadata
 
     base = extract_metadata(filename, data, content_type)
 
