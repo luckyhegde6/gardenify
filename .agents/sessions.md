@@ -405,6 +405,27 @@ Track all agent sessions for continuity. Update before each commit.
 - **Tests status**: TypeScript clean, 73/73 Python pass, ruff clean
 - **Next session**: Create PR, deploy backend to Vercel
 
+### 2026-07-31: Production Deployment — Vercel + EAS APK
+
+- **Duration**: ~1.5 hours
+- **Goal**: Deploy backend to Vercel production, build Android APK for distribution
+- **Branch**: `feat/production-deployment`
+- **Commits**:
+  - `8974f07` — feat(deploy): production backend deployed, EAS secrets configured
+- **What was done**:
+  - ✅ **Vercel redeploy**: Moved 2,170 GBIF hash images (254MB) out of `api/` to fix bundle size (527MB → 267MB)
+  - ✅ **Dev deps stripped**: Removed pytest, pytest-asyncio, ruff from production `requirements.txt`
+  - ✅ **Backend verified**: `https://sasyakashi.vercel.app` — health OK, `use_remote=true`, species search works
+  - ✅ **EAS.json updated**: Added `EXPO_PUBLIC_API_URL` to production profile (public URL only)
+  - ✅ **EAS Secrets configured**: `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` set via `eas secret:create` (not in git)
+  - ✅ **APK built**: Production APK available on EAS
+  - ✅ **PR created**: [#7 feat/production-deployment](https://github.com/luckyhegde6/gardenify/pull/7)
+- **Files modified**:
+  - `api/requirements.txt` — removed dev deps
+  - `eas.json` — added EXPO_PUBLIC_API_URL env
+- **Security fix**: Supabase credentials moved from `eas.json` to EAS Secrets (user review caught this)
+- **Next session**: Merge PR, test APK on device, expand hash index, push notifications
+
 ---
 
 ## Session Rules

@@ -6,22 +6,26 @@
 
 **Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
-| Key              | Value                                                                      |
-| ---------------- | -------------------------------------------------------------------------- |
-| Repo             | `https://github.com/luckyhegde6/gardenify`                                 |
-| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                     |
-| Platform         | Android-first, iOS later                                                   |
-| Backend          | Python FastAPI on Vercel                                                   |
-| Database         | Supabase (PostgreSQL + Auth + Storage)                                     |
-| Plant AI         | PlantNet API v2 (free 500/day)                                             |
-| Current Branch   | `main`                                                                     |
-| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                       |
-| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                      |
-| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                            |
-| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                     |
-| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                      |
-| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied            |
-| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true` |
+| Key              | Value                                                                          |
+| ---------------- | ------------------------------------------------------------------------------ |
+| Repo             | `https://github.com/luckyhegde6/gardenify`                                     |
+| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                         |
+| Platform         | Android-first, iOS later                                                       |
+| Backend          | Python FastAPI on Vercel                                                       |
+| Database         | Supabase (PostgreSQL + Auth + Storage)                                         |
+| Plant AI         | PlantNet API v2 (free 500/day)                                                 |
+| Current Branch   | `feat/production-deployment`                                                   |
+| Backend (prod)   | `https://sasyakashi.vercel.app`                                                |
+| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                     |
+| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)           |
+| APK URL          | https://expo.dev/artifacts/eas/KopMD17qWdke4xZBCtZ97Zfb2Gid1UCGhuvQ1OM9GkA.apk |
+| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                           |
+| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                          |
+| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                                |
+| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                         |
+| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                          |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied                |
+| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`     |
 
 ## Architecture (10 seconds)
 
@@ -83,11 +87,18 @@ Expo App → FastAPI Backend → PlantNet API
 - [x] **Skip-gate fixed** — PlantNet called when local DB has no matches
 - [x] **Server restart workflow** — `Popen(CREATE_NEW_CONSOLE)` for detached process
 
+### Production Deployment (Done)
+
+- [x] Vercel production deployment — bundle 527MB → 267MB, `use_remote=true` live
+- [x] Dev deps stripped from requirements.txt
+- [x] EAS Secrets configured (Supabase creds not in git)
+- [x] Android APK built (production profile)
+- [x] PR #7 created — feat/production-deployment → main
+
 ### Not Done
 
-- [ ] PlantNet API key for production (need from user)
-- [ ] Create PR: current main → main
-- [ ] Vercel deployment
+- [ ] 🟡 PR #7 needs merge into main
+- [ ] APK needs testing on physical device
 - [ ] Expand hash index to remaining ~8K species (need alternative image sources)
 - [ ] Push notifications (Phase 3)
 - [ ] Community features (Phase 3)

@@ -188,21 +188,50 @@ supabase/               # Database migrations
 .agents/                # Agent configuration and guidelines
 ```
 
-## Deployment
+## Releases
 
-### Backend (Vercel)
+### Latest APK
 
-Already deployed at [sasyakashi.vercel.app](https://sasyakashi.vercel.app). Push to `main` to trigger automatic deployment.
+Download the latest production APK from [Expo EAS Builds](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds).
 
-```bash
-vercel deploy --prod
-```
-
-### Mobile (EAS Build)
+Or build it yourself:
 
 ```bash
-npx eas-cli build -p android --profile production
+npx eas build -p android --profile production
 ```
+
+### Release Workflow
+
+1. **Merge PR** into `main` (squash merge)
+2. **CI runs automatically**: lint + typecheck + Python tests
+3. **Vercel auto-deploys** backend from `main` (if `api/` changed)
+4. **Tag the release**:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+5. **GitHub Release is created** automatically (via CI)
+6. **Build APK manually** (or via CI):
+   ```bash
+   npx eas build -p android --profile production
+   ```
+
+### APK Distribution
+
+- **No Play Store** — direct APK installation only
+- **Download from** [expo.dev](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
+- **Install on device**: enable "Install from unknown sources" in Android settings
+- **OTA updates**: published to preview channels on `feat/*`/`bugfix/*` pushes
+
+### Environment Variables for Release Builds
+
+Required env vars for production APK builds. Set these via [EAS Secrets](https://docs.expo.dev/build-reference/variables/) (never commit secrets to git):
+
+| Variable                        | Description                 |
+| ------------------------------- | --------------------------- |
+| `EXPO_PUBLIC_API_URL`           | Backend URL (in `eas.json`) |
+| `EXPO_PUBLIC_SUPABASE_URL`      | Supabase project URL        |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key      |
 
 ## Documentation
 

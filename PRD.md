@@ -92,7 +92,7 @@
 
 ### Mobile
 
-- [ ] Expo project builds for Android (pending EAS build)
+- [x] Expo project builds for Android
 - [x] Camera permission requested
 - [x] Gallery permission requested
 - [x] SecureStore used for tokens
@@ -105,9 +105,9 @@
 - [x] GitHub Actions lint passes
 - [x] GitHub Actions typecheck passes
 - [x] GitHub Actions Python tests pass
-- [ ] EAS build succeeds
-- [ ] Vercel deployment works
-- [ ] Supabase migrations run
+- [x] EAS build succeeds
+- [x] Vercel deployment works
+- [x] Supabase migrations run
 
 ## Security
 
