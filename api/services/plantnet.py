@@ -1,9 +1,10 @@
 """PlantNet API client — species identification and disease detection."""
 
+import json
 import logging
+import uuid
 from io import BytesIO
-
-import httpx
+from urllib.request import Request, urlopen
 
 from api.config import settings
 
@@ -14,14 +15,64 @@ DISEASE_URL = f"{settings.plantnet_api_url}/diseases/identify"
 VALID_ORGANS = {"leaf", "flower", "fruit", "bark", "auto"}
 
 
-async def identify_plant(
+def _build_multipart(
+    images: list[tuple[str, BytesIO]],
+    organs: list[str],
+) -> tuple[bytes, str]:
+    """Build multipart/form-data body and boundary.
+
+    PlantNet API v2 does NOT accept a ``lang`` parameter.
+    Must repeat ``organs`` field per image (one value or same for all).
+    """
+    boundary = uuid.uuid4().hex
+    body = bytearray()
+
+    for fn, data in images:
+        body.extend(f"--{boundary}\r\n".encode())
+        body.extend(f'Content-Disposition: form-data; name="images"; filename="{fn}"\r\n'.encode())
+        body.extend(b"Content-Type: image/jpeg\r\n\r\n")
+        body.extend(data.getvalue())
+        body.extend(b"\r\n")
+
+    for organ in organs:
+        body.extend(f"--{boundary}\r\n".encode())
+        body.extend(b'Content-Disposition: form-data; name="organs"\r\n\r\n')
+        body.extend(organ.encode())
+        body.extend(b"\r\n")
+
+    body.extend(f"--{boundary}--\r\n".encode())
+    return bytes(body), boundary
+
+
+def _call_plantnet(url: str, images: list[tuple[str, BytesIO]], organs: list[str]) -> dict:
+    """Call PlantNet API via urllib with multipart body.
+
+    Note: PlantNet API v2 does NOT accept a ``lang`` parameter.
+    """
+    body, boundary = _build_multipart(images, organs)
+    headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
+
+    req = Request(url, data=body, headers=headers, method="POST")
+    try:
+        resp = urlopen(req, timeout=30)
+    except Exception as e:
+        logger.warning("PlantNet request failed: %s", e)
+        raise RuntimeError(str(e)) from e
+
+    raw = json.loads(resp.read())
+    logger.debug("PlantNet response keys=%s, results=%d",
+                  list(raw.keys()), len(raw.get("results", [])))
+    return raw
+
+
+def identify_plant(
     images: list[tuple[str, BytesIO]],
     organs: list[str] | None = None,
     lang: str = "en",
 ) -> dict:
     """Identify plant species from images via PlantNet API.
 
-    Raises ValueError on invalid input, httpx.HTTPStatusError on API failure.
+    Raises ValueError on invalid input, RuntimeError on API failure.
     """
     if not images:
         raise ValueError("At least one image required")
@@ -36,25 +87,18 @@ async def identify_plant(
     if bad:
         raise ValueError(f"Invalid organs: {bad}. Use: {VALID_ORGANS}")
 
-    files = [("images", (fn, data.getvalue(), "image/jpeg")) for fn, data in images]
+    url = f"{SPECIES_URL}?api-key={settings.plantnet_api_key}"
+    data = _call_plantnet(url, images, organs)
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(
-            SPECIES_URL,
-            params={"api-key": settings.plantnet_api_key},
-            files=files,
-            data={"organs": organs, "lang": lang},
-        )
+    quota = data.get("remainingIdentificationRequests")
+    if quota is not None and quota == 0:
+        logger.warning("PlantNet daily quota exhausted")
+        raise RuntimeError("Quota exhausted")
 
-    if resp.status_code == 429:
-        logger.warning("PlantNet quota exceeded")
-        raise httpx.HTTPStatusError("Quota exceeded", request=resp.request, response=resp)
-
-    resp.raise_for_status()
-    return resp.json()
+    return data
 
 
-async def identify_disease(
+def identify_disease(
     images: list[tuple[str, BytesIO]],
     organs: list[str] | None = None,
     lang: str = "en",
@@ -64,20 +108,10 @@ async def identify_disease(
         return None
 
     organs = organs or ["leaf"] * len(images)
-    files = [("images", (fn, data.getvalue(), "image/jpeg")) for fn, data in images]
-
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                DISEASE_URL,
-                params={"api-key": settings.plantnet_api_key},
-                files=files,
-                data={"organs": organs, "lang": lang},
-            )
-        if resp.status_code != 200:
-            logger.warning("Disease API returned %s", resp.status_code)
-            return None
-        return resp.json()
+        url = f"{DISEASE_URL}?api-key={settings.plantnet_api_key}"
+        data = _call_plantnet(url, images, organs)
+        return data
     except Exception as e:
         logger.warning("Disease detection failed: %s", e)
         return None

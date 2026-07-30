@@ -1159,6 +1159,53 @@ Patterns confirmed to block:
 
 ---
 
+## 2026-07-30: PlantNet API v2 Rejects `lang` Parameter
+
+**Context:** Debugging "no match found" for rose image — PlantNet returned 400 with `{"message":"\"lang\" is not allowed"}`.
+
+**Issue:** The `lang=en` parameter was included in the multipart form data sent to PlantNet, but the v2 API does NOT accept it. This caused PlantNet to return a 400 error with an error body (HTTP 200 status with `statusCode: 400` in JSON body), which the old httpx-based code handled silently — `raw` was set but had no results.
+
+**Fix:** Remove the `lang` parameter entirely from multipart body and curl command.
+
+**Key insight:** The API documentation mentions `lang` for v1 endpoints but v2 endpoints reject it outright. Always test with `curl -v` to see the exact request/response when debugging API client issues.
+
+**Applies to:** backend
+**Severity:** critical
+**Status:** active
+
+---
+
+## 2026-07-30: Server Process Management on Windows — Verify PID Before Killing
+
+**Context:** Made edits to `plantnet.py` but the server kept returning old responses. Spent hours debugging why changes weren't taking effect.
+
+**Issue:** Taskkill commands were killing wrong PIDs. The running server (PID 14652, uptime 7+ hours) survived all kill attempts because `netstat` was returning a different PID each time (child processes of the startup window). The `start "" python -m uvicorn` commands were failing silently (port in use or import error) while the user thought they were starting fresh servers.
+
+**Fix:**
+
+1. Always verify `netstat -ano | findstr ":PORT "` to get the actual listening PID
+2. Kill with `taskkill /F /PID <actual_pid>`
+3. Verify port is free with `netstat` again
+4. Start new server
+5. Verify new server is running with `uptime_seconds` (should be < 10)
+
+**Working launch patterns:**
+
+- `subprocess.Popen(['python','-m','uvicorn','api.main:app','--port','8000'], creationflags=0x00000010)` — `CREATE_NEW_CONSOLE`, truly detached ✅
+- `start "" python -m uvicorn api.main:app --host 0.0.0.0 --port 8000` — opens new window ✅
+
+**Patterns that block:**
+
+- `start /B` — same console group, blocks agent shell ❌
+- `subprocess.Popen(DETACHED_PROCESS=0x00000008)` — hangs parent ❌
+- `subprocess.run(['curl', ...])` — hangs on Windows in this env ❌
+
+**Applies to:** all
+**Severity:** critical
+**Status:** active
+
+---
+
 ## 2026-07-29: Suppress PIL Debug Log Noise
 
 **Context:** Backend logs flooded with `DEBUG PIL.TiffImagePlugin` messages when processing JPEG images.
@@ -1174,4 +1221,85 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 **Applies to:** backend
 **Severity:** minor
+**Status:** active
+
+---
+
+## 2026-07-31: `supabase db push` Fails on Multi-Statement SQL — Apply Migrations Manually
+
+**Context:** Running `supabase db push` to apply 5 migration files to production Supabase.
+
+**Issue:** `supabase db push` failed with error when encountering SQL with multiple statements or lines it couldn't parse. The CLI doesn't handle multi-statement SQL well in production push context.
+
+**Fix:** Apply migrations manually per statement:
+
+1. Use `supabase db query "<sql>"` for single-line statements
+2. For full migration files, use a Python script with `psycopg2` to execute the entire file
+
+**Pattern:** Supabase CLI's `db push` is unreliable for multi-statement SQL. Always have a manual apply strategy (CLI `db query` + psycopg2 for files). Verify each migration with `supabase db dump --local` or by querying the `_migrations` table.
+
+**Applies to:** database
+**Severity:** important
+**Status:** active
+
+---
+
+## 2026-07-31: `uuid-ossp` Extension Required for `uuid_generate_v4()`
+
+**Context:** Applying migrations to production Supabase that use `uuid_generate_v4()` for primary keys.
+
+**Issue:** Migration failed with `function uuid_generate_v4() does not exist` — the `uuid-ossp` extension wasn't enabled on the production database.
+
+**Fix:** Enable the extension before running migrations:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
+
+**Note:** Local `supabase start` includes this extension by default, but production doesn't. Always check which extensions are needed and enable them explicitly in early migrations.
+
+**Applies to:** database
+**Severity:** important
+**Status:** active
+
+---
+
+## 2026-07-31: GBIF Batch Upsert — 100 Rows Per Batch Optimal
+
+**Context:** Importing 10,008 species from local SQLite to production Supabase.
+
+**Issue:** Large batch upserts (>100 rows) can cause Supabase API timeouts or payload size limits. Single-row upserts are too slow.
+
+**Fix:** Batch upsert in chunks of 100 rows using `supabase.table("species").upsert(batch, ignore_duplicates=True)`.
+
+**Pattern:** For large Supabase data imports:
+
+1. Read source data in chunks (100 rows)
+2. Upsert each chunk with `ignore_duplicates=True` for idempotency
+3. Log progress every N batches
+4. Delete import scripts after use (not production code)
+
+**Applies to:** database
+**Severity:** moderate
+**Status:** active
+
+---
+
+## 2026-07-31: `load_dotenv()` Required for Pydantic `.env` Compatibility
+
+**Context:** `supabase_species.py` uses `os.environ.get("SUPABASE_URL")` but those values are only loaded via Pydantic `Settings` from `.env.local`.
+
+**Issue:** Pydantic's `BaseSettings` reads `.env` files into its model fields but does NOT write to `os.environ`. Code using `os.environ.get()` gets `None` for all env vars from `.env` files.
+
+**Fix:** Call `load_dotenv()` in `api/main.py` before anything else reads env vars:
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+```
+
+**Pattern:** Any code that uses `os.environ.get()` instead of Pydantic `settings.xxx` needs `load_dotenv()` to be called at startup. This applies to libraries or services that read env vars directly (like `supabase_species.py`).
+
+**Applies to:** backend
+**Severity:** important
 **Status:** active

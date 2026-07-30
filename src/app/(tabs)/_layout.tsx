@@ -1,16 +1,16 @@
-import { Text } from "react-native"
-import { Tabs } from "expo-router"
-import { colors } from "@/constants/theme"
+import { Text } from "react-native";
+import { Tabs } from "expo-router";
+import { useTheme } from "@/hooks/use-theme";
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
-      {label}
-    </Text>
-  )
+    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{label}</Text>
+  );
 }
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -52,5 +52,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }

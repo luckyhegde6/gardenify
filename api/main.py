@@ -13,11 +13,15 @@ import os
 import time
 import uuid
 
+from dotenv import load_dotenv
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from api.config import settings
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env.local"))  # noqa: E402
 from api.routes.admin import router as admin_router
 from api.routes.health import router as health_router
 from api.routes.species import router as species_router

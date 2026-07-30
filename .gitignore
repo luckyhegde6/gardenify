@@ -127,3 +127,11 @@ screenshots/
 # Swagger exports
 swagger-overview
 swagger-full.png
+
+# Installed skills (managed by skill system)
+.agents/skills/
+.claude/skills/
+skills-lock.json
+
+# Test artifacts
+identify_response.json

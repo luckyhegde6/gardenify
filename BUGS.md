@@ -6,6 +6,7 @@
 
 ```markdown
 ### BUG-001: Title
+
 - **Status**: Open | In Progress | Fixed | Won't Fix
 - **Severity**: Critical | High | Medium | Low
 - **Component**: Backend | Mobile | Database | CI/CD
@@ -23,6 +24,7 @@
 ## Open Issues
 
 ### BUG-001: TypeScript CI failing on example/ imports
+
 - **Status**: Fixed
 - **Severity**: High
 - **Component**: CI/CD
@@ -35,6 +37,7 @@
 - **Root cause**: Expo template includes example app that wasn't cleaned up
 
 ### BUG-002: Python ruff B008 errors on FastAPI File/Form defaults
+
 - **Status**: Fixed
 - **Severity**: Medium
 - **Component**: Backend
@@ -47,6 +50,7 @@
 - **Root cause**: FastAPI idiomatic pattern conflicts with ruff's default rules
 
 ### BUG-003: Python ruff BLE001 errors on blind except
+
 - **Status**: Fixed
 - **Severity**: Medium
 - **Component**: Backend
@@ -62,7 +66,44 @@
 
 ## Fixed Issues
 
-(None yet — add fixed issues here)
+### BUG-004: PlantNet Skip-Gate Logic Reversed
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: Backend
+- **Reported**: 2026-07-30
+- **Description**: When local DB had no matches (`local_has_matches = False`), PlantNet was skipped to "save quota" instead of being called as fallback. This caused all identifications with unknown plants to return "no match found".
+- **Steps to reproduce**: Upload an image of a plant not in the local DB (e.g., a rose) → `source: "local"` with `results: []`
+- **Expected**: PlantNet should be called when local DB has no matches
+- **Actual**: PlantNet was skipped when `local_has_matches` was False
+- **Fix**: Changed condition from `if has_plantnet and local_has_matches` to `if has_plantnet and not local_has_matches` in `api/routes/identify.py:212`
+- **Root cause**: Logic was inverted — intended to save quota by using local DB when matches exist, but accidentally also skipped PlantNet when local had no matches
+
+### BUG-005: `lang` Parameter Not Allowed in PlantNet API v2
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: Backend
+- **Reported**: 2026-07-30
+- **Description**: PlantNet API v2 rejects the `lang` parameter. The old httpx-based code sent `lang=en` in the multipart form data, causing a 400 error (`{"message":"\"lang\" is not allowed"}`). The error response had no results.
+- **Steps to reproduce**: Call PlantNet API with `lang=en` form field
+- **Expected**: Results in specified language
+- **Actual**: 400 error, no results
+- **Fix**: Removed `lang` parameter from multipart body and all function signatures
+- **Root cause**: API v2 doesn't support `lang` — only v1 did
+
+### BUG-006: Server Process Was Never Restarted
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: Backend
+- **Reported**: 2026-07-30
+- **Description**: Despite running multiple `taskkill` and `start` commands, the original server (PID 14652, uptime 7+ hours) kept running. All code edits on disk were never loaded. The `netstat` results showed different PIDs each time because child processes of `start ""` windows were being killed, not the actual server.
+- **Steps to reproduce**: Kill PID from `netstat`, start new server, check `uptime_seconds` → still shows 7+ hours
+- **Expected**: Server restarts with new code
+- **Actual**: Stale server continues running
+- **Fix**: Verify actual listening PID with `netstat -ano | findstr ":PORT"` before killing. Kill exact PID. Verify port free. Start new server. Verify `uptime_seconds` < 10.
+- **Root cause**: Windows process management — `start ""` windows create children that show up in `netstat`, but flushing the port takes time. Killed wrong PID each time.
 
 ---
 
@@ -75,18 +116,21 @@
 ## Observations
 
 ### OBS-001: PlantNet API returns 429 not 403 for quota exceeded
+
 - **Component**: Backend
 - **Date**: 2026-07-27
 - **Description**: PlantNet API returns HTTP 429 (Too Many Requests) when quota is exceeded, not 403 (Forbidden) as might be expected.
 - **Action**: Handle 429 specifically in `plantnet.py`
 
 ### OBS-002: EXIF extraction fails silently on some images
+
 - **Component**: Backend
 - **Date**: 2026-07-27
 - **Description**: Some images (especially screenshots or edited photos) have corrupt or missing EXIF data. The code handles this gracefully with try/except.
 - **Action**: None needed — degradation is by design
 
 ### OBS-003: In-memory cache is lost on serverless restart
+
 - **Component**: Backend
 - **Date**: 2026-07-27
 - **Description**: Vercel serverless functions restart frequently, clearing the in-memory cache. This is expected behavior for serverless.
@@ -97,25 +141,28 @@
 ## Usage
 
 ### Adding a Bug
+
 1. Copy the template above
 2. Fill in all fields
 3. Assign next BUG-XXX number
 4. Add to "Open Issues" section
 
 ### Updating Status
+
 - Change status to "In Progress" when starting work
 - Change status to "Fixed" when resolved
 - Add fix description and root cause
 - Move to "Fixed Issues" section
 
 ### Closing Issues
+
 - Move to "Fixed Issues" or "Won't Fix" section
 - Add resolution notes
 - Reference commit hash if applicable
 
 ---
 
-**Last updated**: 2026-07-27
+**Last updated**: 2026-07-30
 **Total open**: 0
-**Total fixed**: 3
+**Total fixed**: 6
 **Total observations**: 3

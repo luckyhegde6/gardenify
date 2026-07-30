@@ -1,23 +1,24 @@
-import { useEffect, useState } from "react"
-import { Stack } from "expo-router"
-import { StatusBar } from "expo-status-bar"
-import { AuthProvider, useAuth } from "@/hooks/use-auth"
-import { Loading } from "@/components/loading"
-import { colors } from "@/constants/theme"
+import { useEffect, useState } from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ThemeProvider, useTheme } from "@/hooks/use-theme";
+import { Loading } from "@/components/loading";
 
 function RootNavigator() {
-  const { user, loading } = useAuth()
-  const [ready, setReady] = useState(false)
+  const { user, loading } = useAuth();
+  const { colors, isDark } = useTheme();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!loading) setReady(true)
-  }, [loading])
+    if (!loading) setReady(true);
+  }, [loading]);
 
-  if (!ready) return <Loading message="Loading..." />
+  if (!ready) return <Loading message="Loading..." />;
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false }}>
         {!user ? (
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -56,13 +57,15 @@ function RootNavigator() {
         />
       </Stack>
     </>
-  )
+  );
 }
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootNavigator />
+      <ThemeProvider>
+        <RootNavigator />
+      </ThemeProvider>
     </AuthProvider>
-  )
+  );
 }

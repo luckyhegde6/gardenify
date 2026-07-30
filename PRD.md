@@ -153,8 +153,8 @@
 
 ---
 
-**Last updated**: 2026-07-29
-**Current progress**: OpenCV image validation + perceptual hash index (1,960 species) + offline identify flow + LSP/formatter/superpower plugin config
+**Last updated**: 2026-07-31
+**Current progress**: Species detail crash fixed, production Supabase linked + migrations applied + 10,008 GBIF species imported, backend configured for remote
 
 ### Admin User Management
 

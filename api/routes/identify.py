@@ -8,6 +8,7 @@ Pipeline:
 5. Plant care profile lookup (by genus/family)
 """
 
+import asyncio
 import json
 import logging
 import uuid
@@ -152,7 +153,8 @@ async def identify(
             all_plant_like = False
 
         hashes.append(compute_hash(data))
-        processed.append((fn, BytesIO(data)))
+        img_data = pipe.get("compressed_data") or data
+        processed.append((fn, BytesIO(img_data)))
 
         m = pipe["metadata"]
         meta_list.append(ImageMetadata(
@@ -199,7 +201,7 @@ async def identify(
         logger.warning("Local identification failed: %s", e)
         local_error = e
 
-    # ── Step 3: Call PlantNet only if local DB had matches ──
+    # ── Step 3: Call PlantNet when local DB has no matches ──
     raw = None
     plantnet_error = None
     source = "local"
@@ -207,15 +209,15 @@ async def identify(
     has_plantnet = bool(settings.plantnet_api_key)
     local_has_matches = bool(local_results)
 
-    if local_has_matches and has_plantnet:
+    if has_plantnet and not local_has_matches:
         try:
-            raw = await identify_plant(processed, organs, lang)
+            raw = await asyncio.to_thread(identify_plant, processed, organs)
             source = "plantnet"
         except Exception as e:
-            logger.warning("PlantNet API failed after local match: %s", e)
+            logger.warning("PlantNet API failed after local miss: %s", e)
             plantnet_error = e
-    elif has_plantnet and not local_has_matches:
-        logger.info("Local DB no matches — skipping PlantNet to save quota")
+    elif has_plantnet and local_has_matches:
+        logger.info("Local DB has matches — using local results to save PlantNet quota")
     elif not has_plantnet:
         logger.info("PlantNet API key not configured — using local DB only")
 
@@ -246,7 +248,7 @@ async def identify(
         care_info = CareInfo(**get_care_profile(
             best.species.scientific_name, best.species.genus, best.species.family,
         ))
-        raw_disease = await identify_disease(processed, organs, lang)
+        raw_disease = await asyncio.to_thread(identify_disease, processed, organs)
         if raw_disease:
             disease_info = DiseaseResult(**parse_disease(raw_disease))
 
