@@ -36,5 +36,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: pip install ruff pytest pytest-asyncio
       - run: ruff check .
       - run: pytest --tb=short
