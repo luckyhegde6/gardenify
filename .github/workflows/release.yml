@@ -1,4 +1,4 @@
-name: GitHub Release
+name: Release
 
 on:
   push:
@@ -10,18 +10,58 @@ on:
         description: "Release tag (e.g., v1.0.0)"
         required: true
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
 jobs:
-  release:
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    if: ${{ secrets.EXPO_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build APK (EAS)
+        run: |
+          echo "::group::Build APK"
+          eas build -p android --profile production --non-interactive --wait 2>&1
+          echo "::endgroup::"
+      - name: Download APK artifact
+        run: |
+          echo "::group::Download APK"
+          eas build:download --platform android --output=gardenify.apk 2>&1
+          echo "APK size: $(stat --printf=%s gardenify.apk) bytes"
+          echo "::endgroup::"
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gardenify-apk
+          path: gardenify.apk
+          retention-days: 90
+
+  create-release:
     name: Create Release
+    needs: build-apk
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Set tag
         id: tag
         run: |
@@ -30,28 +70,48 @@ jobs:
           else
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
-
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: gardenify-apk
+          path: .
+      - name: Verify APK exists
+        run: |
+          if [ -f gardenify.apk ]; then
+            echo "APK ready: $(stat --printf=%s gardenify.apk) bytes"
+            mv gardenify.apk gardenify-${{ steps.tag.outputs.tag }}.apk
+          else
+            echo "WARNING: APK not found"
+          fi
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          name: "Gardenify ${{ steps.tag.outputs.tag }}"
+          name: Gardenify ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(steps.tag.outputs.tag, '-beta') || contains(steps.tag.outputs.tag, '-alpha') }}
+          files: |
+            gardenify-${{ steps.tag.outputs.tag }}.apk
           body: |
             ## Gardenify ${{ steps.tag.outputs.tag }}
 
-            ### Android APK
-            1. Go to [EAS Builds](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
-            2. Download the latest APK for this release
-            3. Install on your Android device (enable "Install from unknown sources")
+            ### 📱 Android APK
+            The APK is attached to this release. Download it to install on your Android device.
+
+            **Installation:**
+            1. Download the `gardenify-${{ steps.tag.outputs.tag }}.apk` file below
+            2. On your Android device, enable **Install from unknown sources** (Settings → Security)
+            3. Open the downloaded APK to install
+
+            ### 🌐 API
+            - **Live API:** https://sasyakashi.vercel.app
+            - **Swagger Docs:** https://sasyakashi.vercel.app/docs
+
+            ### 📖 Documentation
+            - **README:** https://github.com/luckyhegde6/gardenify
+            - **Source Code:** https://github.com/luckyhegde6/gardenify
 
             ### What's Changed
-            See release notes below for details.
-
-            ### API
-            - Live API: https://sasyakashi.vercel.app
-            - Swagger Docs: https://sasyakashi.vercel.app/docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

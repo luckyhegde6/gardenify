@@ -152,4 +152,22 @@ if not os.environ.get("VERCEL"):
     except Exception as e:
         logger.warning("Local DB init failed: %s", e)
 
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def about_page():
+    """About page linking to GitHub profile and contribution guide."""
+    from api.landing_page import ABOUT_PAGE_HTML
+    return HTMLResponse(content=ABOUT_PAGE_HTML)
+
+
+
+
+@app.get("/onboarding", response_class=HTMLResponse)
+async def onboarding_page():
+    """Onboarding page with architecture, workflows, and sequence diagrams."""
+    from api.onboarding_page import ONBOARDING_PAGE_HTML
+    return HTMLResponse(content=ONBOARDING_PAGE_HTML)
+
+
 logger.info("Gardenify API started (debug=%s)", settings.debug)
