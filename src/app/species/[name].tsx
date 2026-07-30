@@ -1,81 +1,117 @@
-import { useState, useEffect, useCallback } from "react"
-import { View, Text, ScrollView, StyleSheet, Linking } from "react-native"
-import { useLocalSearchParams } from "expo-router"
-import { apiClient } from "@/lib/api-client"
-import { Button } from "@/components/button"
-import { Loading } from "@/components/loading"
-import { colors, spacing, borderRadius, typography } from "@/constants/theme"
-import type { SpeciesListItem } from "@/lib/types"
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, StyleSheet, Linking } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { apiClient } from "@/lib/api-client";
+import { Button } from "@/components/button";
+import { Loading } from "@/components/loading";
+import { spacing, borderRadius, typography } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/hooks/use-theme";
+import type { SpeciesListItem } from "@/lib/types";
+import type { ThemeColors } from "@/hooks/use-theme";
 
 export default function SpeciesDetailScreen() {
-  const { name } = useLocalSearchParams<{ name: string }>()
-  const [species, setSpecies] = useState<SpeciesListItem | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { name } = useLocalSearchParams<{ name: string }>();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const sectionStyles = useThemedStyles(makeSectionStyles);
+  const infoStyles = useThemedStyles(makeInfoStyles);
+  const [species, setSpecies] = useState<SpeciesListItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchSpecies = useCallback(async () => {
-    if (!name) return
-    setLoading(true)
-    setError(null)
+    if (!name) return;
+    setLoading(true);
+    setError(null);
     try {
-      const decodedName = decodeURIComponent(name)
-      const result = await apiClient.getSpeciesByName(decodedName)
-      setSpecies(result)
+      const decodedName = decodeURIComponent(name);
+      const result = await apiClient.getSpeciesByName(decodedName);
+      setSpecies(result);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Species not found"
-      )
+      setError(err instanceof Error ? err.message : "Species not found");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [name])
+  }, [name]);
 
   useEffect(() => {
-    fetchSpecies()
-  }, [fetchSpecies])
+    fetchSpecies();
+  }, [fetchSpecies]);
 
-  if (loading) return <Loading message="Loading species info..." />
+  if (loading) return <Loading message="Loading species info..." />;
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
       </View>
-    )
+    );
   }
   if (!species) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Species not found</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          Species not found
+        </Text>
       </View>
-    )
+    );
   }
 
-  const commonNames = species.common_names
-    ? species.common_names.split(",").map((s) => s.trim())
-    : []
+  const commonNames = species.common_names ?? [];
   const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(
-    species.scientific_name
-  )}`
+    species.scientific_name,
+  )}`;
   const gbifUrl = `https://www.gbif.org/species/search?q=${encodeURIComponent(
-    species.scientific_name
-  )}`
+    species.scientific_name,
+  )}`;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
       <View style={styles.header}>
-        <Text style={styles.scientificName}>{species.scientific_name}</Text>
+        <Text style={[styles.scientificName, { color: colors.text }]}>
+          {species.scientific_name}
+        </Text>
         {commonNames.length > 0 && (
-          <Text style={styles.commonNames}>{commonNames.join(", ")}</Text>
+          <Text style={[styles.commonNames, { color: colors.textSecondary }]}>
+            {commonNames.join(", ")}
+          </Text>
         )}
       </View>
 
-      <Section title="Taxonomy">
-        <InfoRow label="Family" value={species.family} />
-        <InfoRow label="Genus" value={species.genus} />
-        <InfoRow label="Scientific Name" value={species.scientific_name} />
-      </Section>
+      <View style={sectionStyles.container}>
+        <Text style={[sectionStyles.title, { color: colors.textSecondary }]}>
+          Taxonomy
+        </Text>
+        <View
+          style={[sectionStyles.content, { backgroundColor: colors.surface }]}
+        >
+          <InfoRow
+            label="Family"
+            value={species.family}
+            infoStyles={infoStyles}
+            colors={colors}
+          />
+          <InfoRow
+            label="Genus"
+            value={species.genus}
+            infoStyles={infoStyles}
+            colors={colors}
+          />
+          <InfoRow
+            label="Scientific Name"
+            value={species.scientific_name}
+            infoStyles={infoStyles}
+            colors={colors}
+          />
+        </View>
+      </View>
 
-      <Section title="External Links">
+      <View style={sectionStyles.container}>
+        <Text style={[sectionStyles.title, { color: colors.textSecondary }]}>
+          External Links
+        </Text>
         <Button
           title="View on Wikipedia"
           onPress={() => Linking.openURL(wikipediaUrl)}
@@ -90,119 +126,125 @@ export default function SpeciesDetailScreen() {
           size="sm"
           style={styles.linkButton}
         />
-      </Section>
+      </View>
 
       {species.id > 0 && (
-        <Section title="Database Info">
-          <InfoRow label="Species ID" value={String(species.id)} />
-          <InfoRow label="Database" value="Local Plant Database" />
-        </Section>
+        <View style={sectionStyles.container}>
+          <Text style={[sectionStyles.title, { color: colors.textSecondary }]}>
+            Database Info
+          </Text>
+          <View
+            style={[sectionStyles.content, { backgroundColor: colors.surface }]}
+          >
+            <InfoRow
+              label="Species ID"
+              value={String(species.id)}
+              infoStyles={infoStyles}
+              colors={colors}
+            />
+            <InfoRow
+              label="Database"
+              value="Local Plant Database"
+              infoStyles={infoStyles}
+              colors={colors}
+            />
+          </View>
+        </View>
       )}
     </ScrollView>
-  )
+  );
 }
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <View style={sectionStyles.container}>
-      <Text style={sectionStyles.title}>{title}</Text>
-      <View style={sectionStyles.content}>{children}</View>
-    </View>
-  )
-}
-
-const sectionStyles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.lg,
-  },
-  title: {
-    ...typography.label,
-    color: colors.textSecondary,
-    textTransform: "uppercase",
-    marginBottom: spacing.sm,
-  },
-  content: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-  },
-})
 
 function InfoRow({
   label,
   value,
+  infoStyles,
+  colors,
 }: {
-  label: string
-  value: string
+  label: string;
+  value: string;
+  infoStyles: any;
+  colors: ThemeColors;
 }) {
-  if (!value) return null
+  if (!value) return null;
   return (
     <View style={infoStyles.row}>
-      <Text style={infoStyles.label}>{label}</Text>
-      <Text style={infoStyles.value}>{value}</Text>
+      <Text style={[infoStyles.label, { color: colors.textSecondary }]}>
+        {label}
+      </Text>
+      <Text style={[infoStyles.value, { color: colors.text }]}>{value}</Text>
     </View>
-  )
+  );
 }
 
-const infoStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  label: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    flex: 1,
-  },
-  value: {
-    ...typography.bodySmall,
-    color: colors.text,
-    flex: 2,
-    textAlign: "right",
-  },
-})
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: spacing.lg,
+    },
+    header: {
+      marginBottom: spacing.xl,
+    },
+    scientificName: {
+      ...typography.h1,
+      fontStyle: "italic",
+    },
+    commonNames: {
+      ...typography.body,
+      marginTop: spacing.xs,
+    },
+    linkButton: {
+      marginBottom: spacing.sm,
+    },
+    errorText: {
+      ...typography.body,
+      textAlign: "center",
+    },
+  });
+}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
-  },
-  header: {
-    marginBottom: spacing.xl,
-  },
-  scientificName: {
-    ...typography.h1,
-    color: colors.text,
-    fontStyle: "italic",
-  },
-  commonNames: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  linkButton: {
-    marginBottom: spacing.sm,
-  },
-  errorText: {
-    ...typography.body,
-    color: colors.error,
-    textAlign: "center",
-  },
-})
+function makeSectionStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      marginBottom: spacing.lg,
+    },
+    title: {
+      ...typography.label,
+      textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+    content: {
+      borderRadius: borderRadius.md,
+      padding: spacing.md,
+    },
+  });
+}
+
+function makeInfoStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+    },
+    label: {
+      ...typography.bodySmall,
+      flex: 1,
+    },
+    value: {
+      ...typography.bodySmall,
+      flex: 2,
+      textAlign: "right",
+    },
+  });
+}

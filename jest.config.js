@@ -1,12 +1,14 @@
 module.exports = {
   preset: "jest-expo",
+  setupFiles: ["./jest-setup.js"],
   transformIgnorePatterns: [
     "node_modules/(?!(react-native|@react-native|@react-navigation|expo.*|@expo.*|@supabase.*)/)",
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@/assets/(.*)$": "<rootDir>/assets/$1",
-    "^@react-native-async-storage/async-storage$": "<rootDir>/__mocks__/async-storage.js",
+    "^@react-native-async-storage/async-storage$":
+      "<rootDir>/__mocks__/async-storage.js",
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
   collectCoverageFrom: [
@@ -16,4 +18,4 @@ module.exports = {
     "!src/types/**",
   ],
   testMatch: ["**/__tests__/**/*.test.{ts,tsx}"],
-}
+};

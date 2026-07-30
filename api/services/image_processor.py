@@ -126,6 +126,8 @@ def compress_image(data: bytes, max_dim: int = MAX_DIM, quality: int = COMPRESS_
     """Compress image: resize if larger than max_dim, reduce JPEG quality."""
     try:
         img = Image.open(io.BytesIO(data))
+        if img.mode in ("RGBA", "P", "PA"):
+            img = img.convert("RGB")
         if max(img.size) > max_dim:
             ratio = max_dim / max(img.size)
             new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
@@ -143,6 +145,8 @@ def generate_thumbnail(data: bytes, size: tuple[int, int] = THUMBNAIL_SIZE) -> b
     """Generate a thumbnail from image data."""
     try:
         img = Image.open(io.BytesIO(data))
+        if img.mode in ("RGBA", "P", "PA"):
+            img = img.convert("RGB")
         img.thumbnail(size, Image.LANCZOS)
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=60, optimize=True)
@@ -240,6 +244,7 @@ class ImageProcessor:
         return {
             "valid": True,
             "metadata": meta,
+            "compressed_data": compressed,
             "storage": {
                 "upload_id": self.upload_id,
                 "original": str(original_path),

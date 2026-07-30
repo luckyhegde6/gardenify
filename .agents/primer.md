@@ -24,24 +24,25 @@ Expo App → FastAPI Backend → PlantNet API
 | Local DB + Offline   | ✅ Done        | 10,008 species, 1,960 with perceptual hashes (19.6%)                |
 | Image Processing     | ✅ Done        | OpenCV gate, compression, thumbnails, server-side storage           |
 | History API          | ✅ Done        | GET list + detail + thumbnail endpoints                             |
-| Supabase Schema      | ✅ Done        | Users, identifications, favorites, settings + RLS + admin + seed    |
+| Supabase Schema      | ✅ Done        | All 5 migrations applied to production Supabase                     |
 | CI/CD                | ✅ Done        | GitHub Actions (lint, test, build, deploy)                          |
 | Mobile UI            | ✅ Done        | Auth, 4-tabs (Scan/Saved/History/Profile), results, species detail  |
 | Phase 2 Features     | ✅ Done        | Disease UI, favorites, share, caching, multi-lang                   |
 | Admin Panel          | ✅ Done        | Backend API + mobile screen + RLS (security definer)                |
 | Frontend Tests       | ✅ Done        | 41 tests (Jest)                                                     |
 | E2E Tests            | ✅ Done        | 21 Playwright API tests (OpenCV, caching, security, error recovery) |
-| Credentials          | ❌ Blocked     | Need Supabase project URL + PlantNet API key from user              |
+| Production Supabase  | ✅ Done        | Linked, migrations applied, 10,008 GBIF species imported            |
+| Species Detail       | ✅ Fixed       | `common_names` type string → string[]                               |
+| PlantNet Integration | ✅ Fixed       | `lang` removed, skip-gate fixed, verified with rose image           |
 | Vercel Deploy        | ❌ Not started | —                                                                   |
+| PlantNet API Key     | ❌ Blocked     | Need from user for production                                       |
 
 ## What's Next
 
-1. Create PR: `feat/mobile-ui-phase-1-2` → `main`
-2. Get Supabase credentials from user
-3. Get PlantNet API key from user
-4. Deploy backend to Vercel
-5. Wire up prod Supabase
-6. Expand hash index to remaining ~8K species (need alternative image sources)
+1. Create PR with current changes
+2. Get PlantNet API key from user for production
+3. Deploy backend to Vercel
+4. Expand hash index to remaining ~8K species (need alternative image sources)
 
 ## Key Files
 
@@ -60,9 +61,14 @@ Expo App → FastAPI Backend → PlantNet API
 
 ```bash
 # Client-side (EXPO_PUBLIC_ prefix)
-EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321
+EXPO_PUBLIC_SUPABASE_URL=https://amyriuhwqyalodsfkwzf.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-key>
 EXPO_PUBLIC_API_URL=http://localhost:8000/api
+
+# Backend (.env.local)
+USE_REMOTE=true
+SUPABASE_URL=https://amyriuhwqyalodsfkwzf.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<key>
 ```
 
 ## Run Commands

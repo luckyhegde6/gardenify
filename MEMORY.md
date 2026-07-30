@@ -6,18 +6,22 @@
 
 **Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
-| Key              | Value                                                 |
-| ---------------- | ----------------------------------------------------- |
-| Repo             | `https://github.com/luckyhegde6/gardenify`            |
-| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                |
-| Platform         | Android-first, iOS later                              |
-| Backend          | Python FastAPI on Vercel                              |
-| Database         | Supabase (PostgreSQL + Auth + Storage)                |
-| Plant AI         | PlantNet API v2 (free 500/day)                        |
-| Current Branch   | `feat/mobile-ui-phase-1-2`                            |
-| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)  |
-| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver) |
-| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total       |
+| Key              | Value                                                                      |
+| ---------------- | -------------------------------------------------------------------------- |
+| Repo             | `https://github.com/luckyhegde6/gardenify`                                 |
+| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                     |
+| Platform         | Android-first, iOS later                                                   |
+| Backend          | Python FastAPI on Vercel                                                   |
+| Database         | Supabase (PostgreSQL + Auth + Storage)                                     |
+| Plant AI         | PlantNet API v2 (free 500/day)                                             |
+| Current Branch   | `main`                                                                     |
+| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                       |
+| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                      |
+| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                            |
+| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                     |
+| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                      |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied            |
+| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true` |
 
 ## Architecture (10 seconds)
 
@@ -67,7 +71,7 @@ Expo App → FastAPI Backend → PlantNet API
 
 - [x] OpenCV image validation (edge detection + color analysis + content score)
 - [x] Image compression, thumbnail generation, server-side storage
-- [x] Identify flow: OpenCV gate → local DB pHash → PlantNet (quota saver)
+- [x] Identify flow: OpenCV gate → local DB pHash → PlantNet as fallback
 - [x] Source flag in response: `source: "local" | "plantnet"`
 - [x] History endpoints (GET list + detail + thumbnail)
 - [x] Synthetic test fixtures for E2E tests
@@ -75,11 +79,14 @@ Expo App → FastAPI Backend → PlantNet API
 - [x] GBIF image downloader + hash index builder script
 - [x] LSP (TypeScript + Python), formatter (Prettier + Ruff), superpower plugin
 - [x] 21 Playwright API tests passing
+- [x] **PlantNet integration verified** — rose → _Rosa lucieae_ (10 results, quota 491)
+- [x] **Skip-gate fixed** — PlantNet called when local DB has no matches
+- [x] **Server restart workflow** — `Popen(CREATE_NEW_CONSOLE)` for detached process
 
 ### Not Done
 
-- [ ] Supabase/PlantNet credentials (need from user)
-- [ ] Create PR: feat/mobile-ui-phase-1-2 → main
+- [ ] PlantNet API key for production (need from user)
+- [ ] Create PR: current main → main
 - [ ] Vercel deployment
 - [ ] Expand hash index to remaining ~8K species (need alternative image sources)
 - [ ] Push notifications (Phase 3)

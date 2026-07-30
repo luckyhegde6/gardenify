@@ -1,15 +1,18 @@
-name: Build & Release APK
+name: Build APK (Manual)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      profile:
+        description: "Build profile (development, preview, production)"
+        required: true
+        default: "preview"
 
 permissions:
   contents: write
 
 concurrency:
-  group: build-release-${{ github.ref }}
+  group: build-manual-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,8 +32,12 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Build APK
-        run: eas build -p android --profile production --non-interactive
-      - name: Wait for build
-        run: |
-          echo "Build submitted. Check https://expo.dev for build status."
-          echo "APK will be available for download from Expo."
+        run: eas build -p android --profile ${{ inputs.profile }} --non-interactive --wait
+      - name: Download APK
+        run: eas build:download --platform android --output=gardenify.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: gardenify-apk
+          path: gardenify.apk
+          retention-days: 14

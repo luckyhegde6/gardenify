@@ -358,6 +358,55 @@ Track all agent sessions for continuity. Update before each commit.
   - `--no-server-header` uvicorn flag, PIL debug log suppression
 - **Tests status**: 73/73 Python, 21/21 Playwright, 0 deprecation warnings
 
+---
+
+### 2026-07-30: PlantNet API Fix — Lang Param + Server Restart + Rose Identification Verified
+
+- **Duration**: ~2 hours
+- **Goal**: Fix "no match found" for rose image identification on emulator
+- **Root causes** (3 bugs):
+  1. **Reversed skip-gate** (`identify.py` L212): When local DB had no matches, PlantNet was skipped instead of being called as fallback
+  2. **`lang` not allowed** (`plantnet.py`): PlantNet API v2 rejects `lang` field — removed from multipart body and curl command
+  3. **Server never restarted**: All code edits were on disk but the original server (7h uptime) kept running with stale httpx code — had to kill PID 14652 and start fresh
+- **Files modified**:
+  - `api/services/plantnet.py` — Rewrote `_call_plantnet`: removed httpx (network issues in env), replaced with urllib + manual multipart with `_build_multipart()`; removed `lang` param
+  - `api/routes/identify.py` — Fixed reversed PlantNet skip-gate logic; removed `lang` from `identify_plant`/`identify_disease` calls
+  - `api/services/image_processor.py` — Added `compressed_data` to return dict; RGBA→RGB conversion in `compress_image` and `generate_thumbnail` (JPEG can't encode alpha)
+  - `start_backend.bat` — Reverted to simple uvicorn launch
+- **Key discovery**: PlantNet API v2 does NOT accept `lang` parameter — returns `{"statusCode":400,"message":"\"lang\" is not allowed"}`
+- **Verification**: `/api/identify` with rose image returns `best_match: "Rosa lucieae"`, 10 results, `remaining_quota: 491`
+- **Process management lesson**: `start /B` and `subprocess.Popen(DETACHED_PROCESS)` both block agent shell. Verified working: `start "" python -m uvicorn` (new window) and `subprocess.Popen(CREATE_NEW_CONSOLE)` from Python
+- **Tests status**: 73/73 Python passed, TypeScript clean, ruff clean
+
+### 2026-07-31: Species Detail Fix + Production Supabase Setup + GBIF Import
+
+- **Duration**: ~3 hours
+- **Goal**: Fix species detail crash, set up production Supabase, import GBIF species data
+- **Bugs fixed**:
+  - `species/[name].tsx:59` — `common_names.split(",")` crashed because API returns JSON array, not string. Fixed: `common_names ?? []` + `.join(", ")`
+  - `src/lib/types.ts:105` — `SpeciesListItem.common_names` type changed `string` → `string[]`
+- **Production Supabase setup**:
+  - Linked project `amyriuhwqyalodsfkwzf` via `supabase link`
+  - All 5 migrations applied manually via `supabase db query` + psycopg2 (multi-statement SQL not supported by CLI)
+  - `uuid-ossp` extension enabled for `uuid_generate_v4()`
+  - 10,008 GBIF species imported via batch upsert (100 per batch) from local SQLite
+  - `load_dotenv()` added to `api/main.py` so `supabase_species.py` can read `.env.local`
+  - `.env.local` updated with `USE_REMOTE=true` + production Supabase URL/keys
+  - Backend now queries production Supabase for species
+- **Files modified**:
+  - `src/lib/types.ts` — `common_names` string → string[]
+  - `src/app/species/[name].tsx` — `.split(",")` → `?? []` + `.join(", ")`
+  - `src/__tests__/api-client.test.ts` — mock data updated (strings → arrays)
+  - `api/main.py` — added `load_dotenv()` import + call
+  - `api/config.py` — USE_REMOTE, supabase_effective_url, env_file loading
+  - `api/routes/species.py` — `_get_backend()` checks `supabase_species.is_available()`
+  - `api/services/supabase_species.py` — reads SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY from os.environ
+  - `.env.local` — production Supabase config
+- **Tests status**: TypeScript clean, 73/73 Python pass, ruff clean
+- **Next session**: Create PR, deploy backend to Vercel
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done

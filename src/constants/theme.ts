@@ -1,4 +1,4 @@
-export const colors = {
+export const lightColors = {
   primary: "#208AEF",
   primaryDark: "#1A75CC",
   primaryLight: "#6BB3F5",
@@ -39,7 +39,52 @@ export const colors = {
   tabBarBorder: "#E5E7EB",
   tabBarInactive: "#9CA3AF",
   tabBarActive: "#208AEF",
-}
+};
+
+export const darkColors = {
+  primary: "#3B9EFF",
+  primaryDark: "#208AEF",
+  primaryLight: "#1E3A5F",
+  secondary: "#34C759",
+  secondaryDark: "#2DB14F",
+  secondaryLight: "#1A3A2E",
+
+  background: "#0F0F1A",
+  surface: "#1A1A2E",
+  surfaceElevated: "#242442",
+
+  text: "#E8E8F0",
+  textSecondary: "#9CA3AF",
+  textTertiary: "#6B7280",
+  textInverse: "#FFFFFF",
+
+  border: "#2D2D44",
+  borderLight: "#1E1E32",
+  divider: "#2D2D44",
+
+  error: "#F87171",
+  errorLight: "#3D1A1A",
+  warning: "#FBBF24",
+  warningLight: "#3D2E0A",
+  success: "#34D399",
+  successLight: "#0D3328",
+  info: "#60A5FA",
+  infoLight: "#0D1B3D",
+
+  confidenceHigh: "#34D399",
+  confidenceMedium: "#FBBF24",
+  confidenceLow: "#F87171",
+
+  favorite: "#F87171",
+  favoriteLight: "#3D1A1A",
+
+  tabBarBackground: "#1A1A2E",
+  tabBarBorder: "#2D2D44",
+  tabBarInactive: "#6B7280",
+  tabBarActive: "#3B9EFF",
+};
+
+export const colors = lightColors;
 
 export const spacing = {
   xs: 4,
@@ -48,7 +93,7 @@ export const spacing = {
   lg: 24,
   xl: 32,
   xxl: 48,
-}
+};
 
 export const borderRadius = {
   sm: 8,
@@ -56,7 +101,7 @@ export const borderRadius = {
   lg: 16,
   xl: 24,
   full: 9999,
-}
+};
 
 export const typography = {
   h1: {
@@ -99,7 +144,7 @@ export const typography = {
     fontWeight: "600" as const,
     lineHeight: 20,
   },
-}
+};
 
 export const shadows = {
   sm: {
@@ -123,4 +168,4 @@ export const shadows = {
     shadowRadius: 8,
     elevation: 5,
   },
-}
+};

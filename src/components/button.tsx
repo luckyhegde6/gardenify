@@ -5,18 +5,20 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
-} from "react-native"
-import { colors, spacing, borderRadius, typography } from "@/constants/theme"
+} from "react-native";
+import { spacing, borderRadius, typography } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/hooks/use-theme";
+import type { ThemeColors } from "@/hooks/use-theme";
 
 interface ButtonProps {
-  title: string
-  onPress: () => void
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger"
-  size?: "sm" | "md" | "lg"
-  loading?: boolean
-  disabled?: boolean
-  style?: ViewStyle
-  textStyle?: TextStyle
+  title: string;
+  onPress: () => void;
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
+  loading?: boolean;
+  disabled?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
 export function Button({
@@ -29,7 +31,9 @@ export function Button({
   style,
   textStyle,
 }: ButtonProps) {
-  const isDisabled = disabled || loading
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const isDisabled = disabled || loading;
 
   return (
     <TouchableOpacity
@@ -63,75 +67,77 @@ export function Button({
         </Text>
       )}
     </TouchableOpacity>
-  )
+  );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: borderRadius.md,
-  },
-  variant_primary: {
-    backgroundColor: colors.primary,
-  },
-  variant_secondary: {
-    backgroundColor: colors.secondary,
-  },
-  variant_outline: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  variant_ghost: {
-    backgroundColor: "transparent",
-  },
-  variant_danger: {
-    backgroundColor: colors.error,
-  },
-  size_sm: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  size_md: {
-    paddingVertical: spacing.md - 4,
-    paddingHorizontal: spacing.lg,
-  },
-  size_lg: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  text: {
-    ...typography.button,
-  },
-  text_primary: {
-    color: colors.textInverse,
-  },
-  text_secondary: {
-    color: colors.textInverse,
-  },
-  text_outline: {
-    color: colors.primary,
-  },
-  text_ghost: {
-    color: colors.primary,
-  },
-  text_danger: {
-    color: colors.textInverse,
-  },
-  textSize_sm: {
-    fontSize: 14,
-  },
-  textSize_md: {
-    fontSize: 16,
-  },
-  textSize_lg: {
-    fontSize: 18,
-  },
-  textDisabled: {
-    opacity: 0.7,
-  },
-})
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    base: {
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: borderRadius.md,
+    },
+    variant_primary: {
+      backgroundColor: c.primary,
+    },
+    variant_secondary: {
+      backgroundColor: c.secondary,
+    },
+    variant_outline: {
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderColor: c.primary,
+    },
+    variant_ghost: {
+      backgroundColor: "transparent",
+    },
+    variant_danger: {
+      backgroundColor: c.error,
+    },
+    size_sm: {
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    size_md: {
+      paddingVertical: spacing.md - 4,
+      paddingHorizontal: spacing.lg,
+    },
+    size_lg: {
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xl,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+    text: {
+      ...typography.button,
+    },
+    text_primary: {
+      color: c.textInverse,
+    },
+    text_secondary: {
+      color: c.textInverse,
+    },
+    text_outline: {
+      color: c.primary,
+    },
+    text_ghost: {
+      color: c.primary,
+    },
+    text_danger: {
+      color: c.textInverse,
+    },
+    textSize_sm: {
+      fontSize: 14,
+    },
+    textSize_md: {
+      fontSize: 16,
+    },
+    textSize_lg: {
+      fontSize: 18,
+    },
+    textDisabled: {
+      opacity: 0.7,
+    },
+  });
+}
