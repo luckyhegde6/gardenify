@@ -17,6 +17,7 @@ jobs:
   publish-preview:
     name: Publish OTA Update
     runs-on: ubuntu-latest
+    environment: production
     if: ${{ secrets.EXPO_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
