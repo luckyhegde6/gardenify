@@ -192,7 +192,7 @@ supabase/               # Database migrations
 
 ### Latest APK
 
-Download the latest production APK from [Expo EAS Builds](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds).
+Download the latest release APK from [GitHub Releases](https://github.com/luckyhegdedev/gardenify/releases).
 
 Or build it yourself:
 
@@ -219,7 +219,8 @@ npx eas build -p android --profile production
 ### APK Distribution
 
 - **No Play Store** — direct APK installation only
-- **Download from** [expo.dev](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
+- **Download from** [GitHub Releases](https://github.com/luckyhegdedev/gardenify/releases)
+- **Build logs on** [expo.dev](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
 - **Install on device**: enable "Install from unknown sources" in Android settings
 - **OTA updates**: published to preview channels on `feat/*`/`bugfix/*` pushes
 

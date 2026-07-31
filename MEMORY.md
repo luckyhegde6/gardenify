@@ -6,26 +6,27 @@
 
 **Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
-| Key              | Value                                                                          |
-| ---------------- | ------------------------------------------------------------------------------ |
-| Repo             | `https://github.com/luckyhegde6/gardenify`                                     |
-| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                         |
-| Platform         | Android-first, iOS later                                                       |
-| Backend          | Python FastAPI on Vercel                                                       |
-| Database         | Supabase (PostgreSQL + Auth + Storage)                                         |
-| Plant AI         | PlantNet API v2 (free 500/day)                                                 |
-| Current Branch   | `feat/production-deployment`                                                   |
-| Backend (prod)   | `https://sasyakashi.vercel.app`                                                |
-| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                     |
-| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)           |
-| APK URL          | https://expo.dev/artifacts/eas/KopMD17qWdke4xZBCtZ97Zfb2Gid1UCGhuvQ1OM9GkA.apk |
-| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                           |
-| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                          |
-| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                                |
-| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                         |
-| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                          |
-| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied                |
-| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`     |
+| Key              | Value                                                                       |
+| ---------------- | --------------------------------------------------------------------------- |
+| Repo             | `https://github.com/luckyhegde6/gardenify`                                  |
+| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                      |
+| Platform         | Android-first, iOS later                                                    |
+| Backend          | Python FastAPI on Vercel                                                    |
+| Database         | Supabase (PostgreSQL + Auth + Storage)                                      |
+| Plant AI         | PlantNet API v2 (free 500/day)                                              |
+| Current Branch   | `feat/production-deployment`                                                |
+| Backend (prod)   | `https://sasyakashi.vercel.app`                                             |
+| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                  |
+| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)        |
+| APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) v0.1.0 |
+| EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds           |
+| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                        |
+| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                       |
+| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                             |
+| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                      |
+| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                       |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied             |
+| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`  |
 
 ## Architecture (10 seconds)
 

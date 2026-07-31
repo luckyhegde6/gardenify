@@ -8,19 +8,19 @@ Gardenify is a plant identification mobile app. Users capture photos of plants, 
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| Mobile | Expo (React Native) | SDK 55 |
-| Language (Mobile) | TypeScript | 5.9 |
-| Language (Backend) | Python | 3.12 |
-| Backend Framework | FastAPI | 0.117+ |
-| Database | Supabase (PostgreSQL) | — |
-| Auth | Supabase Auth | — |
-| Storage | Supabase Storage | — |
-| Plant AI | PlantNet API v2 | REST |
-| Deployment (Mobile) | EAS Build | APK only (no Play Store) |
-| Deployment (Backend) | Vercel Serverless | — |
-| CI/CD | GitHub Actions | — |
+| Layer                | Technology            | Version                  |
+| -------------------- | --------------------- | ------------------------ |
+| Mobile               | Expo (React Native)   | SDK 55                   |
+| Language (Mobile)    | TypeScript            | 5.9                      |
+| Language (Backend)   | Python                | 3.12                     |
+| Backend Framework    | FastAPI               | 0.117+                   |
+| Database             | Supabase (PostgreSQL) | —                        |
+| Auth                 | Supabase Auth         | —                        |
+| Storage              | Supabase Storage      | —                        |
+| Plant AI             | PlantNet API v2       | REST                     |
+| Deployment (Mobile)  | EAS Build             | APK only (no Play Store) |
+| Deployment (Backend) | Vercel Serverless     | —                        |
+| CI/CD                | GitHub Actions        | —                        |
 
 ## Architecture (One Diagram)
 
@@ -41,6 +41,7 @@ Gardenify is a plant identification mobile app. Users capture photos of plants, 
 **All changes to `main` go through pull requests.** No direct commits allowed.
 
 ### Branch Naming
+
 ```
 feat/short-description      # New features
 bugfix/short-description    # Bug fixes
@@ -49,6 +50,7 @@ hotfix/short-description    # Critical production fixes
 ```
 
 ### Flow
+
 ```bash
 # Start work
 git checkout main && git pull origin main
@@ -64,16 +66,18 @@ git push origin feat/my-feature
 ```
 
 ### What Happens on Merge
-| Event | Action |
-|---|---|
-| PR merged to `main` | CI runs (lint + typecheck + Python tests) |
-| `api/` changed on `main` | Vercel deploys backend to production |
-| `supabase/` changed on `main` | Supabase migrations run |
-| Push to `feat/*`/`bugfix/*`/`chore/*` | OTA preview update published |
-| `v*` tag pushed | GitHub Release created, APK built |
+
+| Event                                 | Action                                    |
+| ------------------------------------- | ----------------------------------------- |
+| PR merged to `main`                   | CI runs (lint + typecheck + Python tests) |
+| `api/` changed on `main`              | Vercel deploys backend to production      |
+| `supabase/` changed on `main`         | Supabase migrations run                   |
+| Push to `feat/*`/`bugfix/*`/`chore/*` | OTA preview update published              |
+| `v*` tag pushed                       | GitHub Release created, APK built         |
 
 ### Distribution
-- **APK:** Built via EAS, available at [expo.dev](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
+
+- **APK:** Built via EAS, distributed via [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases)
 - **GitHub Release:** Created automatically on `v*` tag push
 - **No Play Store** — direct APK installation only
 

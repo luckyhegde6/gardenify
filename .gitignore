@@ -135,3 +135,10 @@ skills-lock.json
 
 # Test artifacts
 identify_response.json
+
+#apk for testing Production build
+prodAPK/
+
+# Local build artifacts
+gardenify-prod.apk
+smoke-test.png

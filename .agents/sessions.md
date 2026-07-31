@@ -426,6 +426,25 @@ Track all agent sessions for continuity. Update before each commit.
 - **Security fix**: Supabase credentials moved from `eas.json` to EAS Secrets (user review caught this)
 - **Next session**: Merge PR, test APK on device, expand hash index, push notifications
 
+### 2026-07-31: v0.1.0 Release — APK Built, Tested, Shipped
+
+- **Duration**: ~30 min
+- **Goal**: Build production APK, test on emulator against prod backend, ship v0.1.0
+- **What was done**:
+  - ✅ PR #7 merged to main
+  - ✅ New production APK built (`eas build -p android --profile production`)
+  - ✅ APK (85.6MB) installed + launched on Pixel_7_API_34 emulator (com.gardenify.app)
+  - ✅ Production backend verified: health, debug, species search/detail, history all working
+  - ✅ `git tag v0.1.0` pushed → GitHub Release created with APK attached
+  - ✅ Release link: https://github.com/luckyhegde6/gardenify/releases/tag/v0.1.0
+  - ✅ README/AGENTS/MEMORY links updated to point at GitHub Releases
+- **Files modified**:
+  - `README.md` — download links → GitHub Releases
+  - `AGENTS.md` — APK distribution link → GitHub Releases
+  - `MEMORY.md` — APK URL → release link
+  - `.gitignore` — added `prodAPK/`, `gardenify-prod.apk`, `smoke-test.png`
+- **Next session**: Expand hash index, push notifications, Play Store (later)
+
 ---
 
 ## Session Rules
