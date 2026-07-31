@@ -22,7 +22,6 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
     environment: production
-    if: ${{ secrets.EXPO_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
