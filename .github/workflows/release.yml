@@ -34,14 +34,23 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Build APK (EAS)
+        id: build
         run: |
           echo "::group::Build APK"
-          eas build -p android --profile production --non-interactive --wait 2>&1
+          BUILD_OUTPUT=$(eas build -p android --profile production --non-interactive --wait 2>&1)
+          echo "$BUILD_OUTPUT"
           echo "::endgroup::"
+          APK_URL=$(echo "$BUILD_OUTPUT" | grep -oE 'https://expo\.dev/artifacts/eas/[A-Za-z0-9_-]+\.apk' | tail -1)
+          if [ -z "$APK_URL" ]; then
+            echo "::error::Could not find APK URL in EAS build output"
+            exit 1
+          fi
+          echo "apk_url=$APK_URL" >> "$GITHUB_OUTPUT"
       - name: Download APK artifact
         run: |
           echo "::group::Download APK"
-          eas build:download --platform android --output=gardenify.apk 2>&1
+          curl -sL -o gardenify.apk "${{ steps.build.outputs.apk_url }}"
+          ls -la gardenify.apk
           echo "APK size: $(stat --printf=%s gardenify.apk) bytes"
           echo "::endgroup::"
       - name: Upload APK as workflow artifact
