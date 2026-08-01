@@ -1303,3 +1303,95 @@ load_dotenv()
 **Applies to:** backend
 **Severity:** important
 **Status:** active
+
+---
+
+## 2026-07-31: Leftover Expo Template Placeholder Overrode the Entire App
+
+**Context:** Production APK launched to a blank screen reading "Edit src/app/index.tsx to edit this screen." instead of the Gardenify app — reported on a physical device and reproduced on the emulator.
+
+**Issue:** `src/app/index.tsx` was the default `create-expo-app` template placeholder. In expo-router, `/` resolves to `index.tsx`, so it rendered instead of the real app. The root `_layout.tsx`'s conditional Stack was never reached because the placeholder route shadowed it.
+
+**Fix:** Replace `src/app/index.tsx` with an auth-aware redirect:
+
+```tsx
+import { Redirect } from "expo-router";
+import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/loading";
+
+export default function Index() {
+  const { user, loading } = useAuth();
+  if (loading) return <Loading message="Loading..." />;
+  return <Redirect href={user ? "/(tabs)" : "/(auth)/login"} />;
+}
+```
+
+**Pattern:** Always audit `app/` routes (especially root `index.tsx`) before shipping — the Expo template leaves a placeholder that overrides routing. Verify by installing the built APK, not just via `npx expo start`.
+
+**Applies to:** mobile
+**Severity:** critical
+**Status:** active
+
+---
+
+## 2026-07-31: Verify Installed APK Actually Replaced the Old One (adb)
+
+**Context:** After `adb install -r` reported Success, relaunching still showed the old template screen. Root cause: the install silently didn't take effect (likely a stale adb server after `taskkill /f /im adb.exe`), leaving the previous v0.1.3 APK installed.
+
+**Issue:** `adb install` "Success" can be misleading — the old app can remain. The version name/code won't reveal it (both v0.1.3 and v0.1.4 are versionCode 1).
+
+**Fix:** Verify the installed APK matches your build by comparing MD5:
+
+```
+adb shell pm path com.gardenify.app        # get base.apk path
+adb pull <path> device_base.apk
+certutil -hashfile device_base.apk MD5
+certutil -hashfile my-build.apk MD5         # must match
+```
+
+If they differ: `adb uninstall com.gardenify.app` then `adb install -r` the correct APK, then re-verify.
+
+**Pattern:** Never trust `adb install` Success alone — compare hashes of the installed vs intended APK. Also, after killing adb (`taskkill /f /im adb.exe`), the emulator may disconnect and the next `adb install` targets a stale session.
+
+**Applies to:** mobile
+**Severity:** important
+**Status:** active
+
+---
+
+## 2026-07-31: Verify Built APK Contains the Correct Env Config
+
+**Context:** Suspected the production APK had wrong/missing Supabase or API config ("not working on device").
+
+**Issue:** Environment problems are hard to eyeball. `EXPO_PUBLIC_*` vars are inlined into the Hermes bundle at build time.
+
+**Fix:** Extract `assets/index.android.bundle` from the APK and grep for expected strings:
+
+```
+7z x -y -o<out> app.apk "assets/*"
+python -c "data=open('.../index.android.bundle','rb').read(); print(data.find(b'supabase.co'))"
+```
+
+Confirm: expected Supabase URL present, `localhost:54321` fallback ABSENT, API URL present. This proved v0.1.3's env config was actually correct — the real bug was routing.
+
+**Pattern:** Before debugging a "broken on device" report, rule out build config by inspecting the compiled bundle. Hermes bytecode keeps string literals searchable.
+
+**Applies to:** mobile
+**Severity:** important
+**Status:** active
+
+---
+
+## 2026-07-31: Android Emulator Input via `adb shell input` Is Unreliable After Reboot
+
+**Context:** Attempting automated UI smoke tests on the emulator after a fresh boot.
+
+**Issue:** `adb shell input tap` + `input text` failed to populate fields — login dialog said "Please enter email and password" even though text was typed. Field coordinates shift when the soft keyboard opens, and focus doesn't always land where tapped.
+
+**Fix:** For reliable programmatic verification, use `adb shell uiautomator dump` to read actual element bounds, then tap those exact centers. Re-dump after each interaction (layout shifts with the keyboard). Prefer `uiautomator dump` text assertions over pixel coordinates.
+
+**Pattern:** UI assertions via `uiautomator dump` are the most reliable non-visual signal on the emulator. Do a clean `adb uninstall` + `adb install` and verify hash before spending time on flaky `input` automation.
+
+**Applies to:** mobile
+**Severity:** minor
+**Status:** active

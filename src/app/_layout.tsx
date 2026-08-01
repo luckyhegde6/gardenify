@@ -6,7 +6,7 @@ import { ThemeProvider, useTheme } from "@/hooks/use-theme";
 import { Loading } from "@/components/loading";
 
 function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const { colors, isDark } = useTheme();
   const [ready, setReady] = useState(false);
 
@@ -20,11 +20,9 @@ function RootNavigator() {
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false }}>
-        {!user ? (
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        ) : (
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        )}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="identification/[id]"
           options={{

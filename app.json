@@ -8,7 +8,7 @@
     "scheme": "gardenify",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "package": "com.gardenify.app",

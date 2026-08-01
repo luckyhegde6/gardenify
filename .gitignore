@@ -141,4 +141,5 @@ prodAPK/
 
 # Local build artifacts
 gardenify-prod.apk
+gardenify-v*.apk
 smoke-test.png

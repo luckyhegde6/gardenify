@@ -112,7 +112,11 @@ def get_species_by_id(species_id: int) -> dict | None:
         )
         if not resp.data:
             return None
-        return _row_to_dict(resp.data[0])
+        result = _row_to_dict(resp.data[0])
+        # Ensure images key exists for API contract parity with local_db
+        if "images" not in result:
+            result["images"] = []
+        return result
     except Exception as e:
         logger.error("Supabase get by ID failed: %s", e)
         return None

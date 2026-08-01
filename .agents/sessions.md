@@ -445,6 +445,27 @@ Track all agent sessions for continuity. Update before each commit.
   - `.gitignore` — added `prodAPK/`, `gardenify-prod.apk`, `smoke-test.png`
 - **Next session**: Expand hash index, push notifications, Play Store (later)
 
+### 2026-07-31: Root-Cause Fix — APK Showed Expo Template Screen + New App Icon
+
+- **Duration**: ~1 hour
+- **Goal**: Diagnose why production APK "didn't work" on a real device, fix it, update the app icon
+- **Branch**: `main`
+- **What was done**:
+  - ✅ **Root cause found**: `src/app/index.tsx` was the default Expo template placeholder ("Edit src/app/index.tsx..."). It's the `/` route, so it overrode the real app on every device (emulator + physical).
+  - ✅ **Verified env was NOT the issue**: Extracted `assets/index.android.bundle` from v0.1.3 APK — contains `https://amyriuhwqyalodsfkwzf.supabase.co` and `https://sasyakashi.vercel.app/api`; no `localhost:54321` fallback.
+  - ✅ **Fix**: Replaced `src/app/index.tsx` with auth-aware `Redirect` → `/(auth)/login` or `/(tabs)` via `useAuth()`.
+  - ✅ **New app icon**: Generated leaf/sprout icon on brand blue→green gradient (`icon.png` 1024, adaptive foreground/background/monochrome, splash, favicon) via PIL script.
+  - ✅ `app.json` — `ios.icon` now points at `./assets/images/icon.png` (was the default `expo.icon` composer).
+  - ✅ Typecheck + lint pass.
+  - 🔄 **In progress**: EAS production APK build (`1ecadb49`) running for verification.
+- **Files modified**:
+  - `src/app/index.tsx` — template placeholder → auth redirect
+  - `assets/images/icon.png`, `android-icon-{foreground,background,monochrome}.png`, `splash-icon.png`, `favicon.png` — new branded icon
+  - `app.json` — iOS icon path
+  - `BUGS.md` — added BUG-007
+- **Tests status**: TypeScript clean, lint clean (APK verification pending)
+- **Next session**: Install rebuilt APK on emulator, confirm real screens load, then tag `v0.1.4` to release the fixed APK via CI
+
 ---
 
 ## Session Rules
