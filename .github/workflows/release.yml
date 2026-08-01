@@ -105,12 +105,21 @@ jobs:
           body: |
             ## Gardenify ${{ steps.tag.outputs.tag }}
 
+            ### 🚀 What's New
+            <!-- Summarize the headline improvements for this release -->
+
+            ### 🐛 Bug Fixes
+            <!-- List bugs fixed in this release (reference BUG IDs/issues) -->
+
+            ### ⚙️ Enhancements
+            <!-- List new features and improvements -->
+
             ### 📱 Android APK
-            The APK is attached to this release. Download it to install on your Android device.
+            Download `gardenify-${{ steps.tag.outputs.tag }}.apk` below and install on your Android device.
 
             **Installation:**
             1. Download the `gardenify-${{ steps.tag.outputs.tag }}.apk` file below
-            2. On your Android device, enable **Install from unknown sources** (Settings → Security)
+            2. Enable **Install from unknown sources** (Settings → Security)
             3. Open the downloaded APK to install
 
             ### 🌐 API
@@ -121,7 +130,8 @@ jobs:
             - **README:** https://github.com/luckyhegde6/gardenify
             - **Source Code:** https://github.com/luckyhegde6/gardenify
 
-            ### What's Changed
+            ### 📋 What's Changed (PRs)
+            <!-- Auto-generated PR list below -->
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
