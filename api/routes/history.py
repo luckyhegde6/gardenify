@@ -6,7 +6,6 @@ Returns processed image details including thumbnail paths and metadata.
 
 import logging
 import os
-from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -21,8 +20,6 @@ from api.models.schemas import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
 
 
 async def _get_user_id(authorization: str | None = None) -> str:
