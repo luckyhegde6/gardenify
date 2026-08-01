@@ -1,18 +1,3 @@
-node_modules
-.git
-.expo
-.vscode
-.opencode
-.claude
-.agents
-e2e
-tests
-docs
-scripts
-*.md
-api/data/gbif/
-api/data/gardenify.db
-api/data/gardenify.db-wal
-api/data/gardenify.db-shm
-api/data/extracted/
-!api/requirements.txt
+# Allowlist: only upload the api backend
+/*
+!api
