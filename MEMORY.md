@@ -6,27 +6,27 @@
 
 **Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
-| Key              | Value                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| Repo             | `https://github.com/luckyhegde6/gardenify`                                                        |
-| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                                            |
-| Platform         | Android-first, iOS later                                                                          |
-| Backend          | Python FastAPI on Vercel                                                                          |
-| Database         | Supabase (PostgreSQL + Auth + Storage)                                                            |
-| Plant AI         | PlantNet API v2 (free 500/day)                                                                    |
-| Current Branch   | `main`                                                                                            |
-| Backend (prod)   | `https://sasyakashi.vercel.app`                                                                   |
-| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                                        |
-| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                              |
-| APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (latest v0.1.3, next v0.1.4) |
-| EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                                 |
-| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                              |
-| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                             |
-| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                                                   |
-| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                                            |
-| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                                             |
-| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied                                   |
-| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`                        |
+| Key              | Value                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| Repo             | `https://github.com/luckyhegde6/gardenify`                                                         |
+| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                                             |
+| Platform         | Android-first, iOS later                                                                           |
+| Backend          | Python FastAPI on Vercel                                                                           |
+| Database         | Supabase (PostgreSQL + Auth + Storage)                                                             |
+| Plant AI         | PlantNet API v2 (free 500/day)                                                                     |
+| Current Branch   | `main`                                                                                             |
+| Backend (prod)   | `https://sasyakashi.vercel.app`                                                                    |
+| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                                         |
+| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                               |
+| APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (latest v0.1.4 — routing fix) |
+| EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                                  |
+| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                               |
+| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                              |
+| Tests            | 73 Python + 21 Playwright + 41 Jest = 135 total                                                    |
+| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                                             |
+| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                                              |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied                                    |
+| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`                         |
 
 ## Architecture (10 seconds)
 
@@ -96,12 +96,13 @@ Expo App → FastAPI Backend → PlantNet API
 - [x] Android APK built (production profile)
 - [x] PR #7 merged into main
 - [x] Release automation — tag push → EAS build → APK auto-attached to GitHub Release
-- [x] **BUG-007 fixed** — `src/app/index.tsx` template placeholder overrode the real app; replaced with auth redirect (v0.1.4 APK pending)
+- [x] **BUG-007 fixed** — `src/app/index.tsx` template placeholder overrode the real app; replaced with auth redirect (released v0.1.4)
 - [x] **Branded app icon** — leaf/sprout on blue→green gradient
 
 ### Not Done
 
-- [ ] 🟡 v0.1.4 APK (routing fix) verified on emulator + physical device
+- [ ] 🟡 v0.1.4 APK re-test on physical device (emulator verified)
+- [ ] 🔴 Vercel deploy workflow broken — `VERCEL_TOKEN` env secret invalid/expired
 - [ ] Expand hash index to remaining ~8K species (need alternative image sources)
 - [ ] Push notifications (Phase 3)
 - [ ] Community features (Phase 3)
