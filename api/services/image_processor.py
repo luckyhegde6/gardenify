@@ -2,6 +2,7 @@
 
 import io
 import logging
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -11,7 +12,29 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
+DEFAULT_UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
+
+
+def _resolve_upload_dir() -> Path:
+    """Return a writable upload directory.
+
+    Vercel serverless functions have a read-only filesystem except /tmp, so the
+    default ``api/data/uploads`` (under /var/task) must fall back to a temp dir.
+    """
+    try:
+        DEFAULT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        probe = DEFAULT_UPLOAD_DIR / ".write_test"
+        probe.write_text("ok")
+        probe.unlink()
+        return DEFAULT_UPLOAD_DIR
+    except OSError:
+        tmp = Path(tempfile.gettempdir()) / "gardenify-uploads"
+        tmp.mkdir(parents=True, exist_ok=True)
+        logger.info("Using temp upload dir: %s", tmp)
+        return tmp
+
+
+UPLOAD_DIR = _resolve_upload_dir()
 
 MAGIC_BYTES: dict[str, bytes] = {
     "image/jpeg": b"\xff\xd8\xff",
@@ -228,12 +251,22 @@ class ImageProcessor:
         compressed_path = self.upload_dir / f"{stem}_compressed.jpg"
         thumbnail_path = self.upload_dir / f"{stem}_thumb.jpg"
 
-        with open(original_path, "wb") as f:
-            f.write(data)
-        with open(compressed_path, "wb") as f:
-            f.write(compressed)
-        with open(thumbnail_path, "wb") as f:
-            f.write(thumbnail)
+        storage = {}
+        try:
+            with open(original_path, "wb") as f:
+                f.write(data)
+            with open(compressed_path, "wb") as f:
+                f.write(compressed)
+            with open(thumbnail_path, "wb") as f:
+                f.write(thumbnail)
+            storage = {
+                "upload_id": self.upload_id,
+                "original": str(original_path),
+                "compressed": str(compressed_path),
+                "thumbnail": str(thumbnail_path),
+            }
+        except OSError as e:
+            logger.warning("Upload storage write skipped for %s: %s", filename, e)
 
         meta = extract_enhanced_metadata(data, filename, content_type)
         meta["compressed_size_bytes"] = len(compressed)
@@ -245,12 +278,7 @@ class ImageProcessor:
             "valid": True,
             "metadata": meta,
             "compressed_data": compressed,
-            "storage": {
-                "upload_id": self.upload_id,
-                "original": str(original_path),
-                "compressed": str(compressed_path),
-                "thumbnail": str(thumbnail_path),
-            },
+            "storage": storage,
         }
 
     def get_upload_id(self) -> str:
