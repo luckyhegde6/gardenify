@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install uv (Vercel Python build requirement)
+        run: pip install uv
       - name: Install Vercel CLI
         run: npm install -g vercel
       - name: Pull Vercel Environment
