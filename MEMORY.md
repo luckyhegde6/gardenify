@@ -98,11 +98,15 @@ Expo App → FastAPI Backend → PlantNet API
 - [x] Release automation — tag push → EAS build → APK auto-attached to GitHub Release
 - [x] **BUG-007 fixed** — `src/app/index.tsx` template placeholder overrode the real app; replaced with auth redirect (released v0.1.4)
 - [x] **Branded app icon** — leaf/sprout on blue→green gradient
+- [x] **Deploy flow redesigned** — removed `deploy-backend.yml`; backend deploys via `deploy-backend` job in `release.yml` after `create-release` (tests → tag → release APK → deploy backend)
+- [x] **Vercel ENOENT deploy bug fixed** — `vercel build` + `--prebuilt` created local `.vercel/python/.venv` artifacts referenced by the deploy manifest but excluded by `.vercelignore` → `lstat ENOENT`. Switched to direct `vercel deploy --prod` (server-side build)
+- [x] **`.vercelignore` corrected** — only excludes untracked/generated files; previously excluded git-tracked files that Vercel's git-tree manifest syncs (deny-list and allowlist both caused ENOENT)
+- [x] **Vercel CLI pinned** — `vercel@58.4.4`; project `commandForIgnoringBuildStep` skips production on git pushes (prod deploys only via release workflow)
 
 ### Not Done
 
+- [ ] 🟡 First end-to-end run of new release flow — cut next tag, confirm `deploy-backend` job reaches production (species `images` key fix not live yet)
 - [ ] 🟡 v0.1.4 APK re-test on physical device (emulator verified)
-- [ ] 🔴 Vercel deploy workflow broken — `VERCEL_TOKEN` env secret invalid/expired
 - [ ] Expand hash index to remaining ~8K species (need alternative image sources)
 - [ ] Push notifications (Phase 3)
 - [ ] Community features (Phase 3)

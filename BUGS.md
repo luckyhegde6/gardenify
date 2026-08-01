@@ -106,6 +106,19 @@
 - **Root cause**: `src/app/index.tsx` was the default `create-expo-app` placeholder left in the repo. Since `/` resolves to `index.tsx`, the root `_layout.tsx`'s conditional Stack was never reached — the placeholder overrode all real screens
 - **Also verified**: v0.1.3 bundle does contain correct `https://amyriuhwqyalodsfkwzf.supabase.co` and `https://sasyakashi.vercel.app/api` (env config was not the problem)
 
+### BUG-008: Vercel Backend Deploy Fails with `lstat ENOENT` on Git-Tracked Files
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: CI/CD (Vercel deploy)
+- **Reported**: 2026-08-01
+- **Description**: Production backend deploy failed with `Error: ENOENT: no such file or directory, lstat '/vercel/path0/...'`. Error path changed across retries: `.agents/agentic-handoff.md` → `__mocks__/@react-native-async-storage/async-storage.ts` → `.vercel/python/.venv/lib/python3.12/site-packages/StrEnum-0.4.15.dist-info/LICENSE`.
+- **Steps to reproduce**: Push `api/**` to `main` (or `workflow_dispatch`) → `vercel deploy` step errors with `lstat ENOENT`
+- **Expected**: Backend deploys to production
+- **Actual**: Vercel's build server fails syncing deployment files referenced in the manifest but missing from the upload
+- **Fix**: (1) `.vercelignore` now excludes ONLY untracked/generated files (verified via `git ls-files --error-unmatch`); (2) removed `vercel build` + `vercel deploy --prebuilt` — now direct `vercel deploy --prod` (server-side build); (3) moved deploy into `release.yml` `deploy-backend` job after `create-release`
+- **Root cause**: For a GitHub-linked Vercel project, the deployment manifest is derived from the git tree. Any git-tracked file excluded by `.vercelignore` breaks the server-side file sync (`lstat ENOENT`). Additionally, local `vercel build` produced `.vercel/python/.venv` artifacts referenced by the manifest but excluded from the upload.
+
 ### BUG-006: Server Process Was Never Restarted
 
 - **Status**: Fixed
@@ -176,7 +189,7 @@
 
 ---
 
-**Last updated**: 2026-07-31
+**Last updated**: 2026-08-01
 **Total open**: 0
-**Total fixed**: 7
+**Total fixed**: 8
 **Total observations**: 3

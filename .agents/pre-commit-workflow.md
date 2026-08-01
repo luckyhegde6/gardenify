@@ -2,6 +2,15 @@
 
 > Run this checklist BEFORE every commit.
 
+## Session Todo File (MANDATORY)
+
+Always maintain `.agents/session-todos.md` from session start until the final commit:
+
+1. **At session start**: copy the checklist + any carried-forward todos into the file.
+2. **Before every commit**: review all todos — mark completed/cancelled; carry unfulfilled ones forward as "next session" todos.
+3. **During commit check**: if an unfulfilled todo is a confirmed bug, add it to BUGS.md.
+4. **Never drop a todo silently** — carry it forward or log it.
+
 ## Pre-Commit Checklist
 
 ```
@@ -29,6 +38,7 @@
   □ LESSONS.md updated (if new discovery)
   □ .agents/sessions.md updated
   □ .agents/handoff-current.md updated
+  □ .agents/session-todos.md checked — all done/carried-forward; unfulfilled bugs → BUGS.md
   □ PRD.md updated (if feature completed)
   □ BUGS.md updated (if bug fixed)
   □ Comments explain WHY, not WHAT
@@ -59,6 +69,7 @@ Refs: #issue-number (if applicable)
 ```
 
 ### Types
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -71,6 +82,7 @@ Refs: #issue-number (if applicable)
 - `security`: Security fix
 
 ### Scopes
+
 - `api`: Backend API
 - `mobile`: Expo app
 - `db`: Database/schema
@@ -91,6 +103,7 @@ Refs: #issue-number (if applicable)
 ## Automated Checks
 
 ### Pre-commit Hooks
+
 ```yaml
 # .pre-commit-config.yaml
 repos:
@@ -119,6 +132,7 @@ repos:
 ```
 
 ### GitHub Actions
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -130,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci
       - run: npx tsc --noEmit
-  
+
   python:
     runs-on: ubuntu-latest
     defaults:

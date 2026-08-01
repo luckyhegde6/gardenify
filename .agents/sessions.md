@@ -468,6 +468,29 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-01: Backend Deploy Fixed — Moved into Release Flow
+
+- **Duration**: ~2 hours
+- **Goal**: Fix the broken Vercel production deploy (token invalid → uv missing → `lstat ENOENT`), then align deploy with the intended release process
+- **Branch**: `main` (via PRs #10–#14)
+- **What was done**:
+  - ✅ **Token fixed**: replaced expired `VERCEL_TOKEN` env secret with `vcp_1vJDJ...` (validated via `vercel whoami` → luckyhegde6); set via `gh secret set --env production`
+  - ✅ **uv fix (#10)**: `vercel build` needs `uv` on the runner → added `pip install uv`
+  - ✅ **Root-caused `lstat ENOENT`**: Vercel's deploy manifest syncs the git tree; any git-tracked file excluded by `.vercelignore` breaks the sync. Deny-list failed on `.agents/*.md` (#11 allowlist made it worse → `__mocks__/...`)
+  - ✅ **`.vercelignore` corrected (#13)**: only excludes untracked/generated files — verified no remaining pattern matches a git-tracked path
+  - ✅ **CLI pinned (#12)**: `vercel@58.4.4` + `--force` (did not fix alone — confirmed manifest issue)
+  - ✅ **Deploy flow redesigned (#14)**: removed `deploy-backend.yml`; added `deploy-backend` job to `release.yml` running AFTER `create-release` via direct `vercel deploy --prod` (server-side build, no local `.vercel/python/.venv` artifacts)
+  - ✅ **Vercel project setting**: restored `commandForIgnoringBuildStep` to skip production on git pushes (no premature auto-deploys; prod deploys only via release workflow)
+- **Files modified**:
+  - `.github/workflows/deploy-backend.yml` — deleted
+  - `.github/workflows/release.yml` — added `deploy-backend` job
+  - `.vercelignore` — only untracked files
+  - `.github/workflows/deploy-backend.yml` (before deletion) — uv + CLI pin + direct deploy (reverted via deletion)
+- **Tests status**: TypeScript clean, lint clean, 73/73 Python pass, all PRs #10–#14 CI checks green
+- **Next session**: Cut next tag to run the new release flow end-to-end; verify `deploy-backend` job reaches production (species `images` key fix pending)
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done
