@@ -1,17 +1,11 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Redirect } from "expo-router";
+import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/loading";
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
+  const { user, loading } = useAuth();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+  if (loading) return <Loading message="Loading..." />;
+
+  return <Redirect href={user ? "/(tabs)" : "/(auth)/login"} />;
+}

@@ -92,6 +92,20 @@
 - **Fix**: Removed `lang` parameter from multipart body and all function signatures
 - **Root cause**: API v2 doesn't support `lang` — only v1 did
 
+### BUG-007: Production APK Shows Expo Template Screen ("Edit src/app/index.tsx")
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: Mobile
+- **Reported**: 2026-07-31
+- **Description**: Production APK launched to a blank white screen reading "Edit src/app/index.tsx to edit this screen." instead of the Gardenify auth/scan screens. Reproduced on emulator and reported on a physical device.
+- **Steps to reproduce**: Install `gardenify-v0.1.3.apk`, launch `com.gardenify.app` → template placeholder renders
+- **Expected**: App opens at login (unauthenticated) or Scan tab (authenticated)
+- **Actual**: Default Expo template placeholder screen rendered
+- **Fix**: Replaced `src/app/index.tsx` template placeholder with an auth-aware `Redirect` to `/(auth)/login` or `/(tabs)` via `useAuth()`
+- **Root cause**: `src/app/index.tsx` was the default `create-expo-app` placeholder left in the repo. Since `/` resolves to `index.tsx`, the root `_layout.tsx`'s conditional Stack was never reached — the placeholder overrode all real screens
+- **Also verified**: v0.1.3 bundle does contain correct `https://amyriuhwqyalodsfkwzf.supabase.co` and `https://sasyakashi.vercel.app/api` (env config was not the problem)
+
 ### BUG-006: Server Process Was Never Restarted
 
 - **Status**: Fixed
@@ -162,7 +176,7 @@
 
 ---
 
-**Last updated**: 2026-07-30
+**Last updated**: 2026-07-31
 **Total open**: 0
-**Total fixed**: 6
+**Total fixed**: 7
 **Total observations**: 3
