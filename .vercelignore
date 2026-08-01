@@ -1,3 +1,9 @@
-# Allowlist: only upload the api backend
-/*
-!api
+node_modules
+.git
+.expo
+.vercel
+api/data/gbif/
+api/data/gardenify.db
+api/data/gardenify.db-wal
+api/data/gardenify.db-shm
+api/data/extracted/
