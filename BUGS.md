@@ -1,6 +1,9 @@
 # BUGS.md — Issue Tracker
 
 > Log all bugs, issues, and observations. Track resolution.
+> **Note (2026-08-02):** New bugs are now tracked as GitHub Issues
+> (https://github.com/luckyhegde6/gardenify/issues) instead of this file. This
+> file remains for historical entries and cross-references.
 
 ## Format
 
@@ -119,6 +122,19 @@
 - **Fix**: (1) `.vercelignore` now excludes ONLY untracked/generated files (verified via `git ls-files --error-unmatch`); (2) removed `vercel build` + `vercel deploy --prebuilt` — now direct `vercel deploy --prod` (server-side build); (3) moved deploy into `release.yml` `deploy-backend` job after `create-release`
 - **Root cause**: For a GitHub-linked Vercel project, the deployment manifest is derived from the git tree. Any git-tracked file excluded by `.vercelignore` breaks the server-side file sync (`lstat ENOENT`). Additionally, local `vercel build` produced `.vercel/python/.venv` artifacts referenced by the manifest but excluded from the upload.
 
+### BUG-009: Production `/api/identify` 500 — Read-only File System on Vercel
+
+- **Status**: Fixed
+- **Severity**: Critical
+- **Component**: Backend
+- **Reported**: 2026-08-02 (GitHub Issue #18)
+- **Description**: `POST /api/identify` returned HTTP 500 in production. `ImageProcessor.__init__` → `_ensure_upload_dir()` → `mkdir` at `/var/task/api/data/uploads/<upload_id>` failed with `OSError: [Errno 30] Read-only file system`.
+- **Steps to reproduce**: Upload any plant image to production `/api/identify` → 500 with read-only FS traceback
+- **Expected**: Identification proceeds (in-memory `compressed_data` → PlantNet)
+- **Actual**: Crash on upload dir `mkdir` (Vercel serverless `/var/task` is read-only; only `/tmp` writable)
+- **Fix**: `image_processor.py` resolves writable upload dir (probe default, fall back to `<tempdir>/gardenify-uploads`); storage writes best-effort (`storage: {}` on failure, in-memory data preserved); `history.py` imports `UPLOAD_DIR`. Deployed via PR #16. Verified: prod returns HTTP 400 (plant validation) not 500.
+- **Root cause**: Hardcoded project-relative upload path is read-only on Vercel serverless
+
 ### BUG-006: Server Process Was Never Restarted
 
 - **Status**: Fixed
@@ -189,7 +205,7 @@
 
 ---
 
-**Last updated**: 2026-08-01
+**Last updated**: 2026-08-02
 **Total open**: 0
-**Total fixed**: 8
+**Total fixed**: 9
 **Total observations**: 3

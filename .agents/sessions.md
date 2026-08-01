@@ -491,6 +491,30 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-02: Identify 500 Fix + Release Notes + v0.1.5 Verification
+
+- **Duration**: ~1.5 hours
+- **Goal**: Fix production `/api/identify` 500 (read-only FS on Vercel), publish release-notes template, verify v0.1.5 release + prod seed users
+- **Branch**: `main` (via PRs #16, #17)
+- **What was done**:
+  - ✅ **Read-only FS 500 fixed (#16)**: `ImageProcessor` resolves a writable upload dir — probes `api/data/uploads`, falls back to `<tempdir>/gardenify-uploads` on Vercel (`/var/task` is read-only, only `/tmp` writable). Storage writes best-effort: on failure `storage` returns `{}`, in-memory `compressed_data` still flows to PlantNet. `history.py` imports `UPLOAD_DIR` from image_processor.
+  - ✅ **4 new tests** (`api/tests/test_image_processor.py`): default writable, temp fallback, write-failure resilience, normal storage path. 77/77 Python pass, ruff clean, tsc clean.
+  - ✅ **Release notes template (#17)**: `release.yml` body now has What's New / Bug Fixes / Enhancements / What's Changed (PRs) placeholders.
+  - ✅ **Both PRs merged** (squash); Vercel auto-deployed prod build `gardenify-7h7o4wo4x` (Ready, aliased to `sasyakashi.vercel.app`).
+  - ✅ **Prod verified**: `POST /api/identify` now returns HTTP 400 (plant-detection validation) instead of read-only FS 500.
+  - ✅ **Issue #18 filed & closed** documenting the bug + fix.
+  - ✅ **v0.1.5 release flow confirmed** — APK (89.5MB) installed on `emulator-5554`, launches; seed users `admin@`/`test@`/`user2@` synced to prod Supabase via Auth Admin API.
+- **Files modified**:
+  - `api/services/image_processor.py` — `_resolve_upload_dir()` (temp fallback), best-effort storage writes
+  - `api/routes/history.py` — import `UPLOAD_DIR` from image_processor (dropped duplicate Path)
+  - `api/tests/test_image_processor.py` — new test file (4 tests)
+  - `.github/workflows/release.yml` — release-notes body placeholders
+  - `.agents/handoff-current.md`, `.agents/session-todos.md`, `.agents/sessions.md`, `MEMORY.md` — updated
+- **Tests status**: 77/77 Python, ruff clean, `npx tsc --noEmit` clean, all CI checks green
+- **Next session**: Fix Supabase prod auth config (Site URL/redirects → app, not localhost); investigate `public.users` missing profile rows for Auth users ("verified but cannot login"); re-test v0.1.5 APK against prod
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done
