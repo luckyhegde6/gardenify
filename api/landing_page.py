@@ -1,5 +1,54 @@
 """Static HTML pages for sasyakashi.vercel.app."""
 
+NOT_FOUND_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | Gardenify</title>
+    <style>
+        :root {
+            --green-600: #16a34a; --green-700: #15803d; --green-800: #166534;
+            --gray-50: #f9fafb; --gray-200: #e5e7eb; --gray-500: #6b7280;
+            --gray-600: #4b5563; --gray-800: #1f2937;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--gray-800); background: var(--gray-50); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+        .hero { background: linear-gradient(135deg, var(--green-800), var(--green-600)); color: white; text-align: center; padding: 4.5rem 1.5rem 3.5rem; }
+        .hero h1 { font-size: 5rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; }
+        .hero p { font-size: 1.2rem; opacity: 0.95; }
+        .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; text-align: center; flex: 1; }
+        .container p { color: var(--gray-600); margin-bottom: 1.5rem; }
+        .links { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+        .btn { display: inline-block; background: var(--green-600); color: white; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 600; text-decoration: none; }
+        .btn:hover { background: var(--green-700); text-decoration: none; }
+        .btn-secondary { background: white; color: var(--green-600); border: 1px solid var(--gray-200); }
+        .btn-secondary:hover { background: var(--gray-50); }
+        footer { text-align: center; padding: 2rem; color: var(--gray-500); font-size: 0.85rem; border-top: 1px solid var(--gray-200); background: white; }
+        footer a { color: var(--green-600); }
+        @media (max-width: 640px) { .hero h1 { font-size: 3.5rem; } }
+    </style>
+</head>
+<body>
+<div class="hero">
+    <h1>404</h1>
+    <p>🌿 Page not found</p>
+</div>
+<div class="container">
+    <p>The page you're looking for doesn't exist or has moved. Head back to a page that does.</p>
+    <div class="links">
+        <a href="/" class="btn">Back to Home</a>
+        <a href="/docs" class="btn btn-secondary">API Docs</a>
+        <a href="/onboarding" class="btn btn-secondary">How It Works</a>
+        <a href="/about" class="btn btn-secondary">About</a>
+    </div>
+</div>
+<footer>
+    <p>Gardenify &copy; 2026 &middot; <a href="https://github.com/luckyhegde6/gardenify" target="_blank">GitHub</a> &middot; <a href="/api/health">API Status</a></p>
+</footer>
+</body>
+</html>"""
+
 LANDING_PAGE_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
