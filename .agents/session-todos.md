@@ -36,9 +36,22 @@
 
 ### Carried Forward (next session)
 
-- [ ] Cut next tag (e.g., v0.1.5) → verify new release flow end-to-end: APK build → GitHub Release → `deploy-backend` reaches production
-- [ ] Verify `https://sasyakashi.vercel.app/health` returns `use_remote=true` + db ok after first release
-- [ ] Confirm species detail endpoint returns `images` key (pending `supabase_species.py` fix reaching prod)
-- [ ] Real-device re-test of `gardenify-v0.1.4.apk`
+- [x] Cut v0.1.5 tag → release flow end-to-end verified (APK → Release → deploy-backend to prod)
+- [x] Verify `https://sasyakashi.vercel.app/api/health` returns ok after first release
+- [x] Confirm species detail endpoint returns `images` key (fix live on prod)
+- [ ] Real-device re-test of `gardenify-v0.1.5.apk`
+- [ ] Fix Supabase prod auth config (Site URL / redirect URLs → production app, not localhost)
+- [ ] Investigate "verified but cannot login" (missing `public.users` profile rows for Auth users)
+- [ ] Re-test v0.1.5 APK on emulator against prod (login + identify flow)
 - [ ] Expand hash index to remaining ~8K species
 - [ ] Push notifications (Phase 3)
+
+## 2026-08-02 Session — Identify 500 Fix + Release Notes
+
+- [x] Fix `/api/identify` read-only FS 500 (PR #16) — temp-dir fallback + best-effort writes
+- [x] Add 4 tests (`api/tests/test_image_processor.py`); 77 passed, ruff/tsc clean
+- [x] PR #17: release-notes body template placeholders
+- [x] Merge both PRs; verified prod auto-deploy (build `gardenify-7h7o4wo4x` Ready, aliased)
+- [x] Verify prod `/api/identify` returns 400 (plant validation) not read-only FS 500
+- [x] File & close issue #18 (read-only FS bug)
+- [x] Update docs (handoff, sessions)

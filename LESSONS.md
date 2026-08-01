@@ -1423,3 +1423,21 @@ Confirm: expected Supabase URL present, `localhost:54321` fallback ABSENT, API U
 **Applies to:** CI/CD
 **Severity:** important
 **Status:** active
+
+## 2026-08-02: Vercel Serverless Filesystem Is Read-Only (Only /tmp Writable)
+
+**Context:** Production `/api/identify` returned HTTP 500. The user-supplied traceback showed `ImageProcessor()` → `_ensure_upload_dir()` → `mkdir` at `/var/task/api/data/uploads/<upload_id>` failing with `OSError: [Errno 30] Read-only file system`.
+
+**Issue:** Vercel serverless functions run from a read-only `/var/task`. Any write outside `/tmp` crashes at runtime — even a directory `mkdir`. The upload dir was hardcoded to `api/data/uploads`, which works locally but is read-only in production.
+
+**Fix:**
+
+1. Resolve the upload dir at import time: probe the default dir with a write test; on `OSError`, fall back to `<tempdir>/gardenify-uploads` (Vercel maps `/tmp`).
+2. Make disk writes best-effort: wrap storage file writes in `try/except OSError`; on failure return `storage: {}` while still returning the in-memory `compressed_data` (the PlantNet pipeline only needs in-memory bytes).
+3. Import `UPLOAD_DIR` from `image_processor` in `history.py` rather than re-deriving the path (single source of truth).
+
+**Pattern:** On serverless platforms, never assume a project-relative path is writable. Resolve writable storage at startup with a fallback to `tempfile.gettempdir()`, and treat secondary disk writes (metadata/storage) as non-fatal so the primary in-memory path always succeeds.
+
+**Applies to:** backend
+**Severity:** critical
+**Status:** active
