@@ -1395,3 +1395,31 @@ Confirm: expected Supabase URL present, `localhost:54321` fallback ABSENT, API U
 **Applies to:** mobile
 **Severity:** minor
 **Status:** active
+
+## 2026-08-01: Vercel Deploy `lstat ENOENT` — Never Exclude Git-Tracked Files via `.vercelignore`
+
+**Context:** Backend production deploy (GH Actions → `vercel deploy`) failed repeatedly with `Error: ENOENT: no such file or directory, lstat '/vercel/path0/...'` — first on `.agents/agentic-handoff.md`, then `__mocks__/...`, then `.vercel/python/.venv/...`.
+
+**Issue:** For a GitHub-linked Vercel project, the deployment manifest is derived from the **git tree**, and Vercel's build server syncs every tracked file to `/vercel/path0`. Any git-tracked file excluded from the upload (via `.vercelignore`) breaks that sync with `lstat ENOENT`.
+
+**Fix:** `.vercelignore` must exclude ONLY untracked/generated files (`node_modules`, `.git`, `.expo`, `.vercel`, `api/data` artifacts). Both a deny-list that excluded tracked files (`.agents/*.md`) AND a `/*` allowlist (uploading only `api/`) caused ENOENT — the manifest references ALL tracked files regardless.
+
+**Bonus:** `vercel build` + `vercel deploy --prebuilt` is the wrong pattern here — local `vercel build` creates `.vercel/python/.venv`, which the deploy manifest references but `.vercelignore` excludes → more ENOENT. Use direct `vercel deploy --prod` and let Vercel build server-side (also makes system env vars available).
+
+**Pattern:** To check a `.vercelignore` rule is safe: `git ls-files --error-unmatch <pattern>` — any match means a tracked file, which must NOT be ignored.
+
+**Applies to:** backend / CI/CD
+**Severity:** critical
+**Status:** active
+
+## 2026-08-01: Deploy Backend as Part of the Release Flow, Not on Every Push
+
+**Context:** Backend auto-deployed to production on every `api/**` change to `main` via `deploy-backend.yml`.
+
+**Issue:** This double-deployed with Vercel's GitHub integration and deployed the backend before the Android app was released, so API changes could ship ahead of the app that uses them.
+
+**Fix:** Remove the push-triggered deploy workflow. Add a `deploy-backend` job to `release.yml` with `needs: create-release`, so the order is: tests/checks → cut tag → release APK → deploy backend. Restore Vercel's `commandForIgnoringBuildStep` to skip production on git pushes (so Vercel doesn't auto-deploy either).
+
+**Applies to:** CI/CD
+**Severity:** important
+**Status:** active

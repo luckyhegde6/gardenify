@@ -195,9 +195,10 @@ For comprehensive architecture, phase TODOs, security guidelines, and agentic wo
 
 ## Pre-Commit Workflow
 
-Before EVERY commit, update these files:
+Maintain `.agents/session-todos.md` from session start until the final commit: mark done/cancelled items before each commit, carry unfulfilled ones forward as new todos, and log any unfulfilled todo that is a confirmed bug into `BUGS.md`. Before EVERY commit, update these files:
 
 ```
+□ .agents/session-todos.md — todos checked, unfulfilled carried forward, bugs logged
 □ .agents/sessions.md — log what was done
 □ .agents/handoff-current.md — next steps for next agent
 □ MEMORY.md — current state + what's not done

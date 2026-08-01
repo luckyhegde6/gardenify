@@ -146,6 +146,8 @@ Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`
 Before EVERY commit:
 
 ```
+□ .agents/session-todos.md maintained — start of session, checked before commit;
+  unfulfilled todos carried forward; confirmed-bug todos logged in BUGS.md
 □ npm run lint passes
 □ npx tsc --noEmit passes
 □ cd api && pytest passes
@@ -156,6 +158,7 @@ Before EVERY commit:
 □ .agents/handoff-current.md updated
 □ MEMORY.md updated
 □ LESSONS.md updated (if new discovery)
+□ BUGS.md updated (if bug found/fixed)
 ```
 
 ---
