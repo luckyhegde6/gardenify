@@ -135,8 +135,9 @@ class TestSupabaseSeedMapping:
         }])
 
         assert rows[0]["scientific_name"] == "Rosa damascena"
-        assert '"Damask Rose"' in rows[0]["common_names"]
-        assert '"Middle East"' in rows[0]["native_regions"]
+        # jsonb columns must be real lists, not JSON strings
+        assert rows[0]["common_names"] == ["Damask Rose"]
+        assert rows[0]["native_regions"] == ["Middle East"]
         assert rows[0]["observation_count"] == 5
         assert rows[0]["source"] == "gbif"
 
@@ -146,8 +147,8 @@ class TestSupabaseSeedMapping:
         rows = _species_rows([{"scientific_name": "Monstera deliciosa", "observation_count": 3}])
         assert rows[0]["family"] == ""
         assert rows[0]["genus"] == ""
-        assert rows[0]["common_names"] == "[]"
-        assert rows[0]["native_regions"] == "[]"
+        assert rows[0]["common_names"] == []
+        assert rows[0]["native_regions"] == []
 
     def test_requires_supabase_env(self):
         import os

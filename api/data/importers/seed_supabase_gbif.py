@@ -48,17 +48,36 @@ def _get_client():
     return create_client(url, key)
 
 
+def _to_list(value) -> list:
+    """Normalize a jsonb list value. Handles list, JSON string, or empty."""
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, list) else []
+        except (json.JSONDecodeError, TypeError):
+            return []
+    return []
+
+
 def _species_rows(species_list: list[dict]) -> list[dict]:
-    """Map importer species dicts to Supabase species columns (JSON fields)."""
+    """Map importer species dicts to Supabase species columns (JSON fields).
+
+    ``common_names`` and ``native_regions`` are jsonb columns, so they must be
+    sent as real lists (not JSON strings). The GBIF archive rarely carries
+    common names, so empty lists are sent and existing values are preserved
+    during upsert to avoid clobbering enriched data.
+    """
     rows = []
     for sp in species_list:
         rows.append({
             "scientific_name": sp["scientific_name"],
-            "common_names": json.dumps(sp.get("common_names") or []),
+            "common_names": _to_list(sp.get("common_names")),
             "family": sp.get("family", ""),
             "genus": sp.get("genus", ""),
             "category": sp.get("category", ""),
-            "native_regions": json.dumps(sp.get("native_regions") or []),
+            "native_regions": _to_list(sp.get("native_regions")),
             "observation_count": sp.get("observation_count", 1),
             "source": sp.get("source", "gbif"),
         })
@@ -97,29 +116,32 @@ def seed_supabase_gbif(max_species: int = 10000, force_download: bool = False) -
         try:
             existing = (
                 client.table("species")
-                .select("id, scientific_name, observation_count")
+                .select("id, scientific_name, observation_count, common_names, native_regions")
                 .in_("scientific_name", [r["scientific_name"] for r in batch])
                 .execute()
             )
             existing_by_name = {r["scientific_name"]: r for r in (existing.data or [])}
 
-            to_insert = []
+            to_upsert = []
             for row in batch:
-                if row["scientific_name"] in existing_by_name:
-                    eid = existing_by_name[row["scientific_name"]]["id"]
-                    client.table("species").update({
-                        "observation_count": (
-                            existing_by_name[row["scientific_name"]].get("observation_count", 0)
-                            + row["observation_count"]
-                        ),
-                    }).eq("id", eid).execute()
+                prev = existing_by_name.get(row["scientific_name"])
+                if prev is not None:
+                    row["observation_count"] = prev.get("observation_count", 0) + row["observation_count"]
+                    # Preserve enriched data the archive doesn't carry.
+                    if not row.get("common_names"):
+                        row["common_names"] = prev.get("common_names", [])
+                    if not row.get("native_regions"):
+                        row["native_regions"] = prev.get("native_regions", [])
                     updated += 1
                 else:
-                    to_insert.append(row)
+                    inserted += 1
+                to_upsert.append(row)
 
-            if to_insert:
-                client.table("species").insert(to_insert).execute()
-                inserted += len(to_insert)
+            client.table("species").upsert(
+                to_upsert,
+                on_conflict="scientific_name",
+                ignore_duplicates=False,
+            ).execute()
         except Exception as e:
             errors += len(batch)
             logger.warning("Batch %d failed: %s", i // BATCH_SIZE, e)
