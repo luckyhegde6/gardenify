@@ -12,11 +12,13 @@ import logging
 import os
 import time
 import uuid
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.config import settings
 
@@ -168,6 +170,44 @@ async def onboarding_page():
     """Onboarding page with architecture, workflows, and sequence diagrams."""
     from api.onboarding_page import ONBOARDING_PAGE_HTML
     return HTMLResponse(content=ONBOARDING_PAGE_HTML)
+
+
+FAVICON_PATH = Path(__file__).resolve().parent.parent / "assets" / "images" / "favicon.png"
+BASE_URL = "https://sasyakashi.vercel.app"
+SITEMAP_URLS = ["/", "/about", "/onboarding", "/docs", "/redoc", "/api/health"]
+
+
+@app.get("/favicon.png", include_in_schema=False)
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serve the app favicon (avoids 404 for browser requests)."""
+    data = FAVICON_PATH.read_bytes()
+    return Response(content=data, media_type="image/png")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    """Generate an XML sitemap of the public pages (avoids 404 for crawlers)."""
+    urls = "".join(
+        f"    <url><loc>{BASE_URL}{path}</loc></url>\n" for path in SITEMAP_URLS
+    )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}</urlset>\n"
+    )
+    return Response(content=body, media_type="application/xml")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Return a branded HTML 404 for unknown non-API paths, JSON for API paths."""
+    if exc.status_code == 404:
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(status_code=404, content={"detail": "Not found"})
+        from api.landing_page import NOT_FOUND_HTML
+        return HTMLResponse(content=NOT_FOUND_HTML, status_code=404)
+    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc.detail)})
 
 
 logger.info("Gardenify API started (debug=%s)", settings.debug)

@@ -2,6 +2,27 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-02: jsonb Columns Reject json.dumps Strings — and Bulk Upsert Can Wipe Enriched Data
+
+**Context:** The new GBIF→Supabase seed script (`seed_supabase_gbif.py`) upserted 10,000 species. Prod `common_names`/`native_regions` search broke (`/api/species?q=sunflower` returned 0) and `common_names` came back as a string not a list.
+
+**Issue:** Two compounding bugs:
+
+1. The `species` table stores `common_names` and `native_regions` as **jsonb**, but the seed sent `json.dumps([...])` — a JSON _string_ (`"[]"`), which PostgREST stores as a jsonb string. The API's `_row_to_dict` then returned `'[]'` (string), failing `isinstance(..., list)` checks.
+2. The seed used `upsert(on_conflict="scientific_name")`, which **overwrites every column** of existing rows. Since the GBIF archive has no common names, all 10,008 enriched prod rows were clobbered to empty arrays.
+
+**Fix:**
+
+1. Send jsonb fields as real Python lists (`_to_list()`), never `json.dumps` strings.
+2. During upsert, fetch existing `common_names`/`native_regions` and preserve non-empty values: only fall back to the archive's (empty) value when the existing row is empty.
+3. Beware `list("[]")` — it splits the string into `['[', ']']` (truthy), defeating the "empty" guard. Use a `json.loads`-based normalizer instead.
+
+**Pattern:** For jsonb columns, treat JSON strings as data loss. When a bulk upsert can overwrite richer rows with sparse seed data, merge-on-conflict (preserve non-empty fields) instead of blind upsert. After any destructive seed run, verify `jsonb_typeof(col)='array'` and sample enriched rows.
+
+**Applies to:** database, backend
+**Severity:** critical
+**Status:** active
+
 ## Format
 
 ```markdown

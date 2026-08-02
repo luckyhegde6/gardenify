@@ -117,8 +117,61 @@ class TestGBIFExtraction:
         assert species == []
 
 
+class TestSupabaseSeedMapping:
+    """Test mapping importer species dicts to Supabase columns."""
+
+    def test_species_rows_json_encoded(self):
+        from api.data.importers.seed_supabase_gbif import _species_rows
+
+        rows = _species_rows([{
+            "scientific_name": "Rosa damascena",
+            "common_names": ["Damask Rose"],
+            "family": "Rosaceae",
+            "genus": "Rosa",
+            "category": "woody_plant",
+            "native_regions": ["Middle East"],
+            "observation_count": 5,
+            "source": "gbif",
+        }])
+
+        assert rows[0]["scientific_name"] == "Rosa damascena"
+        # jsonb columns must be real lists, not JSON strings
+        assert rows[0]["common_names"] == ["Damask Rose"]
+        assert rows[0]["native_regions"] == ["Middle East"]
+        assert rows[0]["observation_count"] == 5
+        assert rows[0]["source"] == "gbif"
+
+    def test_species_rows_missing_optional_fields(self):
+        from api.data.importers.seed_supabase_gbif import _species_rows
+
+        rows = _species_rows([{"scientific_name": "Monstera deliciosa", "observation_count": 3}])
+        assert rows[0]["family"] == ""
+        assert rows[0]["genus"] == ""
+        assert rows[0]["common_names"] == []
+        assert rows[0]["native_regions"] == []
+
+    def test_requires_supabase_env(self):
+        import os
+
+        from api.data.importers.seed_supabase_gbif import _get_client
+
+        old_url = os.environ.get("SUPABASE_URL")
+        old_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+        os.environ.pop("SUPABASE_URL", None)
+        os.environ.pop("SUPABASE_SERVICE_ROLE_KEY", None)
+        try:
+            import pytest
+            with pytest.raises(RuntimeError):
+                _get_client()
+        finally:
+            if old_url is not None:
+                os.environ["SUPABASE_URL"] = old_url
+            if old_key is not None:
+                os.environ["SUPABASE_SERVICE_ROLE_KEY"] = old_key
+
+
 class TestGBIFImport:
-    """Test database import."""
+    """Test import to database."""
 
     def test_import_to_database(self, tmp_path):
         """Test species are inserted into database."""

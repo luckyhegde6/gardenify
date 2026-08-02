@@ -15,36 +15,41 @@ Expo App → FastAPI Backend → PlantNet API
 
 ## Current State (What's Done)
 
-| Component            | Status   | Notes                                                               |
-| -------------------- | -------- | ------------------------------------------------------------------- |
-| Backend API          | ✅ Done  | FastAPI, full pipeline: OpenCV gate → local DB → PlantNet           |
-| PlantNet Integration | ✅ Done  | Species + disease detection                                         |
-| Plant Care           | ✅ Done  | Taxonomy-based care profiles                                        |
-| OpenCV Validation    | ✅ Done  | Edge detection, k-means colors, content scoring                     |
-| Local DB + Offline   | ✅ Done  | 10,008 species, 1,960 with perceptual hashes (19.6%)                |
-| Image Processing     | ✅ Done  | OpenCV gate, compression, thumbnails, server-side storage           |
-| History API          | ✅ Done  | GET list + detail + thumbnail endpoints                             |
-| Supabase Schema      | ✅ Done  | All 5 migrations applied to production Supabase                     |
-| CI/CD                | ✅ Done  | GitHub Actions (lint, test, build, deploy)                          |
-| Mobile UI            | ✅ Done  | Auth, 4-tabs (Scan/Saved/History/Profile), results, species detail  |
-| Phase 2 Features     | ✅ Done  | Disease UI, favorites, share, caching, multi-lang                   |
-| Admin Panel          | ✅ Done  | Backend API + mobile screen + RLS (security definer)                |
-| Frontend Tests       | ✅ Done  | 41 tests (Jest)                                                     |
-| E2E Tests            | ✅ Done  | 21 Playwright API tests (OpenCV, caching, security, error recovery) |
-| Production Supabase  | ✅ Done  | Linked, migrations applied, 10,008 GBIF species imported            |
-| Species Detail       | ✅ Fixed | `common_names` type string → string[]                               |
-| PlantNet Integration | ✅ Fixed | `lang` removed, skip-gate fixed, verified with rose image           |
-| Vercel Deploy        | ✅ Done  | `https://sasyakashi.vercel.app` live, bundle 267MB                  |
-| Android APK          | ✅ Done  | Production build on EAS, env vars via EAS Secrets                   |
-| EAS Secrets          | ✅ Done  | Supabase URL + anon key (not in git)                                |
-| PR #7                | 🟡 Open  | `feat/production-deployment` → `main`, needs merge                  |
+| Component            | Status   | Notes                                                                                                   |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| Backend API          | ✅ Done  | FastAPI, full pipeline: OpenCV gate → local DB → PlantNet                                               |
+| PlantNet Integration | ✅ Done  | Species + disease detection                                                                             |
+| Plant Care           | ✅ Done  | Taxonomy-based care profiles                                                                            |
+| OpenCV Validation    | ✅ Done  | Edge detection, k-means colors, content scoring                                                         |
+| Local DB + Offline   | ✅ Done  | 10,008 species, 1,960 with perceptual hashes (19.6%)                                                    |
+| Image Processing     | ✅ Done  | OpenCV gate, compression, thumbnails, server-side storage                                               |
+| History API          | ✅ Done  | GET list + detail + thumbnail endpoints                                                                 |
+| Supabase Schema      | ✅ Done  | All 5 migrations applied to production Supabase                                                         |
+| CI/CD                | ✅ Done  | GitHub Actions (lint, test, build, deploy)                                                              |
+| Mobile UI            | ✅ Done  | Auth, 4-tabs (Scan/Saved/History/Profile), results, species detail                                      |
+| Phase 2 Features     | ✅ Done  | Disease UI, favorites, share, caching, multi-lang                                                       |
+| Admin Panel          | ✅ Done  | Backend API + mobile screen + RLS (security definer)                                                    |
+| Frontend Tests       | ✅ Done  | 41 tests (Jest)                                                                                         |
+| E2E Tests            | ✅ Done  | 21 Playwright API tests (OpenCV, caching, security, error recovery)                                     |
+| Production Supabase  | ✅ Done  | Linked, 5 migrations applied, 10,008 GBIF species imported                                              |
+| Deploy Bundle Size   | ✅ Fixed | 611MB → 268MB (412MB GBIF zip removed, `.vercelignore` widened)                                         |
+| GBIF Seed Script     | ✅ Done  | `seed_supabase_gbif.py` + GH Action; idempotent, preserves jsonb data                                   |
+| History Thumbnails   | ✅ Done  | Persisted as base64 in `identifications.image_thumbnails` (mig 006, applied)                            |
+| Seed jsonb bug       | ✅ Fixed | jsonb lists + merge-preserve (was `json.dumps` strings wiping data)                                     |
+| Species Detail       | ✅ Fixed | `common_names` type string → string[]                                                                   |
+| PlantNet Integration | ✅ Fixed | `lang` removed, skip-gate fixed, verified with rose image                                               |
+| Vercel Deploy        | ✅ Done  | `https://sasyakashi.vercel.app` live, bundle 268MB                                                      |
+| Android APK          | ✅ Done  | Production build on EAS, env vars via EAS Secrets                                                       |
+| EAS Secrets          | ✅ Done  | Supabase URL + anon key (not in git)                                                                    |
+| PR #20               | 🟡 Open  | `feat/branded-404-favicon-sitemap` → `main`, favicon/404 + deploy-size/thumbnail changes, merge by user |
 
 ## What's Next
 
-1. Merge PR #7 into main
-2. Test APK on physical device (verify identify flow against production backend)
-3. Expand hash index to remaining ~8K species (need alternative image sources)
-4. Push notifications
+1. Deploy fixed bundle to production + verify `/api/health` (user merges PR #20)
+2. Recheck PlantNet 404/401 identify failure
+3. Test APK on physical device (verify identify flow against production backend)
+4. Expand hash index to remaining ~8K species (need alternative image sources)
+5. Push notifications
 
 ## Key Files
 

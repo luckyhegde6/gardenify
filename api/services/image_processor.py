@@ -1,5 +1,6 @@
 """Image processing pipeline — validation, compression, thumbnails, storage, metadata."""
 
+import base64
 import io
 import logging
 import tempfile
@@ -244,6 +245,9 @@ class ImageProcessor:
 
         compressed = compress_image(data)
         thumbnail = generate_thumbnail(data)
+        thumbnail_data_url = (
+            f"data:image/jpeg;base64,{base64.b64encode(thumbnail).decode('ascii')}"
+        )
 
         stem = Path(filename).stem or f"img_{uuid.uuid4().hex[:8]}"
 
@@ -278,6 +282,7 @@ class ImageProcessor:
             "valid": True,
             "metadata": meta,
             "compressed_data": compressed,
+            "thumbnail_data_url": thumbnail_data_url,
             "storage": storage,
         }
 

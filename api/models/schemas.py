@@ -126,6 +126,7 @@ class ImageMetadata(BaseModel):
     exif: dict = Field(default_factory=dict, description="Full EXIF tag dump")
     opencv: OpenCVResult | None = Field(default=None, description="OpenCV analysis results")
     storage: ImageStorage | None = Field(default=None, description="Server-side file paths")
+    thumbnail_data_url: str = Field(default="", description="Base64 data URL of the 256x256 JPEG thumbnail")
 
 
 class IdentificationResponse(BaseModel):

@@ -515,6 +515,30 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-02: Deploy Size Fix + Thumbnail Persistence + GBIF Seed
+
+- **Duration**: ~2 hours
+- **Goal**: Get Vercel bundle under 500MB, persist history images in Supabase, move GBIF processing server-side
+- **Branch**: `feat/branded-404-favicon-sitemap` (PR #20), committing onto this branch per user choice
+- **Root cause**: Vercel bundle hit 611MB because `api/data/gbif/plantnet_observations.zip` (412MB) shipped despite `.vercelignore` entries
+- **What was done**:
+  - ✅ Moved 412MB zip out of repo → `C:\Users\lucky\AppData\Local\Temp\opencode\plantnet_observations.zip`
+  - ✅ `.vercelignore` now excludes `api/data/gardenify.db-journal`, `api/data/uploads/`, `api/data/plantnet-300k/`, `api/data/hashes/`, `api/data/geoplant/`, `**/__pycache__/`
+  - ✅ Preview deploy verified: upload 344MB → **82.1KB**, bundle 611MB → **268MB**, build successful
+  - ✅ GBIF → Supabase seed: `api/data/importers/seed_supabase_gbif.py` + `.github/workflows/seed-gbif.yml` (dispatch + weekly cron); prod species route already reads Supabase
+  - ✅ History images persisted in DB: migration `supabase/migrations/006_thumbnail_data.sql` (`image_thumbnails text[]`); `image_processor.py` emits compressed `thumbnail_data_url`; identify route passes it through; history list maps to `thumbnail_urls`; `serve_thumbnail` reads DB base64 first with legacy fallback; app inserts/stores `image_thumbnails`
+  - ✅ Migration 006 applied to prod Supabase (image_thumbnails live)
+  - ✅ `seed_supabase_gbif` run against prod — completed (0 inserted, 10,000 updated)
+  - ✅ **Seed data-loss bug found & fixed**: jsonb fields sent as `json.dumps` strings + blind `upsert` wiped 10,008 enriched `common_names`/`native_regions` rows. Restored from local SQLite (all rows back as proper JSON arrays), seed rewritten (`_to_list()` normalizer + merge-preserve non-empty existing fields), tests updated; LESSONS.md logged. Verified idempotent on re-run (enriched data preserved, 0 corrupted rows)
+  - ✅ Tests: 86 passed, ruff clean, `npx tsc --noEmit` clean, `npm run lint` clean
+- **Files modified**:
+  - `.vercelignore`, `api/models/schemas.py`, `api/routes/history.py`, `api/routes/identify.py`, `api/services/image_processor.py`, `api/tests/test_gbif_import.py`, `api/tests/test_image_processor.py`, `src/app/(tabs)/history.tsx`, `src/app/(tabs)/index.tsx`, `src/lib/types.ts`, `api/data/importers/seed_supabase_gbif.py`
+  - New: `.github/workflows/seed-gbif.yml`, `supabase/migrations/006_thumbnail_data.sql`
+- **Tests status**: 86/86 Python, ruff clean, tsc clean, lint clean
+- **Next session**: Deploy fixed bundle to prod + verify `/api/health`; recheck PlantNet 404/401 identify failure
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done

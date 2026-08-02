@@ -84,6 +84,7 @@ export interface ImageMetadata {
   gps_longitude: number | null;
   device_platform: string;
   app_version: string;
+  thumbnail_data_url?: string;
 }
 
 export interface IdentificationResponse {
@@ -126,6 +127,7 @@ export interface IdentificationRecord {
   id: string;
   user_id: string;
   image_urls: string[];
+  image_thumbnails?: string[];
   species_scientific_name: string;
   species_common_names: string;
   confidence: number;

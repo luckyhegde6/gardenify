@@ -174,6 +174,7 @@ async def identify(
             exif=m.get("exif", {}),
             opencv=OpenCVResult(**m["opencv"]) if m.get("opencv") else None,
             storage=pipe.get("storage"),
+            thumbnail_data_url=pipe.get("thumbnail_data_url", ""),
         ))
 
     if not all_plant_like:
