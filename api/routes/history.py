@@ -8,7 +8,7 @@ import logging
 import os
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from api.models.schemas import (
     HistoryDetailResponse,
@@ -87,6 +87,7 @@ async def list_history(
     total = resp.count or 0
     records = []
     for row in resp.data or []:
+        thumbnails = row.get("image_thumbnails", []) or []
         records.append(HistoryRecord(
             id=row.get("id", ""),
             best_match=row.get("best_match", ""),
@@ -96,7 +97,7 @@ async def list_history(
             species_family=row.get("species_family", ""),
             species_genus=row.get("species_genus", ""),
             image_urls=row.get("image_urls", []),
-            thumbnail_urls=row.get("thumbnail_urls", []),
+            thumbnail_urls=thumbnails,
             organs=row.get("organs", []),
             source=row.get("source", ""),
             created_at=str(row.get("created_at", "")),
@@ -188,7 +189,7 @@ async def get_history_detail(identification_id: str):
     response_class=FileResponse,
 )
 async def serve_thumbnail(identification_id: str, image_index: int):
-    """Serve a processed thumbnail image from upload storage."""
+    """Serve a processed thumbnail image from the DB (base64) or legacy disk paths."""
     from supabase import create_client
 
     from api.config import settings
@@ -201,7 +202,7 @@ async def serve_thumbnail(identification_id: str, image_index: int):
     try:
         resp = (
             client.table("identifications")
-            .select("results_json")
+            .select("results_json, image_thumbnails")
             .eq("id", identification_id)
             .maybe_single()
             .execute()
@@ -212,8 +213,24 @@ async def serve_thumbnail(identification_id: str, image_index: int):
     if not resp.data:
         raise HTTPException(404, "Identification not found")
 
+    import base64
     import json
 
+    # Prefer base64 thumbnails persisted in the DB (survives serverless cold starts).
+    thumbnails = resp.data.get("image_thumbnails", []) or []
+    if image_index < len(thumbnails) and thumbnails[image_index]:
+        b64 = thumbnails[image_index]
+        if b64.startswith("data:"):
+            b64 = b64.split(",", 1)[1]
+        try:
+            return Response(
+                content=base64.b64decode(b64),
+                media_type="image/jpeg",
+            )
+        except Exception as e:
+            logger.warning("Thumbnail base64 decode failed for %s: %s", identification_id, e)
+
+    # Fallback: legacy server-side file path stored in results_json metadata.
     results_json = resp.data.get("results_json", "{}")
     if isinstance(results_json, str):
         parsed = json.loads(results_json)

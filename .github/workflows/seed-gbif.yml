@@ -1,0 +1,32 @@
+name: Seed Supabase Species (GBIF)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_species:
+        description: "Maximum species to import (default: 10000)"
+        required: false
+        default: "10000"
+  schedule:
+    - cron: "0 3 * * 0"  # Weekly Sunday 03:00 UTC
+
+jobs:
+  seed:
+    name: Download + Process GBIF into Supabase
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests supabase python-dotenv
+
+      - name: Seed Supabase species from GBIF
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m api.data.importers.seed_supabase_gbif --max-species ${{ inputs.max_species || '10000' }}

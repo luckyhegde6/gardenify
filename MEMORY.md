@@ -14,19 +14,21 @@
 | Backend          | Python FastAPI on Vercel                                                             |
 | Database         | Supabase (PostgreSQL + Auth + Storage)                                               |
 | Plant AI         | PlantNet API v2 (free 500/day)                                                       |
-| Current Branch   | `main`                                                                               |
+| Current Branch   | `feat/branded-404-favicon-sitemap` (PR #20)                                          |
 | Backend (prod)   | `https://sasyakashi.vercel.app`                                                      |
 | Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                           |
+| Vercel bundle    | 268MB (fixed from 611MB — 412MB GBIF zip + dev data excluded via `.vercelignore`)    |
 | EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                 |
 | APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (latest v0.1.5) |
 | EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                    |
 | Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                 |
 | Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                |
-| Tests            | 77 Python + 21 Playwright + 41 Jest = 139 total                                      |
+| Tests            | 86 Python + 21 Playwright + 41 Jest = 148 total                                      |
 | PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                               |
 | Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                                |
-| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, all 5 migrations applied                      |
-| Prod species     | 10,008 GBIF species imported, backend queries remote via `USE_REMOTE=true`           |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, 5 migrations applied (006 pending push)       |
+| Prod species     | 10,008 GBIF species imported via `seed_supabase_gbif.py` (re-runnable, GH Action)    |
+| History images   | Persisted as base64 thumbnails in `identifications.image_thumbnails` (migration 006) |
 | Vercel FS        | `/var/task` read-only; only `/tmp` writable — upload dir falls back to temp          |
 
 ## Architecture (10 seconds)
@@ -106,9 +108,16 @@ Expo App → FastAPI Backend → PlantNet API
 - [x] **v0.1.5 released & verified** — APK → GitHub Release → `deploy-backend` to prod; release notes categorized
 - [x] **Read-only FS 500 fixed** — `ImageProcessor` resolves writable upload dir (temp fallback on Vercel), storage writes best-effort; prod `/api/identify` returns 400 not 500 (PR #16, deployed)
 - [x] **Prod seed users synced** — `admin@`, `test@`, `user2@` created via Auth Admin API (email-confirmed)
+- [x] **Deploy size fixed (611MB → 268MB)** — removed 412MB GBIF zip from repo; `.vercelignore` excludes dev data dirs + `__pycache__`; preview verified (upload 82KB)
+- [x] **GBIF → Supabase seed** — `api/data/importers/seed_supabase_gbif.py` + `.github/workflows/seed-gbif.yml` (dispatch + weekly cron); species route reads Supabase
+- [x] **History thumbnails in DB** — migration `006_thumbnail_data.sql` (`image_thumbnails text[]`); `thumbnail_data_url` flows identify → history → app
 
 ### Not Done
 
+- [ ] 🔴 Deploy fixed bundle to production + verify `/api/health`
+- [ ] 🔴 Push migration `006_thumbnail_data.sql` to prod Supabase
+- [ ] 🔴 Run `seed_supabase_gbif` against prod
+- [ ] 🟡 Recheck PlantNet 404/401 identify failure (stale from prior session)
 - [ ] 🟡 Fix Supabase prod auth config — email confirmation links point to `localhost:3000` (Site URL/redirects on `amyriuhwqyalodsfkwzf`); must point at production app
 - [ ] 🟡 Investigate "verified but cannot login" — `public.users` returns `[]` for Auth users; suspected missing `handle_new_user` trigger in prod
 - [ ] 🟡 Re-test v0.1.5 APK on emulator against prod (login + identify flow)
@@ -171,7 +180,7 @@ uvicorn api.main:app --reload --port 8000
 
 # Verify (all 4 must pass)
 npx tsc --noEmit          # TypeScript (0 errors)
-cd api && pytest          # Python tests (73 passing)
+cd api && pytest          # Python tests (86 passing)
 npx expo lint             # Lint (0 errors)
 npx jest --no-cache       # Frontend tests (41 passing)
 npx playwright test e2e/api-tests/ --reporter=list   # E2E (21 passing)

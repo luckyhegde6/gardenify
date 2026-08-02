@@ -62,7 +62,7 @@ export default function HistoryScreen() {
     const best = result?.results?.[0];
     const score = best?.score ?? item.confidence;
     const commonNames = best?.species?.common_names ?? [];
-    const imageUrl = item.image_urls?.[0];
+    const imageUrl = item.image_thumbnails?.[0] ?? item.image_urls?.[0];
 
     return (
       <PlantCard

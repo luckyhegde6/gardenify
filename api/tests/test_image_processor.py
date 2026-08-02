@@ -83,3 +83,43 @@ class TestProcessorResilientStorage:
         assert storage  # paths present
         for path in (storage["original"], storage["compressed"], storage["thumbnail"]):
             assert os.path.isfile(path)
+
+
+class TestProcessorThumbnailDataUrl:
+    def test_process_returns_base64_thumbnail_data_url(self, monkeypatch):
+        """process() should expose a base64 data URL for the thumbnail."""
+        processor = image_processor.ImageProcessor()
+        data = _jpeg_bytes()
+        result = processor.process(data, "rose.jpg", "image/jpeg")
+
+        assert result["valid"] is True
+        url = result["thumbnail_data_url"]
+        assert url.startswith("data:image/jpeg;base64,")
+
+        import base64
+        b64 = url.split(",", 1)[1]
+        decoded = base64.b64decode(b64)
+        assert len(decoded) > 0
+        # Decodable back into a valid JPEG (SOI marker).
+        assert decoded[:2] == b"\xff\xd8"
+
+    def test_thumbnail_data_url_present_even_when_disk_write_fails(self, monkeypatch):
+        """Thumbnail data URL must survive read-only filesystems (serverless)."""
+        import builtins
+
+        real_open = builtins.open
+
+        def _blocking_open(file, mode="r", *args, **kwargs):
+            upload_dir = str(image_processor.UPLOAD_DIR)
+            if mode.startswith("w") and str(file).startswith(upload_dir):
+                raise OSError("Read-only file system")
+            return real_open(file, mode, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "open", _blocking_open)
+        processor = image_processor.ImageProcessor()
+        data = _jpeg_bytes()
+        result = processor.process(data, "rose.jpg", "image/jpeg")
+
+        assert result["valid"] is True
+        assert result["storage"] == {}
+        assert result["thumbnail_data_url"].startswith("data:image/jpeg;base64,")

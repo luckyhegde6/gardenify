@@ -55,3 +55,27 @@
 - [x] Verify prod `/api/identify` returns 400 (plant validation) not read-only FS 500
 - [x] File & close issue #18 (read-only FS bug)
 - [x] Update docs (handoff, sessions)
+
+## 2026-08-02 Session — Deploy Size Fix + Thumbnail Persistence + GBIF Seed
+
+- [x] Root-cause 611MB Vercel bundle: `api/data/gbif/plantnet_observations.zip` (412MB) shipped despite `.vercelignore`
+- [x] Move zip out of repo → `C:\Users\lucky\AppData\Local\Temp\opencode\plantnet_observations.zip`
+- [x] `.vercelignore`: exclude `api/data/gardenify.db-journal`, `api/data/uploads/`, `api/data/plantnet-300k/`, `api/data/hashes/`, `api/data/geoplant/`, `**/__pycache__/`
+- [x] Preview deploy verified: upload 344MB → 82.1KB, bundle 611MB → 268MB
+- [x] GBIF → Supabase seed: `api/data/importers/seed_supabase_gbif.py` + `.github/workflows/seed-gbif.yml`
+- [x] History images persisted in DB: `image_thumbnails text[]` column (migration `006_thumbnail_data.sql`)
+- [x] `image_processor.py` emits `thumbnail_data_url`; identify/history wired end-to-end
+- [x] Tests: 86 passed, ruff clean, tsc clean, lint clean
+- [ ] Deploy fixed bundle to production + verify `/api/health`
+- [ ] Push migration `006_thumbnail_data.sql` to prod Supabase
+- [ ] Run `seed_supabase_gbif` against prod
+- [ ] Recheck PlantNet 404/401 identify failure (stale from prior session)
+
+### Carried Forward (from 2026-08-01)
+
+- [ ] Real-device re-test of `gardenify-v0.1.5.apk`
+- [ ] Fix Supabase prod auth config (Site URL / redirect URLs → production app, not localhost)
+- [ ] Investigate "verified but cannot login" (missing `public.users` profile rows for Auth users)
+- [ ] Re-test v0.1.5 APK on emulator against prod (login + identify flow)
+- [ ] Expand hash index to remaining ~8K species
+- [ ] Push notifications (Phase 3)

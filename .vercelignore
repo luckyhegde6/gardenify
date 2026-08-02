@@ -6,4 +6,10 @@ api/data/gbif/
 api/data/gardenify.db
 api/data/gardenify.db-wal
 api/data/gardenify.db-shm
+api/data/gardenify.db-journal
 api/data/extracted/
+api/data/uploads/
+api/data/plantnet-300k/
+api/data/hashes/
+api/data/geoplant/
+**/__pycache__/

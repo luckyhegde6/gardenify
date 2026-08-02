@@ -56,11 +56,17 @@ export default function ScanScreen() {
       }
 
       if (user) {
+        const thumbnails =
+          result.metadata
+            ?.map((m) => m.thumbnail_data_url ?? "")
+            .filter(Boolean) ?? [];
+
         const { data: inserted, error } = await supabase
           .from("identifications")
           .insert({
             user_id: user.id,
             image_urls: [camera.image.uri],
+            image_thumbnails: thumbnails,
             best_match: result.best_match || "Unknown",
             score: best?.score ?? 0,
             species_scientific_name:
