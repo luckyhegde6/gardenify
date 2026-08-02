@@ -33,8 +33,9 @@ Expo App → FastAPI Backend → PlantNet API
 | E2E Tests            | ✅ Done  | 21 Playwright API tests (OpenCV, caching, security, error recovery)                                     |
 | Production Supabase  | ✅ Done  | Linked, 5 migrations applied, 10,008 GBIF species imported                                              |
 | Deploy Bundle Size   | ✅ Fixed | 611MB → 268MB (412MB GBIF zip removed, `.vercelignore` widened)                                         |
-| GBIF Seed Script     | ✅ Done  | `seed_supabase_gbif.py` + GH Action (dispatch + weekly cron)                                            |
-| History Thumbnails   | ✅ Done  | Persisted as base64 in `identifications.image_thumbnails` (mig 006)                                     |
+| GBIF Seed Script     | ✅ Done  | `seed_supabase_gbif.py` + GH Action; idempotent, preserves jsonb data                                   |
+| History Thumbnails   | ✅ Done  | Persisted as base64 in `identifications.image_thumbnails` (mig 006, applied)                            |
+| Seed jsonb bug       | ✅ Fixed | jsonb lists + merge-preserve (was `json.dumps` strings wiping data)                                     |
 | Species Detail       | ✅ Fixed | `common_names` type string → string[]                                                                   |
 | PlantNet Integration | ✅ Fixed | `lang` removed, skip-gate fixed, verified with rose image                                               |
 | Vercel Deploy        | ✅ Done  | `https://sasyakashi.vercel.app` live, bundle 268MB                                                      |
@@ -44,7 +45,7 @@ Expo App → FastAPI Backend → PlantNet API
 
 ## What's Next
 
-1. Deploy fixed bundle to production + push migration 006 + run `seed_supabase_gbif` (user merges PR #20)
+1. Deploy fixed bundle to production + verify `/api/health` (user merges PR #20)
 2. Recheck PlantNet 404/401 identify failure
 3. Test APK on physical device (verify identify flow against production backend)
 4. Expand hash index to remaining ~8K species (need alternative image sources)

@@ -66,9 +66,10 @@
 - [x] History images persisted in DB: `image_thumbnails text[]` column (migration `006_thumbnail_data.sql`)
 - [x] `image_processor.py` emits `thumbnail_data_url`; identify/history wired end-to-end
 - [x] Tests: 86 passed, ruff clean, tsc clean, lint clean
+- [x] Push migration `006_thumbnail_data.sql` to prod Supabase (image_thumbnails column live)
+- [x] Run `seed_supabase_gbif` against prod — completed (0 inserted, 10,000 updated)
+- [x] **BUG found & fixed**: seed sent jsonb fields as `json.dumps` strings + blind upsert wiped 10,008 enriched `common_names` rows → restored from local SQLite, seed now `_to_list()` + merge-preserve; LESSONS.md logged; 86 tests pass
 - [ ] Deploy fixed bundle to production + verify `/api/health`
-- [ ] Push migration `006_thumbnail_data.sql` to prod Supabase
-- [ ] Run `seed_supabase_gbif` against prod
 - [ ] Recheck PlantNet 404/401 identify failure (stale from prior session)
 
 ### Carried Forward (from 2026-08-01)
