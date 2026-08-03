@@ -16,6 +16,19 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-04: Landing Page Architecture Aligned to SQLite→Supabase Refactor
+
+- **Duration**: ~1 hour
+- **Goal**: Remove stale SQLite references from public pages after the SQLite→Supabase refactor; document the drift lesson
+- **Files modified**:
+  - `api/onboarding_page.py` — component breakdown, identify steps 4–5, sequence participant `Supabase Species Store`, "Fallback & Matching" section, tech-stack cards, nav link
+  - `api/landing_page.py` — "Instant Matching" card + Database value `Supabase (PostgreSQL)`
+  - `LESSONS.md` — added doc-drift lesson (2026-08-04)
+- **Tests status**: `ruff` clean on both pages; `grep -i sqlite` returns nothing in either
+- **Next session**: release v1.0.0 build still IN_QUEUE; open PR for this branch (ask user before merge)
+
+---
+
 ### 2026-07-27: Initial Project Setup + Bug Fixes
 
 - **Duration**: ~2 hours

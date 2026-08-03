@@ -129,3 +129,19 @@
 - Local Supabase: `http://127.0.0.1:54321` (currently DOWN — run `npx supabase start` to use local, or `USE_REMOTE=true` for prod).
 - Prod Supabase: project `amyriuhwqyalodsfkwzf`, URL `https://amyriuhwqyalodsfkwzf.supabase.co`. Management API token lives in the gitignored `C:\Users\lucky\AppData\Local\Temp\opencode\creds.json` — never commit tokens to tracked files.
 - `.env.local`: has both local keys (top) AND prod keys (bottom, remote block) — `SUPABASE_SERVICE_ROLE_KEY` at line 8 is the LOCAL one, line 37 is PROD. Careful when seeding prod.
+
+---
+
+## 2026-08-04 Session — Landing Page Architecture Aligned to SQLite→Supabase Refactor
+
+- [x] Remove stale SQLite references from `api/landing_page.py` (Tech Stack "Supabase + SQLite"→"Supabase (PostgreSQL)"; "Offline Support"→"Instant Matching")
+- [x] Remove stale SQLite/offline-local references from `api/onboarding_page.py` (component breakdown, identify steps 4–5, sequence participant → "Supabase<br>Species Store", "Offline & Fallback"→"Fallback & Matching", tech-stack cards, nav link)
+- [x] Add LESSONS.md doc-drift lesson (2026-08-04)
+- [x] Update `.agents/sessions.md` + `.agents/handoff-current.md`
+- [x] `ruff` clean on both pages; `grep -i sqlite` returns nothing in either
+
+### Carried Forward (next session)
+
+- [ ] Push `docs/landing-architecture` branch + open PR (ask user before merge — do NOT merge without explicit approval)
+- [ ] Release v1.0.0 build (`68c571ba`) still IN_QUEUE on EAS — wait, then test History/Save on emulator
+- [ ] Step 14/15 (from prior session): migrate prod hashes (migration 008) + verify on Vercel

@@ -69,7 +69,7 @@ ONBOARDING_PAGE_HTML = """<!DOCTYPE html>
         <a href="#overview">Overview</a>
         <a href="#architecture">Architecture</a>
         <a href="#identify">Identification Flow</a>
-        <a href="#offline">Offline Fallback</a>
+        <a href="#offline">Fallback &amp; Matching</a>
         <a href="#auth">Auth Flow</a>
         <a href="#release">Release Pipeline</a>
     </div>
@@ -151,7 +151,7 @@ architecture-beta
             </div>
             <div class="card">
                 <h3>⚡ FastAPI Backend</h3>
-                <p>Python async server deployed on Vercel Serverless. Handles image validation (OpenCV), PlantNet proxying, caching, local database queries, and history management.</p>
+                <p>Python async server deployed on Vercel Serverless. Handles image validation (OpenCV), PlantNet proxying, caching, Supabase species matching, and history management.</p>
             </div>
             <div class="card">
                 <h3>🗄️ Supabase</h3>
@@ -159,7 +159,7 @@ architecture-beta
             </div>
             <div class="card">
                 <h3>🌐 PlantNet API</h3>
-                <p>AI-powered plant identification (50,000+ species). Free tier allows 500 identifications per day. Used as a fallback when local database has no match.</p>
+                <p>AI-powered plant identification (50,000+ species). Free tier allows 500 identifications per day. Used as a fallback when Supabase species matching has no match.</p>
             </div>
         </div>
     </div>
@@ -185,11 +185,11 @@ architecture-beta
             </li>
             <li>
                 <span class="num">4</span>
-                <div class="text"><strong>Local database query</strong> — The backend searches the SQLite species database using perceptual hash (pHash) matching. On a match, the result is returned as <code>source: "local"</code>.</div>
+                <div class="text"><strong>Species store match</strong> — The backend searches the Supabase species database (10,008 species, perceptual-hash indexed) using pHash matching. On a match, the result is returned as <code>source: "local"</code> without calling PlantNet.</div>
             </li>
             <li>
                 <span class="num">5</span>
-                <div class="text"><strong>PlantNet API call</strong> — If local database has no match, PlantNet API is queried. The result is returned as <code>source: "plantnet"</code> and cached for future requests.</div>
+                <div class="text"><strong>PlantNet API call</strong> — If the species store has no match, PlantNet API is queried. The result is returned as <code>source: "plantnet"</code> and cached for future requests.</div>
             </li>
             <li>
                 <span class="num">6</span>
@@ -207,7 +207,7 @@ sequenceDiagram
     participant User
     participant App as Expo App
     participant Backend as FastAPI<br>Backend
-    participant Local as SQLite<br>Species DB
+    participant Store as Supabase<br>Species Store
     participant PlantNet
 
     User->>App: Take / upload photo
@@ -226,11 +226,11 @@ sequenceDiagram
         App-->>User: Show identification
     end
 
-    Backend->>Local: pHash lookup
-    alt Local match found
-        Local-->>Backend: Species data
+    Backend->>Store: pHash lookup
+    alt Store match found
+        Store-->>Backend: Species data
         Backend-->>App: Result (source: "local")
-    else No local match
+    else No store match
         Backend->>PlantNet: Identify via API
         PlantNet-->>Backend: Species results
         Backend->>Backend: Cache result
@@ -249,9 +249,9 @@ sequenceDiagram
 
 <section id="offline">
     <div class="container">
-        <h2>Offline & Fallback Strategy</h2>
-        <p class="subtitle">How the app works without internet</p>
-        <p>Gardenify is designed to be resilient to network interruptions. The local database contains 10,008 species, and perceptual hash matching enables offline identification for previously indexed plants.</p>
+        <h2>Fallback &amp; Matching Strategy</h2>
+        <p class="subtitle">How PlantNet quota is saved while staying fast</p>
+        <p>Gardenify matches photos against a curated Supabase species database (10,008 species, of which 1,960 have perceptual hashes). A perceptual-hash hit returns immediately without consuming PlantNet API quota; the cloud species store means no server-side disk database is needed.</p>
         <div class="diagram">
             <div class="mermaid">
 flowchart TD
@@ -259,7 +259,7 @@ flowchart TD
     B -->|"No"| C["❌ Reject: not plant-like"]
     B -->|"Yes"| D{"SHA-256 cache<br>hit?"}
     D -->|"Yes"| E["✅ Return cached result"]
-    D -->|"No"| F{"pHash match<br>in local DB?"}
+    D -->|"No"| F{"pHash match<br>in Supabase store?"}
     F -->|"Yes"| G["✅ Return local result<br>(source: local)"]
     F -->|"No"| H{"PlantNet API<br>available?"}
     H -->|"Yes"| I["🔌 Query PlantNet API"]
@@ -272,15 +272,15 @@ flowchart TD
     L --> M
     M --> N["📱 Display to user"]
             </div>
-            <p class="caption">Decision tree for the identification pipeline, showing online/offline behavior</p>
+            <p class="caption">Decision tree for the identification pipeline, showing online/fallback behavior</p>
         </div>
         <p>Key features of the fallback strategy:</p>
         <ul style="color: var(--gray-600); font-size: 0.9rem; padding-left: 1.25rem;">
             <li><strong>OpenCV gate</strong> rejects non-plant images before any API calls are made</li>
             <li><strong>SHA-256 cache</strong> prevents duplicate PlantNet API calls for the same image</li>
-            <li><strong>Perceptual hash matching</strong> (dHash + pHash) enables offline identification for 1,960 indexed species</li>
+            <li><strong>Perceptual hash matching</strong> (dHash + pHash) hits 1,960 species stored in Supabase before PlantNet is called</li>
             <li><strong>Graceful degradation</strong> — if PlantNet is unreachable, the app falls back gracefully with what it has</li>
-            <li><strong>Care profiles</strong> are determined by taxonomy (genus → family → default), working fully offline</li>
+            <li><strong>Care profiles</strong> are determined by taxonomy (genus → family → default)</li>
         </ul>
     </div>
 </section>
@@ -440,11 +440,11 @@ sequenceDiagram
             </div>
             <div class="card">
                 <h3>⚙️ Backend</h3>
-                <p><strong>FastAPI</strong> (Python 3.12) deployed on Vercel Serverless. Async endpoints, Pydantic validation, OpenCV image processing, and SQLite for local species database.</p>
+                <p><strong>FastAPI</strong> (Python 3.12) deployed on Vercel Serverless. Async endpoints, Pydantic validation, OpenCV image processing, and Supabase species matching.</p>
             </div>
             <div class="card">
                 <h3>🗄️ Database</h3>
-                <p><strong>Supabase</strong> (PostgreSQL) with Row Level Security. 10,008 species from GBIF imported. Local SQLite as offline fallback with perceptual hash indexes.</p>
+                <p><strong>Supabase</strong> (PostgreSQL) with Row Level Security. 10,008 species from GBIF imported, 1,960 indexed with perceptual hashes for instant matching.</p>
             </div>
             <div class="card">
                 <h3>🤖 Plant AI</h3>

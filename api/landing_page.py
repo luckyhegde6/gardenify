@@ -192,8 +192,8 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
                 <a href="/docs/#/Species/list_species_species_get">Explore &rarr;</a>
             </div>
             <div class="card">
-                <h3>💾 Offline Support</h3>
-                <p>Results are cached locally. Species database works offline with perceptual hash matching for quick identification.</p>
+                <h3>⚡ Instant Matching</h3>
+                <p>Previous identifications are cached for quick re-checking, and a perceptual-hash species store matches known plants before PlantNet is called.</p>
                 <a href="https://github.com/luckyhegde6/gardenify" target="_blank">Read more &rarr;</a>
             </div>
             <div class="card">
@@ -302,7 +302,7 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
             <div class="tech-item"><div class="label">Mobile</div><div class="value">Expo SDK 55</div></div>
             <div class="tech-item"><div class="label">Language</div><div class="value">TypeScript 5.9</div></div>
             <div class="tech-item"><div class="label">Backend</div><div class="value">FastAPI + Python</div></div>
-            <div class="tech-item"><div class="label">Database</div><div class="value">Supabase + SQLite</div></div>
+            <div class="tech-item"><div class="label">Database</div><div class="value">Supabase (PostgreSQL)</div></div>
             <div class="tech-item"><div class="label">Plant AI</div><div class="value">PlantNet API v2</div></div>
             <div class="tech-item"><div class="label">Auth</div><div class="value">Supabase Auth</div></div>
             <div class="tech-item"><div class="label">Build</div><div class="value">EAS Build</div></div>
