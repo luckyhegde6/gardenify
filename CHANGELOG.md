@@ -41,3 +41,9 @@ pages.
   SQLite files not shipping to Vercel and being unwritable there. Local
   identification now uses Supabase instead of a bundled database file.
   (PR #16, PR #21)
+- **History tab stuck on "Loading history..."** — the history list was never
+  fetched on screen focus; now fetched via `useFocusEffect`.
+- **Save (favorites) failing** — the `favorites` table schema was
+  identification-based (`identification_id` NOT NULL) but the app saves
+  species-based favorites; reshaped via migration `009` so "Save" persists
+  and the Saved tab lists plants. (PR #24)
