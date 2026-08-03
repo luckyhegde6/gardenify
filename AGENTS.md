@@ -65,6 +65,19 @@ git push origin feat/my-feature
 # Squash merge
 ```
 
+### Git Hooks (enforced gate)
+
+Repository ships versioned hooks in `.githooks/` that block **direct commits on `main`/`master`** and **direct pushes to `main`/`master`**. Every fresh clone must enable them once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+- `.githooks/pre-commit` — refuses to commit when `HEAD` is on `main`/`master`.
+- `.githooks/pre-push` — refuses to push refs targeting `main`/`master` on any remote.
+
+Never bypass with `git commit --no-verify` (or `-f` on push) unless you intentionally override **both** the gate and GitHub push protection. Secrets stay only on gitignored files (`.env.local`, `creds.json`, `.agents/handoff-current.md`). Before pushing, verify no tokens are staged: `git grep -nE 'sbp_[a-f0-9]{20,}'`.
+
 ### What Happens on Merge
 
 | Event                                 | Action                                    |
@@ -192,6 +205,12 @@ For comprehensive architecture, phase TODOs, security guidelines, and agentic wo
 - `.agents/product-development.md` — Product thinking and UX
 - `.agents/release-guidelines.md` — Release process documentation
 - `.agents/orchestration.md` — Monitoring and coordination agents
+
+Also see the `docs/` directory for developer-facing guides:
+
+- `docs/security-architecture.md` — Trust boundary, RLS, and auth decisions
+- `docs/supabase-integration.md` — Supabase setup and migrations
+- `docs/vercel-deployment.md` — Backend deployment
 
 ## Pre-Commit Workflow
 

@@ -1,8 +1,8 @@
 """Import unique species from PlantNet GBIF Darwin Core Archive.
 
 Downloads the observation dataset from GBIF and extracts unique species
-with taxonomy data. This populates the local database with real species
-information without needing images.
+with taxonomy data. This populates the Supabase species table with real
+species information without needing images.
 
 Usage:
     python -m api.data.importers.import_gbif
@@ -21,8 +21,6 @@ import requests
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
-from api.services.local_db import get_connection, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +212,7 @@ def extract_unique_species(zip_path: Path, max_species: int = 10000) -> list[dic
 
 
 def import_to_database(species_list: list[dict]) -> dict:
-    """Import species list into the local SQLite database.
+    """Import species list into the Supabase species table.
 
     Args:
         species_list: List of species dicts
@@ -222,66 +220,19 @@ def import_to_database(species_list: list[dict]) -> dict:
     Returns:
         Dict with import stats
     """
-    init_db()
-    conn = get_connection()
+    from api.data.importers.seed_supabase_gbif import seed_supabase_gbif_from_list
 
-    inserted = 0
-    updated = 0
-    errors = 0
-
-    try:
-        for species in species_list:
-            try:
-                existing = conn.execute(
-                    "SELECT id FROM species WHERE scientific_name = ?",
-                    (species["scientific_name"],),
-                ).fetchone()
-
-                if existing:
-                    conn.execute(
-                        """UPDATE species SET
-                            observation_count = observation_count + ?
-                           WHERE id = ?""",
-                        (species["observation_count"], existing["id"]),
-                    )
-                    updated += 1
-                else:
-                    conn.execute(
-                        """INSERT INTO species
-                            (scientific_name, common_names, family, genus,
-                             category, native_regions, observation_count, source)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                        (
-                            species["scientific_name"],
-                            species["common_names"],
-                            species["family"],
-                            species["genus"],
-                            species["category"],
-                            species["native_regions"],
-                            species["observation_count"],
-                            species["source"],
-                        ),
-                    )
-                    inserted += 1
-
-                if (inserted + updated) % 1000 == 0:
-                    conn.commit()
-                    logger.info("Progress: %d inserted, %d updated", inserted, updated)
-
-            except Exception as e:
-                errors += 1
-                logger.warning("Error importing %s: %s",
-                              species.get("scientific_name", "?"), e)
-
-        conn.commit()
-    finally:
-        conn.close()
+    stats = seed_supabase_gbif_from_list(species_list)
 
     return {
-        "inserted": inserted,
-        "updated": updated,
-        "errors": errors,
-        "total_processed": inserted + updated + errors,
+        "inserted": stats.get("inserted", 0),
+        "updated": stats.get("updated", 0),
+        "errors": stats.get("errors", 0),
+        "total_processed": (
+            stats.get("inserted", 0)
+            + stats.get("updated", 0)
+            + stats.get("errors", 0)
+        ),
     }
 
 

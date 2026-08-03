@@ -1,22 +1,16 @@
 """GET /api/species — Search and browse plant species database.
 
-Uses Supabase on Vercel, SQLite locally.
+Supabase-backed (works on Vercel and against local Supabase in dev).
 """
 
 import logging
 
 from fastapi import APIRouter, HTTPException, Query
 
+from api.services import supabase_species
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _get_backend():
-    from api.services import supabase_species
-    if supabase_species.is_available():
-        return supabase_species
-    from api.services import local_db
-    return local_db
 
 
 @router.get(
@@ -30,15 +24,11 @@ async def list_species(
     limit: int = Query(default=20, ge=1, le=100, description="Max results to return (1-100)"),
 ):
     """Search species database by name, genus, or family."""
-    backend = _get_backend()
-    if q:
-        results = backend.search_species(q, limit)
-    else:
-        results = backend.search_species("", limit)
+    results = supabase_species.search_species(q, limit) if q else supabase_species.search_species("", limit)
     return {
         "count": len(results),
-        "total_species": backend.get_species_count(),
-        "total_hashes": backend.get_hash_count(),
+        "total_species": supabase_species.get_species_count(),
+        "total_hashes": supabase_species.get_hash_count(),
         "results": results,
     }
 
@@ -51,8 +41,7 @@ async def list_species(
 )
 async def get_species(species_id: int):
     """Get species detail by internal database ID."""
-    backend = _get_backend()
-    species = backend.get_species_by_id(species_id)
+    species = supabase_species.get_species_by_id(species_id)
     if not species:
         raise HTTPException(404, f"Species {species_id} not found")
     return species
@@ -66,8 +55,7 @@ async def get_species(species_id: int):
 )
 async def get_species_by_name(scientific_name: str):
     """Get species by exact scientific name (case-sensitive)."""
-    backend = _get_backend()
-    species = backend.get_species_by_name(scientific_name)
+    species = supabase_species.get_species_by_name(scientific_name)
     if not species:
         raise HTTPException(404, f"Species '{scientific_name}' not found")
     return species

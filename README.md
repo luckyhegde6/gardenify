@@ -239,6 +239,7 @@ Required env vars for production APK builds. Set these via [EAS Secrets](https:/
 - [Architecture](.agents/architecture.md) — Full system design
 - [Phase 1 MVP](.agents/phase-1-mvp.md) — MVP checklist
 - [Security](.agents/security-harness.md) — Security practices
+- [Security Architecture](docs/security-architecture.md) — Trust boundary, RLS, and auth decisions
 
 ## License
 

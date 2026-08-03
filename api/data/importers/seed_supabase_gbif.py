@@ -84,26 +84,17 @@ def _species_rows(species_list: list[dict]) -> list[dict]:
     return rows
 
 
-def seed_supabase_gbif(max_species: int = 10000, force_download: bool = False) -> dict:
-    """Download GBIF archive to a temp cache, extract species, upsert to Supabase.
+def seed_supabase_gbif_from_list(species_list: list[dict]) -> dict:
+    """Upsert a list of importer species dicts into Supabase (no download).
 
-    Uses ``api/data/gbif`` as the cache dir (git-ignored) or temp if unavailable.
-    Returns a summary dict with insert/update counts.
+    Shared by ``seed_supabase_gbif()`` and ``import_gbif.import_to_database()``.
+    Uses batch upsert with merge-preserve semantics so enriched jsonb data is
+    never clobbered by sparse seed rows.
     """
     client = _get_client()
 
-    try:
-        zip_path = download_gbif_archive(force=force_download)
-    except Exception as e:
-        logger.error("GBIF download failed: %s", e)
-        return {"status": "download_failed", "error": str(e)}
-
-    logger.info("Extracting up to %d unique species...", max_species)
-    species_list = extract_unique_species(zip_path, max_species=max_species)
-
     if not species_list:
-        logger.warning("No species found in archive")
-        return {"status": "no_species_found"}
+        return {"inserted": 0, "updated": 0, "errors": 0}
 
     rows = _species_rows(species_list)
 
@@ -153,11 +144,37 @@ def seed_supabase_gbif(max_species: int = 10000, force_download: bool = False) -
 
     return {
         "status": "completed",
-        "archive_size_mb": round(zip_path.stat().st_size / (1024 * 1024), 1),
-        "species_found": len(species_list),
         "inserted": inserted,
         "updated": updated,
         "errors": errors,
+    }
+
+
+def seed_supabase_gbif(max_species: int = 10000, force_download: bool = False) -> dict:
+    """Download GBIF archive to a temp cache, extract species, upsert to Supabase.
+
+    Uses ``api/data/gbif`` as the cache dir (git-ignored) or temp if unavailable.
+    Returns a summary dict with insert/update counts.
+    """
+    try:
+        zip_path = download_gbif_archive(force=force_download)
+    except Exception as e:
+        logger.error("GBIF download failed: %s", e)
+        return {"status": "download_failed", "error": str(e)}
+
+    logger.info("Extracting up to %d unique species...", max_species)
+    species_list = extract_unique_species(zip_path, max_species=max_species)
+
+    if not species_list:
+        logger.warning("No species found in archive")
+        return {"status": "no_species_found"}
+
+    stats = seed_supabase_gbif_from_list(species_list)
+
+    return {
+        **stats,
+        "archive_size_mb": round(zip_path.stat().st_size / (1024 * 1024), 1),
+        "species_found": len(species_list),
     }
 
 

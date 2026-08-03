@@ -539,6 +539,44 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-02: Remove SQLite Entirely → Supabase-Only Backend (planning + investigation)
+
+- **Duration**: ~1 hour
+- **Goal**: Plan and start the user-requested refactor to eliminate SQLite from the backend — `local_identify` must hit Supabase (Vercel + local), all importers write to Supabase, and OpenCV best practices applied to image identification
+- **Branch**: `feat/branded-404-favicon-sitemap` (PR #20 open) — refactor not yet implemented
+- **What was done (investigation only, no code changes yet)**:
+  - ✅ Confirmed Vercel root cause: `api/data/gardenify.db` in `.vercelignore` never ships → `sqlite3.connect()` fails → "Local identification failed: unable to open database file"
+  - ✅ Mapped every file referencing `local_db`/`local_identify`: routes (`identify.py`, `species.py`), `main.py` startup init, importers (`seed_species.py`, `import_gbif.py`, `import_plantnet300k.py`, `build_hash_index.py`, `run_all.py`), `scripts/build_hash_index.py`, tests (`conftest.py`, `test_species_routes.py`, `test_identify_offline.py`, `test_gbif_import.py`, `test_local_db.py`)
+  - ✅ Verified local SQLite data: 10,008 species, **1,960 image_hashes** (phash/dhash, `{species_id}\img.jpg`, 16-char hex). Supabase species ids are BIGSERIAL → hash mapping must go via `scientific_name`
+  - ✅ Confirmed Supabase `species` schema (migration 002), jsonb fields, RLS pattern; `supabase_species.py` `get_hash_count()` hardcoded to 0
+  - ✅ Documented full 15-step refactor plan in `.agents/session-todos.md` + `.agents/handoff-current.md`
+  - ✅ Clarified scope with user: **remove SQLite entirely** + **apply OpenCV improvements and document**
+- **Files modified**: `.agents/session-todos.md`, `.agents/handoff-current.md` (refactor plan + state), this file
+- **Tests status**: not run (no code changes); last known green 86/86 Python
+- **Next session**: Implement refactor per plan — start with migration `008_image_hashes_table.sql` + `supabase_species.py` extension
+
+---
+
+### 2026-08-03: Remove SQLite Entirely → Supabase-Only Backend (IMPLEMENTATION + E2E verification)
+
+- **Duration**: ~3 hours
+- **Goal**: Execute the planned refactor — kill SQLite, all importers→Supabase, `local_identify`→Supabase, apply OpenCV best practices, verify locally + on emulator.
+- **Branch**: `main`
+- **What was done**:
+  - ✅ Deleted `local_db.py`, `schema.sql`, `gardenify.db`; removed sqlite lines from `.vercelignore`; removed `main.py` local-DB init/seed.
+  - ✅ Rewrote all importers to Supabase via shared `seed_supabase_gbif.seed_supabase_gbif_from_list()`: `seed_species.py`, `import_gbif.py`, `import_plantnet300k.py`, `build_hash_index.py`, `run_all.py`.
+  - ✅ Extended `supabase_species.py`: `find_by_phash`, `insert_image_hash`, `get_species_images`, real `get_hash_count`, `get_species_id_map`.
+  - ✅ Rewrote `local_identify.py` → Supabase only; `identify.py`/`species.py` gates on `supabase_species.is_available()`. `find_by_phash` graceful on PostgREST 404 (migration 008 not on prod yet).
+  - ✅ Added migration `008_image_hashes_table.sql` (image_hashes FK, phash/dhash/category, RLS).
+  - ✅ Rewrote tests with in-memory `FakeSupabaseClient` + `patched_supabase` fixture — 91 tests pass, ruff clean, tsc clean.
+  - ✅ OpenCV best practices applied to `image_processor.py` (GaussianBlur→Canny, variance-of-Laplacian blur threshold 100.0, HSV green ratio); `OpenCVResult` gained `sharpness`/`is_blurry`/`green_ratio`; added 4 tests.
+  - ✅ E2E on emulator: started local backend w/ prod Supabase; installed `com.gardenify.app` (standalone) logged in via prod auth (created `devtest@gardenify.app` via service-role admin API), picked gallery image, identified → **Monstera deliciosa 81.7%** rendered (taxonomy + care). `POST /api/identify` → 200.
+  - ⏭ Deferred for next session: apply migration 008 + seed hashes to prod (needs 20-30 min run).
+- **Tests status**: 91/91 Python, ruff clean, `npx tsc --noEmit` clean
+- **Next session**: apply migration 008 + seed hashes to prod (~20-30 min), then commit this session.
+
+---
+
 ## Session Rules
 
 1. **Before commit**: Update this file with what was done

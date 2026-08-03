@@ -7,17 +7,36 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import pytest
 from api.main import app
-from api.services import local_db
 from fastapi.testclient import TestClient
+
+SEED_SPECIES = [
+    ("Monstera deliciosa", "Monstera", "Araceae"),
+    ("Ficus benjamina", "Ficus", "Moraceae"),
+    ("Helianthus annuus", "Helianthus", "Asteraceae"),
+    ("Rosa damascena", "Rosa", "Rosaceae"),
+]
+
+
+def _common_names(name: str) -> list[str]:
+    return [name.split()[0]]
 
 
 @pytest.fixture
-def client():
-    """Test client with seeded database."""
-    # Initialize and seed the database
-    local_db.init_db()
-    from api.data.importers.seed_species import seed_database
-    seed_database()
+def client(patched_supabase):
+    """Test client with a seeded in-memory Supabase."""
+    from api.services import supabase_species
+
+    for name, genus, family in SEED_SPECIES:
+        supabase_species.insert_species({
+            "scientific_name": name,
+            "common_names": _common_names(name),
+            "family": family,
+            "genus": genus,
+            "category": "herbaceous_flowering_plant",
+            "native_regions": [],
+            "observation_count": 100,
+            "source": "test",
+        })
     return TestClient(app)
 
 
@@ -30,14 +49,14 @@ class TestListSpecies:
         assert "count" in data
         assert "total_species" in data
         assert "results" in data
-        assert data["total_species"] >= 20
+        assert data["total_species"] >= 4
 
     def test_list_species_with_limit(self, client):
         """Limit parameter controls result count."""
-        response = client.get("/api/species?limit=5")
+        response = client.get("/api/species?limit=2")
         assert response.status_code == 200
         data = response.json()
-        assert data["count"] <= 5
+        assert data["count"] <= 2
 
 
 class TestSearchSpecies:
@@ -51,7 +70,7 @@ class TestSearchSpecies:
 
     def test_search_by_common_name(self, client):
         """Search by common name finds matches."""
-        response = client.get("/api/species?q=sunflower")
+        response = client.get("/api/species?q=monstera")
         assert response.status_code == 200
         data = response.json()
         assert data["count"] >= 1
@@ -83,7 +102,7 @@ class TestSearchSpecies:
         response = client.get("/api/species?q=")
         assert response.status_code == 200
         data = response.json()
-        assert data["count"] >= 20
+        assert data["count"] >= 4
 
 
 class TestGetSpecies:

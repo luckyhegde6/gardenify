@@ -1,4 +1,4 @@
-"""Seed the local database with common plant species for testing.
+"""Seed the Supabase database with common plant species for testing.
 
 Creates a starter dataset so the API works without downloading
 large external datasets. Can be extended with real data later.
@@ -12,7 +12,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import get_connection, init_db, insert_species
+from api.data.importers.seed_supabase_gbif import seed_supabase_gbif_from_list
 
 logger = logging.getLogger(__name__)
 
@@ -20,201 +20,201 @@ logger = logging.getLogger(__name__)
 SEED_SPECIES = [
     {
         "scientific_name": "Monstera deliciosa",
-        "common_names": json.dumps(["Swiss Cheese Plant", "Split-leaf Philodendron"]),
+        "common_names": ["Swiss Cheese Plant", "Split-leaf Philodendron"],
         "family": "Araceae",
         "genus": "Monstera",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Central America"]),
+        "native_regions": ["Central America"],
         "observation_count": 150,
         "source": "seed",
     },
     {
         "scientific_name": "Ficus benjamina",
-        "common_names": json.dumps(["Weeping Fig", "Ficus Tree"]),
+        "common_names": ["Weeping Fig", "Ficus Tree"],
         "family": "Moraceae",
         "genus": "Ficus",
         "category": "woody_plant",
-        "native_regions": json.dumps(["Southeast Asia"]),
+        "native_regions": ["Southeast Asia"],
         "observation_count": 120,
         "source": "seed",
     },
     {
         "scientific_name": "Echeveria elegans",
-        "common_names": json.dumps(["Mexican Snowball", "Echeveria"]),
+        "common_names": ["Mexican Snowball", "Echeveria"],
         "family": "Crassulaceae",
         "genus": "Echeveria",
         "category": "succulent",
-        "native_regions": json.dumps(["Mexico"]),
+        "native_regions": ["Mexico"],
         "observation_count": 95,
         "source": "seed",
     },
     {
         "scientific_name": "Ocimum basilicum",
-        "common_names": json.dumps(["Sweet Basil", "Basil"]),
+        "common_names": ["Sweet Basil", "Basil"],
         "family": "Lamiaceae",
         "genus": "Ocimum",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["India", "Southeast Asia"]),
+        "native_regions": ["India", "Southeast Asia"],
         "observation_count": 200,
         "source": "seed",
     },
     {
         "scientific_name": "Rosa damascena",
-        "common_names": json.dumps(["Damask Rose", "Rose"]),
+        "common_names": ["Damask Rose", "Rose"],
         "family": "Rosaceae",
         "genus": "Rosa",
         "category": "woody_plant",
-        "native_regions": json.dumps(["Middle East"]),
+        "native_regions": ["Middle East"],
         "observation_count": 180,
         "source": "seed",
     },
     {
         "scientific_name": "Quercus robur",
-        "common_names": json.dumps(["English Oak", "Pedunculate Oak"]),
+        "common_names": ["English Oak", "Pedunculate Oak"],
         "family": "Fagaceae",
         "genus": "Quercus",
         "category": "woody_plant",
-        "native_regions": json.dumps(["Europe"]),
+        "native_regions": ["Europe"],
         "observation_count": 300,
         "source": "seed",
     },
     {
         "scientific_name": "Helianthus annuus",
-        "common_names": json.dumps(["Common Sunflower", "Sunflower"]),
+        "common_names": ["Common Sunflower", "Sunflower"],
         "family": "Asteraceae",
         "genus": "Helianthus",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["North America"]),
+        "native_regions": ["North America"],
         "observation_count": 250,
         "source": "seed",
     },
     {
         "scientific_name": "Nephrolepis exaltata",
-        "common_names": json.dumps(["Boston Fern", "Sword Fern"]),
+        "common_names": ["Boston Fern", "Sword Fern"],
         "family": "Nephrolepidaceae",
         "genus": "Nephrolepis",
         "category": "fern",
-        "native_regions": json.dumps(["Tropics"]),
+        "native_regions": ["Tropics"],
         "observation_count": 85,
         "source": "seed",
     },
     {
         "scientific_name": "Aloe vera",
-        "common_names": json.dumps(["Aloe Vera", "Burn Plant"]),
+        "common_names": ["Aloe Vera", "Burn Plant"],
         "family": "Asphodelaceae",
         "genus": "Aloe",
         "category": "succulent",
-        "native_regions": json.dumps(["Arabian Peninsula"]),
+        "native_regions": ["Arabian Peninsula"],
         "observation_count": 175,
         "source": "seed",
     },
     {
         "scientific_name": "Acer palmatum",
-        "common_names": json.dumps(["Japanese Maple", "Momiji"]),
+        "common_names": ["Japanese Maple", "Momiji"],
         "family": "Sapindaceae",
         "genus": "Acer",
         "category": "woody_plant",
-        "native_regions": json.dumps(["Japan", "Korea", "China"]),
+        "native_regions": ["Japan", "Korea", "China"],
         "observation_count": 140,
         "source": "seed",
     },
     {
         "scientific_name": "Pothos aureus",
-        "common_names": json.dumps(["Devil's Ivy", "Golden Pothos"]),
+        "common_names": ["Devil's Ivy", "Golden Pothos"],
         "family": "Araceae",
         "genus": "Epipremnum",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Southeast Asia"]),
+        "native_regions": ["Southeast Asia"],
         "observation_count": 160,
         "source": "seed",
     },
     {
         "scientific_name": "Lavandula angustifolia",
-        "common_names": json.dumps(["English Lavender", "Lavender"]),
+        "common_names": ["English Lavender", "Lavender"],
         "family": "Lamiaceae",
         "genus": "Lavandula",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Mediterranean"]),
+        "native_regions": ["Mediterranean"],
         "observation_count": 190,
         "source": "seed",
     },
     {
         "scientific_name": "Cactaceae sp.",
-        "common_names": json.dumps(["Cactus"]),
+        "common_names": ["Cactus"],
         "family": "Cactaceae",
         "genus": "Cactus",
         "category": "succulent",
-        "native_regions": json.dumps(["Americas"]),
+        "native_regions": ["Americas"],
         "observation_count": 110,
         "source": "seed",
     },
     {
         "scientific_name": "Mentha spicata",
-        "common_names": json.dumps(["Spearmint", "Mint"]),
+        "common_names": ["Spearmint", "Mint"],
         "family": "Lamiaceae",
         "genus": "Mentha",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Europe", "Asia"]),
+        "native_regions": ["Europe", "Asia"],
         "observation_count": 170,
         "source": "seed",
     },
     {
         "scientific_name": "Spathiphyllum wallisii",
-        "common_names": json.dumps(["Peace Lily", "White Sails"]),
+        "common_names": ["Peace Lily", "White Sails"],
         "family": "Araceae",
         "genus": "Spathiphyllum",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Central America"]),
+        "native_regions": ["Central America"],
         "observation_count": 130,
         "source": "seed",
     },
     {
         "scientific_name": "Crassula ovata",
-        "common_names": json.dumps(["Jade Plant", "Money Tree"]),
+        "common_names": ["Jade Plant", "Money Tree"],
         "family": "Crassulaceae",
         "genus": "Crassula",
         "category": "succulent",
-        "native_regions": json.dumps(["South Africa"]),
+        "native_regions": ["South Africa"],
         "observation_count": 145,
         "source": "seed",
     },
     {
         "scientific_name": "Dracaena marginata",
-        "common_names": json.dumps(["Dragon Tree", "Madagascar Dragon Tree"]),
+        "common_names": ["Dragon Tree", "Madagascar Dragon Tree"],
         "family": "Asparagaceae",
         "genus": "Dracaena",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Madagascar"]),
+        "native_regions": ["Madagascar"],
         "observation_count": 105,
         "source": "seed",
     },
     {
         "scientific_name": "Phalaenopsis amabilis",
-        "common_names": json.dumps(["Moth Orchid", "Orchid"]),
+        "common_names": ["Moth Orchid", "Orchid"],
         "family": "Orchidaceae",
         "genus": "Phalaenopsis",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["Southeast Asia"]),
+        "native_regions": ["Southeast Asia"],
         "observation_count": 155,
         "source": "seed",
     },
     {
         "scientific_name": "Sansevieria trifasciata",
-        "common_names": json.dumps(["Snake Plant", "Mother-in-Law's Tongue"]),
+        "common_names": ["Snake Plant", "Mother-in-Law's Tongue"],
         "family": "Asparagaceae",
         "genus": "Dracaena",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["West Africa"]),
+        "native_regions": ["West Africa"],
         "observation_count": 165,
         "source": "seed",
     },
     {
         "scientific_name": "Zamioculcas zamiifolia",
-        "common_names": json.dumps(["ZZ Plant", "Zanzibar Gem"]),
+        "common_names": ["ZZ Plant", "Zanzibar Gem"],
         "family": "Araceae",
         "genus": "Zamioculcas",
         "category": "herbaceous_flowering_plant",
-        "native_regions": json.dumps(["East Africa"]),
+        "native_regions": ["East Africa"],
         "observation_count": 100,
         "source": "seed",
     },
@@ -222,35 +222,18 @@ SEED_SPECIES = [
 
 
 def seed_database() -> dict:
-    """Seed the local database with common species.
+    """Seed the Supabase database with common species.
 
     Returns dict with seed stats.
     """
-    init_db()
+    stats = seed_supabase_gbif_from_list(SEED_SPECIES)
 
-    conn = get_connection()
-    try:
-        existing = conn.execute("SELECT COUNT(*) as cnt FROM species").fetchone()["cnt"]
-        if existing > 0:
-            logger.info("Database already has %d species, skipping seed", existing)
-            return {
-                "status": "skipped",
-                "reason": f"Database already has {existing} species",
-                "species_count": existing,
-            }
-    finally:
-        conn.close()
-
-    count = 0
-    for species in SEED_SPECIES:
-        insert_species(species)
-        count += 1
-
-    logger.info("Seeded %d species into local database", count)
+    logger.info("Seeded %d species into Supabase", len(SEED_SPECIES))
     return {
         "status": "completed",
-        "species_count": count,
+        "species_count": len(SEED_SPECIES),
         "source": "seed",
+        **stats,
     }
 
 

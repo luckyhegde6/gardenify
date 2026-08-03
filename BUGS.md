@@ -65,6 +65,16 @@
 - **Fix**: Added `api/ruff.toml` with `ignore = ["BLE001"]`
 - **Root cause**: Intentional resilience pattern (catch all exceptions for API client + EXIF parser)
 
+### BUG-010: `local_identify` Never Works on Vercel — SQLite DB Doesn't Ship
+
+- **Status**: Fixed 2026-08-03
+- **Severity**: Medium
+- **Component**: Backend
+- **Reported**: 2026-08-02
+- **Description**: The local-identification step in `/api/identify` (Step 2, perceptual-hash matching) always fails on Vercel with `Local identification failed: unable to open database file`. `api/data/gardenify.db` is excluded via `.vercelignore` and Vercel's `/var/task` FS is read-only, so `local_db.get_connection()` → `sqlite3.connect()` throws.
+- **Fix (applied)**: Removed SQLite entirely. Deleted `local_db.py`, `schema.sql`, `gardenify.db`; rewrote all importers to write to Supabase; added Supabase `image_hashes` table (migration 008) + `supabase_species.find_by_phash()`/`insert_image_hash()`/`get_species_images()`/real `get_hash_count()`; rewrote `local_identify.py` to hit Supabase; gate on `supabase_species.is_available()`. Verified: `POST /api/identify` returns 200 via PlantNet with OpenCV metadata on local backend + emulator.
+- **Root cause**: Project-relative SQLite DB is git-ignored + excluded from Vercel bundle; serverless FS is read-only; the identify pipeline still assumed a local DB.
+
 ---
 
 ## Fixed Issues
@@ -205,7 +215,7 @@
 
 ---
 
-**Last updated**: 2026-08-02
+**Last updated**: 2026-08-03
 **Total open**: 0
-**Total fixed**: 9
+**Total fixed**: 10
 **Total observations**: 3

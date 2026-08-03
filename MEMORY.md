@@ -42,6 +42,20 @@ Expo App → FastAPI Backend → PlantNet API
 
 ## Current State
 
+### ✅ DONE — Remove SQLite Entirely → Supabase-Only Backend (2026-08-03)
+
+**Refactor complete and verified end-to-end.** No SQLite anywhere in runtime paths; all importers write to Supabase; `local_identify` hits Supabase; OpenCV best practices applied.
+
+- **Why (root cause)**: `api/data/gardenify.db` was in `.vercelignore` so SQLite never shipped on Vercel → `local_identify` always failed there. Supabase `species` had 10,008 rows but 0 image hashes.
+- **What changed**: deleted `api/services/local_db.py`, `api/data/schema.sql`, `api/data/gardenify.db`; rewrote all importers (`seed_species.py`, `import_gbif.py`, `import_plantnet300k.py`, `build_hash_index.py`, `run_all.py`) to write to Supabase via shared `seed_supabase_gbif.seed_supabase_gbif_from_list()`; added `supabase_species.find_by_phash()`/`insert_image_hash()`/`get_species_images()`/real `get_hash_count()`/`get_species_id_map()`; `local_identify.py` → Supabase only; identify/species/main gates on `supabase_species.is_available()`.
+- **Tests**: rewritten with `FakeSupabaseClient` (in-memory, monkeypatched `_get_client`) — **91 Python tests pass**, ruff clean, tsc clean.
+- **OpenCV**: `image_processor.py` now GaussianBlurs before Canny, detects blur via variance-of-Laplacian (`BLUR_THRESHOLD=100.0`), adds HSV green-pixel ratio; `OpenCVResult` schema gained `sharpness`/`is_blurry`/`green_ratio`. Verified live: flat green → `is_blurry:true`, structured → `sharpness:370`.
+- **Migration `008_image_hashes_table.sql`**: `image_hashes` table (FK→species, phash/dhash/category, RLS) written but **NOT yet applied to prod** — prod identify currently logs a graceful PostgREST 404 for `/rest/v1/image_hashes` (handled).
+- **Hashes**: 1,960 old SQLite hashes were regenerable (archive at `C:\Users\lucky\AppData\Local\Temp\opencode\plantnet_observations.zip`) via `scripts/build_hash_index.py` → Supabase; `total_hashes` currently 0.
+- **Emulator verification**: local backend on `:8000` (prod Supabase) + installed `com.gardenify.app` APK on emulator-5554 → login via prod auth (new `devtest@gardenify.app` auto-confirmed user created via service-role admin API) → gallery pick → identify → **Monstera deliciosa 81.7%** rendered with taxonomy + care.
+- **Known limitations**: local Supabase still won't start (Docker Desktop Linux engine missing); backend verified against prod Supabase instead. Migration 008 + hash seed pending for prod.
+- **Resume point**: `.agents/handoff-current.md` → "Active Task" (apply migration 008 + seed hashes to prod).
+
 ### Done — Phase 1 (Foundation)
 
 - [x] All agent docs

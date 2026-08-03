@@ -96,6 +96,9 @@ class OpenCVResult(BaseModel):
     total_pixels: int = Field(description="Total pixel count")
     content_score: float = Field(description="Content complexity score 0.0-1.0 (higher = more structure)")
     is_plant_like: bool = Field(description="Heuristic: image likely contains a plant subject")
+    sharpness: float = Field(default=0.0, description="Variance of Laplacian focus measure (higher = more in-focus)")
+    is_blurry: bool = Field(default=True, description="Flagged blurry when sharpness is below threshold")
+    green_ratio: float = Field(default=0.0, description="Share of green (foliage) pixels in HSV, 0.0-1.0")
     mean_color: list[float] = Field(description="Mean BGR color values")
     dominant_colors: list[dict] = Field(description="Top dominant BGR colors via k-means clustering")
 

@@ -2,6 +2,61 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-03: Secrets in Commits + Direct-to-main Commits (Both Caught, Both Fixed)
+
+**Context:** During the SQLite→Supabase refactor, a Supabase Management API token (`sbp_…`) was committed into `.agents/session-todos.md` inside a commit made **directly on `main`** (violating the PR-only workflow). `git push` was rejected by GitHub push protection (`GH013` — Push cannot contain secrets).
+
+**Lessons applied:**
+
+1. **Raw secrets belong ONLY on gitignored files.** `.env.local`, `creds.json`, `.agents/handoff-current.md` are gitignored; tracked docs (`.agents/session-todos.md`, `MEMORY.md`, etc.) must reference a pointer (e.g. "see `creds.json`"), never the value. Verify with `git grep -nE 'sbp_[a-f0-9]{20,}'` before every push.
+2. **GitHub push protection saved us** — the push was rejected so the token **never reached GitHub**. Rotation is still recommended hygiene for any secret written to a file.
+3. **Fix a secret committed to history properly:** move the commit to a feature branch, `git add` the cleaned file, `git commit --amend` to rewrite the offending commit, verify `git grep` on `HEAD` is clean, then `git reset --hard origin/main` to restore `main`. The reflog still holds the old object locally but it is never pushed.
+4. **Never commit on `main`.** Even mid-refactor, work goes on `feat/*`/`bugfix/*`/`chore/*` branches and merges via PR. A commit to `main` is now blocked locally by `.githooks/pre-commit` (and direct pushes by `.githooks/pre-push`).
+5. **Hooks must be versioned + opt-in per clone.** Git doesn't track `.git/hooks`, so hooks live in the repo's `.githooks/` dir and each clone runs `git config core.hooksPath .githooks` (documented in AGENTS.md).
+
+**Verification:** after `--amend`, `git grep -n "sbp_f527" HEAD` returns nothing; `git push` of the feature branch succeeded with no `GH013` block; CI on PR #21 all green (Python Tests, Lint & TypeCheck, Publish OTA, GitGuardian).
+
+**Applies to:** all
+**Severity:** critical
+**Status:** active
+
+## 2026-08-03: OpenCV Image-Validation Best Practices (Blur + Green Dominance)
+
+**Context:** Applying OpenCV best practices to `image_processor.py`'s plant-likeness gate ahead of the PlantNet call.
+
+**Lessons applied:**
+
+1. **Always GaussianBlur before Canny** — Canny edge detection is extremely noise-sensitive; a `3x3` GaussianBlur first stabilizes edge output, so `content_score` reflects real structure, not sensor noise.
+2. **Blur/quality is a variance-of-Laplacian, not an edge count** — a flat uniform image has no global content but also shouldn't be rejected as "edgy"; compute `cv2.Laplacian(gray).var()`, classify `sharpness < BLUR_THRESHOLD (100.0)` as blurry (PyImageSearch's well-known default). Edge count alone conflates "low detail" with "out of focus".
+3. **Plant-likeness = green-pixel ratio in HSV** — threshold HSV green (`cv2.inRange` H≈30-90) and compute `green ratio = green_pixels / total`. This cleanly separates plants (high green share) from generic scenes.
+4. **Surface the metrics in the schema** — added `sharpness`, `is_blurry`, `green_ratio` to `OpenCVResult` and returned them in `/api/identify` so callers can reason about quality (e.g., prompt "use a clearer photo" client-side if `is_blurry`).
+5. **`is_plant_like` = `content_score > 0.01 OR green_ratio > 0.3`** — a structured (non-flat) image OR a strongly-green image passes; both must be low to call it "not a plant".
+
+**Verified live on local backend:** flat-green JPEG → `sharpness:0, is_blurry:true, green_ratio:1.0`; structured green → `sharpness:370, is_blurry:false`.
+
+**Applies to:** backend
+**Severity:** minor
+**Status:** active
+
+## 2026-08-02: SQLite Files Don't Ship to Vercel — Use Supabase as the Only Local-Identify Backend
+
+**Context:** `/api/identify` on Vercel logged `Local identification failed: unable to open database file`. The "local" identification step (perceptual-hash matching against a SQLite DB) silently no-ops in production.
+
+**Issue:** `api/data/gardenify.db` is excluded from the Vercel bundle via `.vercelignore` (line 4: `api/data/gardenify.db`), and Vercel's filesystem is read-only (only `/tmp` writable) so WAL-mode SQLite can't work there anyway. Any code path that unconditionally `sqlite3.connect()`s the DB fails on serverless. Supabase was already the production species store (10,008 rows) but had **zero image hashes**, so `local_identify` had no Supabase equivalent.
+
+**Decision (user):** Remove SQLite **entirely** — `local_identify` must hit Supabase (works on Vercel + local Supabase), all importers write to Supabase, `gardenify.db`/`local_db.py`/`schema.sql` deleted. This makes behavior consistent across local (local Supabase `127.0.0.1:54321`) and prod.
+
+**Pattern:**
+
+1. Treat any project-relative data file as non-shippable on serverless — if you can't write it and it's git-ignored, it doesn't exist in prod. Data must live in a database.
+2. When migrating SQLite → Supabase, ids won't match (autoincrement vs BIGSERIAL) — join on the natural key (`scientific_name`).
+3. Supabase `find_by_phash` = fetch all hashes + compute Hamming distance in Python (SQLite/PG bitwise XOR isn't portable; 2K rows is fast).
+4. Gate local-identify on `supabase_species.is_available()` (Supabase configured), not on `local_db.is_available()`.
+
+**Applies to:** backend, database
+**Severity:** important
+**Status:** active
+
 ## 2026-08-02: jsonb Columns Reject json.dumps Strings — and Bulk Upsert Can Wipe Enriched Data
 
 **Context:** The new GBIF→Supabase seed script (`seed_supabase_gbif.py`) upserted 10,000 species. Prod `common_names`/`native_regions` search broke (`/api/species?q=sunflower` returned 0) and `common_names` came back as a string not a list.

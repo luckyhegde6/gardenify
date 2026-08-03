@@ -1,4 +1,4 @@
-"""Import PlantNet-300K metadata into local SQLite database.
+"""Import PlantNet-300K metadata into the Supabase species table.
 
 Reads metadata JSON files and populates the species table.
 Can work with or without actual images (metadata-only import).
@@ -16,7 +16,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import init_db, insert_species
+from api.data.importers.seed_supabase_gbif import seed_supabase_gbif_from_list
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +79,6 @@ def populate_species(species_names: dict[str, str], metadata: dict) -> int:
 
     Returns count of species inserted.
     """
-    init_db()
-
     # Group metadata by species
     species_obs: dict[str, dict] = {}
 
@@ -93,20 +91,19 @@ def populate_species(species_names: dict[str, str], metadata: dict) -> int:
         if sci_name not in species_obs:
             species_obs[sci_name] = {
                 "scientific_name": sci_name,
-                "common_names": "[]",
+                "common_names": [],
                 "family": "",
                 "genus": sci_name.split()[0] if " " in sci_name else "",
                 "category": _guess_category(img_meta),
-                "native_regions": "[]",
+                "native_regions": [],
                 "observation_count": 0,
                 "source": "plantnet300k",
             }
         species_obs[sci_name]["observation_count"] += 1
 
-    count = 0
-    for sci_name, data in species_obs.items():
-        insert_species(data)
-        count += 1
+    count = len(species_obs)
+    if count:
+        seed_supabase_gbif_from_list(list(species_obs.values()))
 
     logger.info("Imported %d species from PlantNet-300K metadata", count)
     return count
