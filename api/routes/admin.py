@@ -3,43 +3,19 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from supabase import create_client
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.config import settings
-from api.models.schemas import AdminUserListResponse, AdminUserResponse, AdminUserUpdate
+from api.models.schemas import (
+    AdminUserListResponse,
+    AdminUserResponse,
+    AdminUserUpdate,
+)
+from api.routes.deps import get_service_client, require_admin
+from api.services.auth_security import record_reset_completed
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _get_service_client():
-    if not settings.supabase_url or not settings.supabase_service_role_key:
-        raise HTTPException(503, "Supabase not configured")
-    return create_client(settings.supabase_url, settings.supabase_service_role_key)
-
-
-async def _require_admin(authorization: Annotated[str | None, Header()] = None):
-    if not authorization:
-        raise HTTPException(401, "Missing Authorization header")
-    token = authorization.removeprefix("Bearer ")
-    client = _get_service_client()
-    try:
-        user_resp = client.auth.get_user(token)
-        user_id = user_resp.user.id
-    except Exception as e:
-        raise HTTPException(401, f"Invalid token: {e}") from e
-
-    profile = (
-        client.table("users")
-        .select("is_admin")
-        .eq("id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    if not profile.data or not profile.data.get("is_admin"):
-        raise HTTPException(403, "Admin access required")
-    return user_id
 
 
 @router.get(
@@ -50,12 +26,12 @@ async def _require_admin(authorization: Annotated[str | None, Header()] = None):
     response_description="Paginated user list with total count",
 )
 async def list_users(
-    _admin_id: Annotated[str, Depends(_require_admin)],
+    _admin_id: Annotated[str, Depends(require_admin)],
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(20, ge=1, le=100, description="Max records to return (1-100)"),
     search: str | None = Query(None, description="Filter by email (case-insensitive partial match)"),
 ):
-    client = _get_service_client()
+    client = get_service_client()
     query = client.table("users").select("*", count="exact")
 
     if search:
@@ -77,10 +53,10 @@ async def list_users(
 )
 async def get_user(
     user_id: str,
-    _admin_id: Annotated[str, Depends(_require_admin)],
+    _admin_id: Annotated[str, Depends(require_admin)],
 ):
     """Get a single user by their UUID."""
-    client = _get_service_client()
+    client = get_service_client()
     resp = client.table("users").select("*").eq("id", user_id).maybe_single().execute()
     if not resp.data:
         raise HTTPException(404, "User not found")
@@ -97,10 +73,10 @@ async def get_user(
 async def update_user(
     user_id: str,
     update: AdminUserUpdate,
-    _admin_id: Annotated[str, Depends(_require_admin)],
+    _admin_id: Annotated[str, Depends(require_admin)],
 ):
     """Update user profile fields (full_name, subscription_tier, is_admin)."""
-    client = _get_service_client()
+    client = get_service_client()
     payload = update.model_dump(exclude_none=True)
     if not payload:
         raise HTTPException(400, "No fields to update")
@@ -119,10 +95,10 @@ async def update_user(
 )
 async def delete_user(
     user_id: str,
-    _admin_id: Annotated[str, Depends(_require_admin)],
+    _admin_id: Annotated[str, Depends(require_admin)],
 ):
     """Soft-delete a user: clear profile, ban auth account."""
-    client = _get_service_client()
+    client = get_service_client()
     profile = client.table("users").select("id").eq("id", user_id).maybe_single().execute()
     if not profile.data:
         raise HTTPException(404, "User not found")
@@ -135,6 +111,27 @@ async def delete_user(
 
     client.auth.admin.update_user_by_id(user_id, {"ban_duration": "876000h"})
     return {"detail": "User deactivated"}
+
+
+@router.post(
+    "/admin/users/{user_id}/reset-password",
+    summary="Reset user password to default (admin)",
+    description="Force-reset a user's password to the configured default and clear any pending forgot-password request. Requires admin JWT.",
+    response_description="Confirmation of password reset",
+)
+async def reset_user_password(
+    user_id: str,
+    _admin_id: Annotated[str, Depends(require_admin)],
+):
+    """Force a user's password back to the default. Admin only."""
+    client = get_service_client()
+    profile = client.table("users").select("id, email").eq("id", user_id).maybe_single().execute()
+    if not profile.data:
+        raise HTTPException(404, "User not found")
+
+    client.auth.admin.update_user_by_id(user_id, {"password": settings.default_password})
+    record_reset_completed(profile.data.get("email", ""))
+    return {"detail": "Password reset to default"}
 
 
 def _profile_to_response(row: dict) -> AdminUserResponse:

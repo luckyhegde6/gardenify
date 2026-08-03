@@ -87,6 +87,31 @@ export default function AdminScreen() {
     ]);
   };
 
+  const resetPassword = (user: AdminUser) => {
+    Alert.alert(
+      "Reset Password",
+      `Reset ${user.email}'s password to the default?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          onPress: async () => {
+            if (!session?.access_token) return;
+            try {
+              await apiClient.adminResetPassword(session.access_token, user.id);
+              Alert.alert("Success", "Password reset to default");
+            } catch (e) {
+              Alert.alert(
+                "Error",
+                e instanceof Error ? e.message : "Reset failed",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const deleteUser = (user: AdminUser) => {
     Alert.alert(
       "Delete User",
@@ -199,6 +224,17 @@ export default function AdminScreen() {
               >
                 <Text style={[styles.actionText, { color: colors.primary }]}>
                   Change Tier
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.actionBtn,
+                  { backgroundColor: colors.primaryLight },
+                ]}
+                onPress={() => resetPassword(item)}
+              >
+                <Text style={[styles.actionText, { color: colors.primary }]}>
+                  Reset Password
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity

@@ -107,6 +107,15 @@ export default function LoginScreen() {
             size="lg"
             style={styles.submitButton}
           />
+
+          <TouchableOpacity
+            style={styles.forgotButton}
+            onPress={() => router.push("/forgot-password" as any)}
+          >
+            <Text style={[styles.forgotText, { color: colors.primary }]}>
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
@@ -169,6 +178,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.md,
+  },
+  forgotButton: {
+    alignSelf: "center",
+    marginTop: spacing.md,
+    padding: spacing.xs,
+  },
+  forgotText: {
+    ...typography.body,
+    fontWeight: "600",
   },
   footer: {
     flexDirection: "row",
