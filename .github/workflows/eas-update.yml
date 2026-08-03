@@ -13,6 +13,9 @@ concurrency:
   group: eas-update-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   publish-preview:
     name: Publish OTA Update
