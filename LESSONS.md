@@ -2,6 +2,24 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-03: Secrets in Commits + Direct-to-main Commits (Both Caught, Both Fixed)
+
+**Context:** During the SQLite→Supabase refactor, a Supabase Management API token (`sbp_…`) was committed into `.agents/session-todos.md` inside a commit made **directly on `main`** (violating the PR-only workflow). `git push` was rejected by GitHub push protection (`GH013` — Push cannot contain secrets).
+
+**Lessons applied:**
+
+1. **Raw secrets belong ONLY on gitignored files.** `.env.local`, `creds.json`, `.agents/handoff-current.md` are gitignored; tracked docs (`.agents/session-todos.md`, `MEMORY.md`, etc.) must reference a pointer (e.g. "see `creds.json`"), never the value. Verify with `git grep -nE 'sbp_[a-f0-9]{20,}'` before every push.
+2. **GitHub push protection saved us** — the push was rejected so the token **never reached GitHub**. Rotation is still recommended hygiene for any secret written to a file.
+3. **Fix a secret committed to history properly:** move the commit to a feature branch, `git add` the cleaned file, `git commit --amend` to rewrite the offending commit, verify `git grep` on `HEAD` is clean, then `git reset --hard origin/main` to restore `main`. The reflog still holds the old object locally but it is never pushed.
+4. **Never commit on `main`.** Even mid-refactor, work goes on `feat/*`/`bugfix/*`/`chore/*` branches and merges via PR. A commit to `main` is now blocked locally by `.githooks/pre-commit` (and direct pushes by `.githooks/pre-push`).
+5. **Hooks must be versioned + opt-in per clone.** Git doesn't track `.git/hooks`, so hooks live in the repo's `.githooks/` dir and each clone runs `git config core.hooksPath .githooks` (documented in AGENTS.md).
+
+**Verification:** after `--amend`, `git grep -n "sbp_f527" HEAD` returns nothing; `git push` of the feature branch succeeded with no `GH013` block; CI on PR #21 all green (Python Tests, Lint & TypeCheck, Publish OTA, GitGuardian).
+
+**Applies to:** all
+**Severity:** critical
+**Status:** active
+
 ## 2026-08-03: OpenCV Image-Validation Best Practices (Blur + Green Dominance)
 
 **Context:** Applying OpenCV best practices to `image_processor.py`'s plant-likeness gate ahead of the PlantNet call.

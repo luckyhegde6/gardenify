@@ -1,0 +1,16 @@
+#!/bin/sh
+
+protected=" refs/heads/main refs/heads/master "
+z40="0000000000000000000000000000000000000000"
+
+while read local_ref local_sha remote_ref remote_sha; do
+  case "$protected" in
+    *" $remote_ref "*)
+      echo "error: direct push to $remote_ref is not allowed (PR-only workflow)." >&2
+      echo "Open a pull request instead:  gh pr create" >&2
+      exit 1
+      ;;
+  esac
+done
+
+exit 0
