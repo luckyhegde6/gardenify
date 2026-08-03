@@ -15,6 +15,64 @@ def _jpeg_bytes(size: tuple[int, int] = (64, 64)) -> bytes:
     return buf.getvalue()
 
 
+def _structured_jpeg_bytes(size: tuple[int, int] = (128, 128)) -> bytes:
+    """A green image with sharp edges/bands, so Laplacian variance is non-zero."""
+    import numpy as np
+
+    arr = np.zeros((size[1], size[0], 3), dtype=np.uint8)
+    block = 8
+    for y in range(0, size[1], block):
+        for x in range(0, size[0], block):
+            val = 60 if (x // block + y // block) % 2 == 0 else 200
+            arr[y : y + block, x : x + block] = (val // 2, val, val // 2)
+    buf = io.BytesIO()
+    Image.fromarray(arr).save(buf, format="JPEG")
+    return buf.getvalue()
+
+
+class TestOpenCVAnalysis:
+    def test_sharp_image_is_not_blurry(self):
+        """A sharp, structured green image has high Laplacian variance."""
+        result = image_processor.validate_with_opencv(_structured_jpeg_bytes())
+        assert result["valid"] is True
+        assert result["sharpness"] > 0
+        assert result["is_blurry"] is False
+
+    def test_green_image_is_plant_like(self):
+        """A foliage-green image is flagged plant-like via green ratio."""
+        result = image_processor.validate_with_opencv(_jpeg_bytes())
+        assert result["valid"] is True
+        assert result["green_ratio"] > 0.3
+        assert result["is_plant_like"] is True
+
+    def test_blurry_image_detected(self):
+        """A heavily blurred image is marked blurry (low Laplacian variance)."""
+        import numpy as np
+
+        img = Image.new("RGB", (128, 128), (40, 120, 40))
+        arr = np.array(img)
+        from PIL import ImageFilter
+
+        blurred = Image.fromarray(arr).filter(ImageFilter.GaussianBlur(radius=12))
+        buf = io.BytesIO()
+        blurred.save(buf, format="JPEG")
+        result = image_processor.validate_with_opencv(buf.getvalue())
+        assert result["valid"] is True
+        assert result["is_blurry"] is True
+
+    def test_opencv_metadata_in_process(self):
+        """process() exposes the OpenCV analysis fields in metadata."""
+        result = image_processor.ImageProcessor().process(
+            _jpeg_bytes(), "leaf.jpg", "image/jpeg"
+        )
+        ocv = result["metadata"]["opencv"]
+        assert ocv["valid"] is True
+        assert "sharpness" in ocv
+        assert "green_ratio" in ocv
+        assert "is_blurry" in ocv
+        assert ocv["is_plant_like"] is True
+
+
 class TestUploadDirResolution:
     def test_default_dir_is_writable(self):
         """api/data/uploads should be writable in local dev."""

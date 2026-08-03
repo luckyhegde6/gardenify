@@ -1,7 +1,7 @@
 """Build perceptual hash index for local plant images.
 
-Scans plantnet-300k images directory, computes dHash for each image,
-and stores in the image_hashes table.
+Scans plantnet-300k images directory, computes phash + dHash for each image,
+and stores in the Supabase image_hashes table.
 
 Usage:
     python -m api.data.importers.build_hash_index [--images-dir PATH]
@@ -15,8 +15,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import get_connection, insert_image_hash
-from api.services.perceptual_hash import compute_dhash
+from api.services.perceptual_hash import compute_dhash, compute_phash
+from api.services.supabase_species import get_species_id_map, insert_image_hash
 
 logger = logging.getLogger(__name__)
 
@@ -58,43 +58,39 @@ def build_index(images_dir: str | Path | None = None) -> dict:
 
     logger.info("Found %d images to index", len(image_files))
 
-    conn = get_connection()
-    try:
-        # Get species mapping from directory structure
-        species_map = _build_species_map(conn, images_dir)
+    # Get species mapping from Supabase
+    species_map = get_species_id_map()
 
-        indexed = 0
-        errors = 0
-        for img_path in image_files:
-            try:
-                data = img_path.read_bytes()
-                dhash = compute_dhash(data)
+    indexed = 0
+    errors = 0
+    for img_path in image_files:
+        try:
+            data = img_path.read_bytes()
+            phash = compute_phash(data)
+            dhash = compute_dhash(data)
 
-                # Determine species from path
-                species_id = _get_species_from_path(species_map, img_path, images_dir)
+            # Determine species from path
+            species_id = _get_species_from_path(species_map, img_path, images_dir)
 
-                if species_id:
-                    relative_path = str(img_path.relative_to(images_dir))
-                    insert_image_hash(
-                        species_id=species_id,
-                        image_path=relative_path,
-                        phash=dhash,
-                        dhash=dhash,
-                        category=_get_category_from_path(img_path, images_dir),
-                    )
-                    indexed += 1
-                else:
-                    errors += 1
-
-            except Exception as e:
-                logger.warning("Failed to hash %s: %s", img_path, e)
+            if species_id:
+                relative_path = str(img_path.relative_to(images_dir))
+                insert_image_hash(
+                    species_id=species_id,
+                    image_path=relative_path,
+                    phash=phash,
+                    dhash=dhash,
+                    category=_get_category_from_path(img_path, images_dir),
+                )
+                indexed += 1
+            else:
                 errors += 1
 
-            if (indexed + errors) % 1000 == 0:
-                logger.info("Progress: %d indexed, %d errors", indexed, errors)
+        except Exception as e:
+            logger.warning("Failed to hash %s: %s", img_path, e)
+            errors += 1
 
-    finally:
-        conn.close()
+        if (indexed + errors) % 1000 == 0:
+            logger.info("Progress: %d indexed, %d errors", indexed, errors)
 
     logger.info("Hash index built: %d indexed, %d errors", indexed, errors)
     return {
@@ -102,16 +98,6 @@ def build_index(images_dir: str | Path | None = None) -> dict:
         "indexed": indexed,
         "errors": errors,
         "total_images": len(image_files),
-    }
-
-
-def _build_species_map(conn, images_dir: Path) -> dict[str, int]:
-    """Build mapping of species names to IDs from directory structure."""
-    rows = conn.execute("SELECT id, scientific_name FROM species").fetchall()
-    # Normalize names for path matching
-    return {
-        row["scientific_name"].lower().replace(" ", "_"): row["id"]
-        for row in rows
     }
 
 

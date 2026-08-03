@@ -191,16 +191,21 @@ async def identify(
         cached["cached"] = True
         return IdentificationResponse(**cached)
 
-    # ── Step 2: Local DB lookup first (gate before PlantNet) ─
+    # ── Step 2: Supabase-backed local lookup first (gate before PlantNet) ─
+    # Uses the species + image-hash data in Supabase, so it works identically
+    # on Vercel and against local Supabase in dev. Skipped cleanly when
+    # Supabase is not configured.
     local_results: list[dict] = []
     local_error = None
-    try:
-        from api.services.local_identify import local_identify
-        local_result = await local_identify(processed, organs)
-        local_results = local_result.get("results", [])
-    except Exception as e:
-        logger.warning("Local identification failed: %s", e)
-        local_error = e
+    from api.services import supabase_species
+    if supabase_species.is_available():
+        try:
+            from api.services.local_identify import local_identify
+            local_result = await local_identify(processed, organs)
+            local_results = local_result.get("results", [])
+        except Exception as e:
+            logger.warning("Local identification failed: %s", e)
+            local_error = e
 
     # ── Step 3: Call PlantNet when local DB has no matches ──
     raw = None

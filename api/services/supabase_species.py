@@ -114,8 +114,7 @@ def get_species_by_id(species_id: int) -> dict | None:
             return None
         result = _row_to_dict(resp.data[0])
         # Ensure images key exists for API contract parity with local_db
-        if "images" not in result:
-            result["images"] = []
+        result["images"] = get_species_images(result.get("id"))
         return result
     except Exception as e:
         logger.error("Supabase get by ID failed: %s", e)
@@ -137,10 +136,33 @@ def get_species_by_name(scientific_name: str) -> dict | None:
         )
         if not resp.data:
             return None
-        return _row_to_dict(resp.data[0])
+        result = _row_to_dict(resp.data[0])
+        result["images"] = get_species_images(result.get("id"))
+        return result
     except Exception as e:
         logger.error("Supabase get by name failed: %s", e)
         return None
+
+
+def get_species_id_map() -> dict[str, int]:
+    """Return mapping of normalized scientific_name -> species id.
+
+    Names are normalized to lowercase with spaces replaced by underscores to
+    match PlantNet-300K's directory structure.
+    """
+    client = _get_client()
+    if not client:
+        return {}
+
+    try:
+        resp = client.table("species").select("id, scientific_name").execute()
+        return {
+            row["scientific_name"].lower().replace(" ", "_"): row["id"]
+            for row in (resp.data or [])
+        }
+    except Exception as e:
+        logger.error("Supabase get_species_id_map failed: %s", e)
+        return {}
 
 
 def get_species_count() -> int:
@@ -157,8 +179,121 @@ def get_species_count() -> int:
 
 
 def get_hash_count() -> int:
-    """Image hashes not stored in Supabase (only in local SQLite)."""
-    return 0
+    """Get total image hash count from Supabase."""
+    client = _get_client()
+    if not client:
+        return 0
+
+    try:
+        resp = client.table("image_hashes").select("id", count="exact").execute()
+        return resp.count or 0
+    except Exception:
+        return 0
+
+
+def find_by_phash(phash: str, max_distance: int = 12) -> list[dict]:
+    """Find species by perceptual hash using Hamming distance.
+
+    Fetches all hashes (with joined species data) and computes Hamming
+    distance in Python — same approach the SQLite backend used. Fast enough
+    for tens of thousands of hashes.
+    """
+    client = _get_client()
+    if not client:
+        return []
+
+    try:
+        resp = (
+            client.table("image_hashes")
+            .select(
+                "species_id, image_path, phash, dhash, category, "
+                "species(id, scientific_name, common_names, family, genus, category)"
+            )
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Supabase find_by_phash failed: %s", e)
+        return []
+
+    from api.services.perceptual_hash import hamming_distance
+
+    matches = []
+    for row in (resp.data or []):
+        candidate = row.get("phash")
+        if not candidate:
+            continue
+        try:
+            dist = hamming_distance(phash, candidate)
+        except ValueError:
+            continue
+        if dist > max_distance:
+            continue
+
+        species = row.get("species") or {}
+        common_names = species.get("common_names", [])
+        if isinstance(common_names, str):
+            try:
+                common_names = json.loads(common_names)
+            except (json.JSONDecodeError, TypeError):
+                common_names = []
+
+        matches.append({
+            "species_id": row.get("species_id"),
+            "image_path": row.get("image_path"),
+            "hamming_dist": dist,
+            "scientific_name": species.get("scientific_name", ""),
+            "common_names": common_names,
+            "family": species.get("family", ""),
+            "genus": species.get("genus", ""),
+            "category": row.get("category", "") or species.get("category", ""),
+        })
+
+    matches.sort(key=lambda x: x["hamming_dist"])
+    return matches
+
+
+def insert_image_hash(species_id: int, image_path: str,
+                      phash: str, dhash: str = "", category: str = "") -> int | None:
+    """Insert an image hash record."""
+    client = _get_client()
+    if not client:
+        return None
+
+    try:
+        resp = (
+            client.table("image_hashes")
+            .insert({
+                "species_id": species_id,
+                "image_path": image_path,
+                "phash": phash,
+                "dhash": dhash,
+                "category": category,
+            })
+            .execute()
+        )
+        return resp.data[0]["id"] if resp.data else None
+    except Exception as e:
+        logger.error("Supabase insert_image_hash failed: %s", e)
+        return None
+
+
+def get_species_images(species_id: int) -> list[dict]:
+    """Get image hashes for a species."""
+    client = _get_client()
+    if not client:
+        return []
+
+    try:
+        resp = (
+            client.table("image_hashes")
+            .select("image_path, phash, dhash, category")
+            .eq("species_id", species_id)
+            .execute()
+        )
+        return [dict(r) for r in (resp.data or [])]
+    except Exception as e:
+        logger.error("Supabase get_species_images failed: %s", e)
+        return []
 
 
 def insert_species(species_data: dict) -> int | None:

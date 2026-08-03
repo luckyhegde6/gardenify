@@ -171,47 +171,32 @@ class TestSupabaseSeedMapping:
 
 
 class TestGBIFImport:
-    """Test import to database."""
+    """Test import to Supabase."""
 
-    def test_import_to_database(self, tmp_path):
-        """Test species are inserted into database."""
+    def test_import_to_database(self, patched_supabase):
+        """Test species are inserted via the shared seed helper."""
 
+        species_list = [
+            {
+                "scientific_name": "Test species",
+                "common_names": [],
+                "family": "Testaceae",
+                "genus": "Testus",
+                "category": "",
+                "native_regions": [],
+                "observation_count": 42,
+                "source": "gbif",
+            }
+        ]
 
-        # Use temp database
-        test_db = tmp_path / "test.db"
+        from api.data.importers.import_gbif import import_to_database
+        result = import_to_database(species_list)
 
-        with patch("api.services.local_db.DB_PATH", test_db):
-            from api.services.local_db import get_connection, init_db
+        assert result["inserted"] == 1
+        assert result["errors"] == 0
 
-            init_db()
-
-            species_list = [
-                {
-                    "scientific_name": "Test species",
-                    "common_names": "[]",
-                    "family": "Testaceae",
-                    "genus": "Testus",
-                    "category": "",
-                    "native_regions": "[]",
-                    "observation_count": 42,
-                    "source": "gbif",
-                }
-            ]
-
-            from api.data.importers.import_gbif import import_to_database
-            result = import_to_database(species_list)
-
-            assert result["inserted"] == 1
-            assert result["errors"] == 0
-
-            # Verify in database
-            conn = get_connection()
-            row = conn.execute(
-                "SELECT * FROM species WHERE scientific_name = ?",
-                ("Test species",),
-            ).fetchone()
-            conn.close()
-
-            assert row is not None
-            assert row["genus"] == "Testus"
-            assert row["observation_count"] == 42
+        # Verify in fake Supabase
+        rows = patched_supabase.tables["species"]
+        assert len(rows) == 1
+        assert rows[0]["genus"] == "Testus"
+        assert rows[0]["observation_count"] == 42

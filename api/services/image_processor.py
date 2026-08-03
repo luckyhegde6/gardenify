@@ -46,6 +46,9 @@ MAGIC_BYTES: dict[str, bytes] = {
 THUMBNAIL_SIZE = (256, 256)
 MAX_DIM = 2048
 COMPRESS_QUALITY = 75
+# Variance of Laplacian below this marks an image blurry (PyImageSearch default 100);
+# out-of-focus shots hurt perceptual-hash matching for plant identification.
+BLUR_THRESHOLD = 100.0
 
 
 def _ensure_upload_dir(upload_id: str) -> Path:
@@ -83,6 +86,9 @@ def validate_with_opencv(data: bytes) -> dict:
       - edges_detected: int (count of edge pixels)
       - content_score: float (0-1, higher = more structure)
       - is_plant_like: bool (heuristic)
+      - sharpness: float (variance of Laplacian; higher = more in-focus)
+      - is_blurry: bool
+      - green_ratio: float (0-1, share of green pixels in HSV)
       - mean_color: list[float] BGR
       - dominant_colors: list[dict]
     """
@@ -94,6 +100,9 @@ def validate_with_opencv(data: bytes) -> dict:
         "total_pixels": 0,
         "content_score": 0.0,
         "is_plant_like": False,
+        "sharpness": 0.0,
+        "is_blurry": True,
+        "green_ratio": 0.0,
         "mean_color": [0.0, 0.0, 0.0],
         "dominant_colors": [],
     }
@@ -111,12 +120,30 @@ def validate_with_opencv(data: bytes) -> dict:
         result["height"] = h
         result["total_pixels"] = h * w
 
+        # Blur before Canny — reduces noise-induced edges (OpenCV best practice:
+        # a Gaussian blur yields a cleaner edge map and better gradient estimates).
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
         edges = cv2.Canny(gray, 50, 150)
         result["edges_detected"] = int(edges.sum() / 255)
         result["content_score"] = min(1.0, result["edges_detected"] / (h * w * 0.3))
 
-        result["is_plant_like"] = result["content_score"] > 0.01
+        # Blur detection via variance of Laplacian — out-of-focus images have
+        # low variance, which degrades perceptual-hash matching.
+        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+        result["sharpness"] = float(laplacian.var())
+        result["is_blurry"] = result["sharpness"] < BLUR_THRESHOLD
+
+        # Green-pixel ratio in HSV — foliage is green: hue ~[35, 85], so a leaf
+        # dominates the frame. Reinforces the plant heuristic for close-ups.
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        green_mask = cv2.inRange(hsv, (35, 40, 40), (85, 255, 255))
+        green_ratio = int(green_mask.sum() / 255) / (h * w)
+        result["green_ratio"] = round(float(green_ratio), 4)
+
+        result["is_plant_like"] = (
+            result["content_score"] > 0.01 or result["green_ratio"] > 0.3
+        )
 
         mean = cv2.mean(img)[:3]
         result["mean_color"] = [float(mean[0]), float(mean[1]), float(mean[2])]

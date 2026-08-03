@@ -193,6 +193,12 @@ For comprehensive architecture, phase TODOs, security guidelines, and agentic wo
 - `.agents/release-guidelines.md` — Release process documentation
 - `.agents/orchestration.md` — Monitoring and coordination agents
 
+Also see the `docs/` directory for developer-facing guides:
+
+- `docs/security-architecture.md` — Trust boundary, RLS, and auth decisions
+- `docs/supabase-integration.md` — Supabase setup and migrations
+- `docs/vercel-deployment.md` — Backend deployment
+
 ## Pre-Commit Workflow
 
 Maintain `.agents/session-todos.md` from session start until the final commit: mark done/cancelled items before each commit, carry unfulfilled ones forward as new todos, and log any unfulfilled todo that is a confirmed bug into `BUGS.md`. Before EVERY commit, update these files:

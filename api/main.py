@@ -144,17 +144,6 @@ async def landing_page():
     return HTMLResponse(content=LANDING_PAGE_HTML)
 
 
-# Initialize local database on startup (skip on Vercel serverless)
-if not os.environ.get("VERCEL"):
-    try:
-        from api.services.local_db import init_db
-        init_db()
-        from api.data.importers.seed_species import seed_database
-        seed_database()
-    except Exception as e:
-        logger.warning("Local DB init failed: %s", e)
-
-
 
 @app.get("/about", response_class=HTMLResponse)
 async def about_page():

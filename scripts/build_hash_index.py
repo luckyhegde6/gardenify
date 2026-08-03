@@ -1,11 +1,11 @@
-"""Build perceptual hash index from GBIF/PlantNet image URLs.
+"""Build perceptual hash index from GBIF/PlantNet image URLs into Supabase.
 
 Pipeline:
-1. Read species from local SQLite DB
+1. Read species from Supabase
 2. Match against GBIF multimedia URLs (bs.plantnet.org)
 3. Download one representative image per species
 4. Compute pHash + dHash
-5. Store in image_hashes table
+5. Store in Supabase image_hashes table
 6. Cache images locally in api/data/hashes/{species_id}/
 
 Usage:
@@ -17,6 +17,8 @@ import csv
 import io
 import json
 import logging
+import os
+import re
 import sys
 import time
 import zipfile
@@ -26,13 +28,12 @@ from urllib.request import urlopen, Request
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.services.local_db import (
-    get_connection,
-    get_hash_count,
-    get_species_count,
-    insert_image_hash,
-)
+from dotenv import load_dotenv
+
+load_dotenv(PROJECT_ROOT / ".env.local")
+
 from api.services.perceptual_hash import compute_dhash, compute_phash
+from api.services.supabase_species import get_species_images, insert_image_hash
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,21 +47,33 @@ HASHES_DIR = PROJECT_ROOT / "api" / "data" / "hashes"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 TIMEOUT = 15
 DELAY = 0.5  # seconds between downloads (rate limiting)
+BATCH_SIZE = 200
+
+
+def _get_client():
+    """Build a Supabase client using the service role key (server-side only)."""
+    from supabase import create_client
+
+    url = os.environ.get("SUPABASE_URL", "")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    if not url or not key:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
+
+    return create_client(url, key)
 
 
 def load_species_from_db() -> dict[str, int]:
-    """Return {scientific_name_lower: id} for all species in DB."""
-    conn = get_connection()
-    try:
-        rows = conn.execute(
-            "SELECT id, scientific_name FROM species"
-        ).fetchall()
-        return {r["scientific_name"].strip().lower(): r["id"] for r in rows}
-    finally:
-        conn.close()
+    """Return {scientific_name_lower: id} for all species in Supabase."""
+    client = _get_client()
+    rows = (
+        client.table("species")
+        .select("id, scientific_name")
+        .order("id")
+        .execute()
+    )
+    return {r["scientific_name"].strip().lower(): r["id"] for r in (rows.data or [])}
 
-
-import re
 
 _AUTHOR_RE = re.compile(
     r"(\s+\([^)]*\))?\s+[A-Z][a-zäëïöü]*(?:\s+et\s+[A-Z][a-z]+)?(?:\s+[A-Z]\.)?(?:\s+ex\s+[A-Z][a-z]+)?(?:\s+f\.)?(?:\s+[A-Z]\.)?\s*$"
@@ -69,7 +82,7 @@ _AUTHOR_RE = re.compile(
 
 def _clean_name(gbif_name: str) -> str:
     """Strip author citation from GBIF scientific name.
-    
+
     'Daucus carota L.' → 'daucus carota'
     'Ipomoea pandurata (L.) G. Mey.' → 'ipomoea pandurata'
     'Echinocystis lobata (Michx.) Torr. & A.Gray' → 'echinocystis lobata'
@@ -130,12 +143,12 @@ def download_image(url: str, max_bytes: int = 5 * 1024 * 1024) -> bytes | None:
 
 
 def build_index(limit: int | None = None, force: bool = False) -> dict:
-    """Build hash index from GBIF image URLs."""
+    """Build hash index from GBIF image URLs into Supabase."""
     results = {"species_in_db": 0, "matched_gbif": 0, "downloaded": 0, "indexed": 0, "errors": 0, "skipped": 0}
 
     species_map = load_species_from_db()
     results["species_in_db"] = len(species_map)
-    logger.info("Loaded %d species from DB", len(species_map))
+    logger.info("Loaded %d species from Supabase", len(species_map))
 
     gbif_index = build_gbif_image_index()
     results["matched_gbif"] = len(gbif_index)
@@ -154,70 +167,66 @@ def build_index(limit: int | None = None, force: bool = False) -> dict:
     if limit:
         candidates = candidates[:limit]
 
-    conn = get_connection()
-    try:
-        for sid, name, info in candidates:
-            species_dir = HASHES_DIR / str(sid)
-            species_dir.mkdir(exist_ok=True)
+    for sid, name, info in candidates:
+        species_dir = HASHES_DIR / str(sid)
+        species_dir.mkdir(exist_ok=True)
 
-            url = info["url"]
-            part = info["part"]
+        url = info["url"]
+        part = info["part"]
 
-            # Skip if already has hashes (unless force)
-            existing = conn.execute(
-                "SELECT COUNT(*) as cnt FROM image_hashes WHERE species_id = ?",
-                (sid,),
-            ).fetchone()
-            if not force and existing["cnt"] > 0:
-                results["skipped"] += 1
-                continue
+        # Skip if already has hashes (unless force)
+        existing = get_species_images(sid)
+        if not force and existing:
+            results["skipped"] += 1
+            continue
 
-            # Check if image already cached
-            cached = None
-            for f in species_dir.iterdir():
-                if f.suffix.lower() in IMAGE_EXTS:
-                    cached = f
-                    break
+        # Check if image already cached
+        cached = None
+        for f in species_dir.iterdir():
+            if f.suffix.lower() in IMAGE_EXTS:
+                cached = f
+                break
 
-            if cached:
-                data = cached.read_bytes()
-                logger.info("Using cached: %s", cached.name)
-            else:
-                data = download_image(url)
-                if not data:
-                    results["errors"] += 1
-                    continue
-
-                # Save to cache
-                ext = Path(url.split("?")[0]).suffix or ".jpg"
-                cache_path = species_dir / f"img{ext}"
-                cache_path.write_bytes(data)
-                logger.info("Downloaded: %s → %s (%d bytes)", name, cache_path.name, len(data))
-
-            # Compute hashes
-            try:
-                phash = compute_phash(data)
-                dhash = compute_dhash(data)
-            except Exception as e:
-                logger.warning("Hash failed for species %d: %s", sid, e)
+        if cached:
+            data = cached.read_bytes()
+            logger.info("Using cached: %s", cached.name)
+        else:
+            data = download_image(url)
+            if not data:
                 results["errors"] += 1
                 continue
 
-            # Store in DB
-            rel_path = str(species_dir.relative_to(HASHES_DIR) / (cached.name if cached else f"img{Path(url.split('?')[0]).suffix or '.jpg'}"))
-            insert_image_hash(
-                species_id=sid,
-                image_path=rel_path,
-                phash=phash,
-                dhash=dhash,
-                category=part,
-            )
-            results["indexed"] += 1
-            results["downloaded"] += 0 if cached else 1
+            # Save to cache
+            ext = Path(url.split("?")[0]).suffix or ".jpg"
+            cache_path = species_dir / f"img{ext}"
+            cache_path.write_bytes(data)
+            logger.info("Downloaded: %s → %s (%d bytes)", name, cache_path.name, len(data))
 
-            time.sleep(DELAY)
-    finally:
-        conn.close()
+        # Compute hashes
+        try:
+            phash = compute_phash(data)
+            dhash = compute_dhash(data)
+        except Exception as e:
+            logger.warning("Hash failed for species %d: %s", sid, e)
+            results["errors"] += 1
+            continue
+
+        # Store in Supabase
+        rel_path = str(species_dir.relative_to(HASHES_DIR) / (cached.name if cached else f"img{Path(url.split('?')[0]).suffix or '.jpg'}"))
+        if insert_image_hash(
+            species_id=sid,
+            image_path=rel_path,
+            phash=phash,
+            dhash=dhash,
+            category=part,
+        ):
+            results["indexed"] += 1
+        else:
+            results["errors"] += 1
+            continue
+        results["downloaded"] += 0 if cached else 1
+
+        time.sleep(DELAY)
 
     logger.info(
         "Done: %d indexed, %d errors, %d skipped (from %d candidates)",

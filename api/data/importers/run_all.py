@@ -1,4 +1,4 @@
-"""Orchestrate all local database imports.
+"""Orchestrate all Supabase imports.
 
 Usage:
     python -m api.data.importers.run_all
@@ -20,7 +20,7 @@ from api.data.importers.build_hash_index import build_index
 from api.data.importers.import_gbif import run_import as import_gbif
 from api.data.importers.import_plantnet300k import run_import as import_plantnet300k
 from api.data.importers.seed_species import seed_database
-from api.services.local_db import get_hash_count, get_species_count
+from api.services.supabase_species import get_hash_count, get_species_count
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def run_all(seed_only: bool = False, gbif_only: bool = False,
 
     if not gbif_only:
         # Step 1: Seed database
-        logger.info("Step 1: Seeding database with common species...")
+        logger.info("Step 1: Seeding Supabase with common species...")
         results["seed"] = seed_database()
 
     if not seed_only:
@@ -68,7 +68,7 @@ def run_all(seed_only: bool = False, gbif_only: bool = False,
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build local plant database")
+    parser = argparse.ArgumentParser(description="Build Supabase plant database")
     parser.add_argument(
         "--seed-only",
         action="store_true",

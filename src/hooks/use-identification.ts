@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { Image } from "react-native";
 import { apiClient } from "@/lib/api-client";
 import { resultCache } from "@/lib/cache";
 import { offlineQueue } from "@/lib/offline-queue";
@@ -8,6 +9,21 @@ import type { IdentificationResponse, OrganType } from "@/lib/types";
 interface IdentifyOptions {
   organs?: OrganType[];
   lang?: string;
+}
+
+async function validateImagesDecodable(uris: string[]): Promise<void> {
+  for (const uri of uris) {
+    await new Promise<void>((resolve, reject) => {
+      Image.getSize(
+        uri,
+        () => resolve(),
+        () =>
+          reject(
+            new Error("Image could not be decoded. Choose another photo."),
+          ),
+      );
+    });
+  }
 }
 
 export function useIdentification() {
@@ -40,6 +56,7 @@ export function useIdentification() {
       }
 
       try {
+        await validateImagesDecodable(images.map((i) => i.uri));
         const response = await apiClient.identify(images, organs, lang);
         if (response.identification_id) {
           await resultCache.set(response.identification_id, response);
