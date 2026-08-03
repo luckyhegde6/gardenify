@@ -2,6 +2,25 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-04: Prod Admin Locked Out Because Seed `is_admin` Never Applied
+
+**Context:** Testing admin functionality with the intended admin account: the app showed "Access Denied" and the backend returned `403 Admin access required` for every admin endpoint, even with a valid JWT.
+
+**Root cause:** The admin gate reads `public.users.is_admin` (backend `_require_admin` via service role; mobile `useAuth` via RLS own-row read). On prod, the account was created through the admin API, so the `seed.sql` step that runs `update ... set is_admin = true` for `admin@gardenify.app` **never executed**. The row defaulted to `false`, locking out every admin path.
+
+**Also:** Seed passwords don't carry to prod-created accounts — an account that is confirmed and not banned but still fails login usually has an **unknown password**, not an account problem.
+
+**Pattern:**
+
+1. When an account's capabilities depend on a data row (not code), verify the **row state on prod** — seeds and migrations only matter if they ran. `SELECT is_admin` is the first diagnostic, not the code.
+2. Two separate gates (backend service-role + mobile RLS own-row read) both keyed on the same column is correct defense-in-depth — fix the **data**, not the code.
+3. Fix data via service-role `PATCH` (bypasses RLS); confirm with a non-admin token returning `403` to prove least-privilege still holds.
+4. Documented in `docs/testing-guide.md` (no passwords — those are reset per session).
+
+**Applies to:** auth, database
+**Severity:** important
+**Status:** active
+
 ## 2026-08-04: Landing/Onboarding HTML Can Drift After a Refactor — Grep for the Removed Technology
 
 **Context:** After the SQLite→Supabase refactor (2026-08-02), the public `/` and `/onboarding` pages still claimed "Supabase + SQLite", "local SQLite database", "local DB query" and an offline SQLite fallback — all of which were removed. The code was fixed, but the marketing/architecture pages still described the old design.
