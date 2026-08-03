@@ -2,6 +2,20 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-04: Landing/Onboarding HTML Can Drift After a Refactor — Grep for the Removed Technology
+
+**Context:** After the SQLite→Supabase refactor (2026-08-02), the public `/` and `/onboarding` pages still claimed "Supabase + SQLite", "local SQLite database", "local DB query" and an offline SQLite fallback — all of which were removed. The code was fixed, but the marketing/architecture pages still described the old design.
+
+**Lesson:** When removing a technology, the removal is only complete when **user-facing docs are in sync**. `grep -ri sqlite .` on the repo surfaced `api/landing_page.py` and `api/onboarding_page.py` still advertising SQLite. Update those pages in the same change (or a follow-up doc PR) so the shipped product and its public documentation match.
+
+**Pattern:** after any backend refactor, run `grep -rniE 'sqlite|local database|offline' api/` to catch stale copy in HTML/doc strings before considering the refactor done.
+
+**Files aligned:** `api/landing_page.py` (Tech Stack + Instant Matching card), `api/onboarding_page.py` (component breakdown, identify steps 4–5, sequence diagram participant `Supabase Species Store`, Fallback & Matching section, tech-stack cards). Verified: `grep -i sqlite` returns nothing in either file; `ruff` clean.
+
+**Applies to:** docs, backend
+**Severity:** minor
+**Status:** active
+
 ## 2026-08-03: Secrets in Commits + Direct-to-main Commits (Both Caught, Both Fixed)
 
 **Context:** During the SQLite→Supabase refactor, a Supabase Management API token (`sbp_…`) was committed into `.agents/session-todos.md` inside a commit made **directly on `main`** (violating the PR-only workflow). `git push` was rejected by GitHub push protection (`GH013` — Push cannot contain secrets).
