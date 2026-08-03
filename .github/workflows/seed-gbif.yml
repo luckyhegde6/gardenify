@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: "0 3 * * 0"  # Weekly Sunday 03:00 UTC
 
+permissions:
+  contents: read
+
 jobs:
   seed:
     name: Download + Process GBIF into Supabase

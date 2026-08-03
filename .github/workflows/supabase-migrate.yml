@@ -7,6 +7,9 @@ on:
       - supabase/**
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   migrate:
     name: Run Migrations
