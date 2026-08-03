@@ -16,6 +16,16 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-04: v1.0.0 Release Testing + Prod Admin Log-in Fix
+
+- **Duration**: ~4 hours (incl. EAS build queue wait)
+- **Goal**: Wait for fixed v1.0.0 APK, verify History/Save on emulator, diagnose login + admin access on prod
+- **Files modified**: `docs/testing-guide.md` (new), `LESSONS.md` (admin gotcha lesson). Prodt data (no commit): promoted `admin@gardenify.app`→`is_admin`, reset passwords.
+- **Tests status**: History + Save verified on emulator (release APK, prod); admin endpoints 200 with admin token / 403 with non-admin; sign-in OK for both accounts
+- **Next session**: seed Supabase `image_hashes` to prod; re-check PlantNet identify; decide on PR #3
+
+---
+
 ### 2026-08-04: Landing Page Architecture Aligned to SQLite→Supabase Refactor
 
 - **Duration**: ~1 hour
