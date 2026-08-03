@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { View, Text, FlatList, StyleSheet, RefreshControl } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 import { PlantCard } from "@/components/plant-card";
@@ -45,6 +45,12 @@ export default function HistoryScreen() {
     setRefreshing(true);
     fetchHistory();
   }, [fetchHistory]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchHistory();
+    }, [fetchHistory]),
+  );
 
   if (loading) return <Loading message="Loading history..." />;
 
