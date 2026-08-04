@@ -212,3 +212,7 @@ npx playwright test e2e/api-tests/ --reporter=list   # E2E (21 passing)
 - Login is backend-mediated (/api/auth/login) with 3-failure lockout (15 min) ; forgot-password is one-shot per email until completed
 - Admin can force-reset to default (GARDENIFY_DEFAULT_PASSWORD, default 12345678) via admin screen/API
 - Recovery deep link must be allowlisted in Supabase: gardenify://reset-password
+
+## Release v1.1.0
+- App + API at 1.1.0; release/v1.1.0 PR pending merge; tag v1.1.0 triggers automated release.yml
+- Backend already deployed to prod manually; auth endpoints verified live

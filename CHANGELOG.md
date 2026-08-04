@@ -5,6 +5,48 @@ All notable changes to Gardenify are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-08-04
+
+Password recovery and hardened login. Login now routes through the backend
+(3-attempt lockout), users can request a one-shot password reset via a Supabase
+recovery email, and admins can force-reset any account to the default password.
+
+### Added
+
+- **Forgot Password flow** — a "Forgot Password?" button on the login screen
+  sends a Supabase recovery email. Each email gets **one pending reset at a
+  time**; further requests are rejected (429) until the reset is completed.
+  (PR #32)
+- **Recovery deep link** — reset links open the app via the
+  `gardenify://reset-password` scheme (PKCE code), where the user sets a new
+  password. (PR #32)
+- **Admin "Reset Password" button** — admins can force-reset any user's
+  password to the configured default (`GARDENIFY_DEFAULT_PASSWORD`). (PR #32)
+- **Backend-mediated login** — `POST /api/auth/login` returns Supabase tokens;
+  the app restores its session via `supabase.auth.setSession`. Login now
+  rate-limits to **3 failed attempts** before a temporary lockout (429).
+  (PR #32)
+- **Shared auth dependencies** — `require_user` / `require_admin` centralize
+  JWT verification so privileged calls are authenticated with proper
+  permissions. (PR #32)
+
+### Security
+
+- **Brute-force protection** on login (3-strike, 15-minute lockout).
+- **No user enumeration** on password recovery — the forgot-password endpoint
+  always returns the same response for known and unknown emails.
+- **Password recovery uses recovery codes** verified server-side via
+  `verify_otp`; the new password is set through the admin API.
+
+### Notes
+
+- Requires the Supabase redirect URL `gardenify://reset-password` to be
+  allowlisted in the Supabase Auth dashboard for the recovery email link to
+  open the app.
+- Default password and lockout windows are configurable via environment
+  variables (`GARDENIFY_DEFAULT_PASSWORD`, `LOGIN_MAX_ATTEMPTS`,
+  `LOGIN_LOCKOUT_SECONDS`).
+
 ## [1.0.0] - 2026-08-03
 
 First 1.0.0 release. Removes the last legacy dependency (SQLite) from the
