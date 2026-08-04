@@ -2,6 +2,32 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-04: ESM-only `brace-expansion` Override Broke the RN Codegen Gradle Build
+
+**Context:** Cut release v1.1.0 (`git tag v1.1.0` + push). `release.yml` fired and the **Build APK (EAS)** job failed at `gradle assembleRelease` → `../react-native/scripts/generate-codegen-schema.js` → `generateCodegenSchemaFromJavaScript` → `expand is not a function`. Every gradle `generateCodegenSchemaFromJavaScript` task (gesture-handler, netinfo, async-storage, etc.) failed; the APK never built and no GitHub Release was created.
+
+**Root cause:** `package.json` had a security override `"brace-expansion": "5.0.9"` (added by the security PR to silence CVE-2024-4068 / GHSA-v6h2-p8h4-qcjw). But v5 is **ESM-only** (`"type": "module"`) and exports no CommonJS `module.exports = expand`, while `@react-native/codegen` → `minimatch@3.1.5` requires `brace-expansion@^1.1.7` and calls `braceExpand()`. A version bump in the 5.x line satisfied npm audit but removed the CJS entry point everything downstream loads at build time.
+
+**Why local checks missed it:** `npx tsc --noEmit`, `npm run lint`, and `npm test` all passed — none of them execute the RN codegen gradle tasks. The failure only surfaces during a native build.
+
+**Fix:**
+
+1. Override → `"brace-expansion": "2.1.4"` (pinned). `2.1.4` is the last **CommonJS** release AND the ReDoS fix landed in `> 2.1.3`, so it satisfies npm audit with 0 vulnerabilities while keeping the CJS `expand` function intact.
+2. Verify before tagging a release by exercising the exact failing path locally:
+   `node -e "const mm=require('minimatch'); console.log(typeof mm.Minimatch.prototype.braceExpand, new mm.Minimatch('foo{a,b}*/bar*.js').makeRe() instanceof RegExp)"`
+   (braceExpand should print `function`) or run a local `npx expo run:android --variant release`.
+3. `npx expo run:android --variant release` (detached, local) builds the full native project and exercises every codegen task — the faithful way to catch a "passes tsc but fails gradle" issue before wasting a cloud EAS build.
+
+**Rules going forward:**
+
+- **Pinning an override from a library must not switch module systems it is consumed under.** Prefer a version whose entry point (CJS vs ESM) matches the dependents. `^2.1.4` over `5.0.9`.
+- **A release tag is the last gate, not a checkpoint.** Verify a real native build locally _before_ pushing the `v*` tag — tsc/lint/audit green is not sufficient for an APK release.
+- **`release.yml` swallows the error message**: the job ran `BUILD_OUTPUT=$(...); echo exit:$?` with `set -e` so the actual gradle failure text was lost. For future release builds, run the EAS build job with `set +e` and capture `$BUILD_OUTPUT` into the log before exiting, so a red run still prints the real error.
+
+**Applies to:** CI/CD, mobile, dependencies
+**Severity:** critical
+**Status:** active
+
 ## 2026-08-04: Prod Admin Locked Out Because Seed `is_admin` Never Applied
 
 **Context:** Testing admin functionality with the intended admin account: the app showed "Access Denied" and the backend returned `403 Admin access required` for every admin endpoint, even with a valid JWT.
@@ -1555,5 +1581,5 @@ Confirm: expected Supabase URL present, `localhost:54321` fallback ABSENT, API U
 **Lesson:** when routing app login through a backend that returns Supabase tokens, call supabase.auth.setSession({access_token, refresh_token}) to restore the session (signInWithPassword stays client-side optional).
 **Lesson:** in-memory rate-limiter on serverless is per-instance/approximate; a 3-strike lockout must not prune a mid-burst entry (prune only idle or expired-lock entries).
 
-**Lesson (release 1.1.0):** Vercel auto-deploy does not reliably fire on GitHub merges for this repo � the auth endpoints were absent on prod until a manual \`vercel --prod\` from main. When a release changes the backend, deploy the backend manually BEFORE tagging so the new APK never points at a stale API.
+**Lesson (release 1.1.0):** Vercel auto-deploy does not reliably fire on GitHub merges for this repo � the auth endpoints were absent on prod until a manual \`vercel --prod\` from main. When a release changes the backend, deploy the backend manually BEFORE tagging so the new APK never points at a stale API.
 **Lesson (release 1.1.0):** full release is automated by \`.github/workflows/release.yml\` on a \`v*\` tag push (EAS production build -> GitHub Release with APK -> Vercel deploy). The git pre-push hook only blocks main/master branches, so tag pushes are allowed.
