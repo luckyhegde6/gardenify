@@ -160,6 +160,19 @@ export interface UserSettings {
 
 export type OrganType = "auto" | "leaf" | "flower" | "fruit" | "bark";
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  is_admin: boolean;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number | null;
+  user: AuthUser | null;
+}
+
 export interface AdminUser {
   id: string;
   email: string;

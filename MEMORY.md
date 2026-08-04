@@ -207,3 +207,8 @@ npx playwright test e2e/api-tests/ --reporter=list   # E2E (21 passing)
 - **4-tab navigation**: Scan → Saved → History → Profile
 - **expo-secure-store** for tokens, AsyncStorage for cache
 - **Server-side API key**: never expose PlantNet key to client
+
+## Auth Security (recent)
+- Login is backend-mediated (/api/auth/login) with 3-failure lockout (15 min) ; forgot-password is one-shot per email until completed
+- Admin can force-reset to default (GARDENIFY_DEFAULT_PASSWORD, default 12345678) via admin screen/API
+- Recovery deep link must be allowlisted in Supabase: gardenify://reset-password

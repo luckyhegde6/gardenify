@@ -181,6 +181,40 @@ class HistoryDetailResponse(BaseModel):
     created_at: str = ""
 
 
+# ── Auth schemas ─────────────────────────────────────────────
+
+class AuthUserResponse(BaseModel):
+    id: str
+    email: str
+    is_admin: bool = False
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(description="Email address")
+    password: str = Field(description="Password")
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    expires_at: int | None = None
+    user: AuthUserResponse | None = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(description="Email address to send a recovery link to")
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str = Field(description="Email address of the account being recovered")
+    code: str = Field(description="Recovery code from the reset email link")
+    new_password: str = Field(min_length=6, description="New password (min 6 characters)")
+
+
+class ForgotPasswordResponse(BaseModel):
+    detail: str = "sent"
+
+
 # ── Admin schemas ─────────────────────────────────────────────
 
 class AdminUserResponse(BaseModel):

@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     supabase_anon_key: str = ""
 
+    # Auth security
+    default_password: str = "12345678"
+    login_max_attempts: int = 3
+    login_lockout_seconds: int = 900
+    reset_resend_cooldown_seconds: int = 60
+    reset_pending_ttl_seconds: int = 86400
+    reset_redirect_url: str = "gardenify://reset-password"
+
     # Limits
     max_images: int = 5
     max_image_size_mb: int = 10

@@ -1550,3 +1550,7 @@ Confirm: expected Supabase URL present, `localhost:54321` fallback ABSENT, API U
 **Applies to:** backend
 **Severity:** critical
 **Status:** active
+
+**Lesson:** supabase-py (2.31) exposes server-side password flows: auth.reset_password_for_email(email, {redirect_to}), auth.verify_otp({type: recovery, email, token}), and auth.admin.update_user_by_id(id, {password}). Client-side recovery-link handling on Expo uses the app scheme (gardenify://reset-password) with PKCE code param.
+**Lesson:** when routing app login through a backend that returns Supabase tokens, call supabase.auth.setSession({access_token, refresh_token}) to restore the session (signInWithPassword stays client-side optional).
+**Lesson:** in-memory rate-limiter on serverless is per-instance/approximate; a 3-strike lockout must not prune a mid-burst entry (prune only idle or expired-lock entries).

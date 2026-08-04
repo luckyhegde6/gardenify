@@ -145,3 +145,10 @@
 - [ ] Push `docs/landing-architecture` branch + open PR (ask user before merge — do NOT merge without explicit approval)
 - [ ] Release v1.0.0 build (`68c571ba`) still IN_QUEUE on EAS — wait, then test History/Save on emulator
 - [ ] Step 14/15 (from prior session): migrate prod hashes (migration 008) + verify on Vercel
+
+## This Session (auth-security)
+- [x] Backend 3-failure login lockout + one-shot forgot-password + reset-password + admin reset-to-default
+- [x] Mobile login via backend + Forgot Password + reset deep-link + admin Reset Password
+- [ ] Supabase: allowlist redirect gardenify://reset-password (config, not code)
+- [ ] Carry forward (prior): seed prod image_hashes; recheck PlantNet 404/401
+- [ ] Verify on emulator once backend redeployed (login lockout + admin reset UX)

@@ -24,6 +24,7 @@ from api.config import settings
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env.local"))
 from api.routes.admin import router as admin_router
+from api.routes.auth import router as auth_router
 from api.routes.health import router as health_router
 from api.routes.species import router as species_router
 
@@ -80,6 +81,10 @@ app = FastAPI(
             "description": "Browse and search the plant species database by name, genus, or family",
         },
         {
+            "name": "Auth",
+            "description": "Login (rate-limited) and password recovery endpoints",
+        },
+        {
             "name": "Admin",
             "description": "User management endpoints for administrators",
         },
@@ -129,6 +134,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(health_router, prefix="/api", tags=["Health"])
+app.include_router(auth_router, prefix="/api", tags=["Auth"])
 if _has_identify:
     app.include_router(identify_router, prefix="/api", tags=["Identification"])
 if _has_history:

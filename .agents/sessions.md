@@ -606,3 +606,9 @@ Track all agent sessions for continuity. Update before each commit.
 2. **After commit**: Note commit hash and what changed
 3. **At session end**: Update handoff-current.md with next steps
 4. **When blocked**: Document in LESSONS.md with workaround
+
+## Session: Auth security (forgot pw + admin reset + rate limiting)
+- Backend: new /api/auth/login (3-failure lockout), /api/auth/forgot-password (reset-once), /api/auth/reset-password (verify recovery code + set pw)
+- Backend: admin POST /admin/users/{id}/reset-password (sets default) ; shared deps.py (get_service_client, require_user, require_admin)
+- Mobile: login now routes through backend + setSession; Forgot Password button + forgot-password screen; reset-password deep-link screen; admin Reset Password button
+- Tests: 95 Python (4 new auth_security), ruff clean, tsc clean, lint clean
