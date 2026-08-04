@@ -612,3 +612,8 @@ Track all agent sessions for continuity. Update before each commit.
 - Backend: admin POST /admin/users/{id}/reset-password (sets default) ; shared deps.py (get_service_client, require_user, require_admin)
 - Mobile: login now routes through backend + setSession; Forgot Password button + forgot-password screen; reset-password deep-link screen; admin Reset Password button
 - Tests: 95 Python (4 new auth_security), ruff clean, tsc clean, lint clean
+
+## Session: Release v1.1.0 (auth/login)
+- Deployed backend to prod manually (vercel --prod) — auth endpoints live (auto-deploy unreliable)
+- Bumped 1.0.0 -> 1.1.0 (package.json, app.json, api/main.py, HealthResponse); CHANGELOG + LESSONS updated; release/v1.1.0 PR opened
+- Next: tag v1.1.0 after merge -> release.yml (EAS APK + GitHub Release + backend deploy)
