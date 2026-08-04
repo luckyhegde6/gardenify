@@ -12,6 +12,8 @@
 - [x] Session persists across app restarts (SecureStore)
 - [x] Password validation (min 8 chars)
 - [x] Error messages for invalid credentials
+- [x] Forgot-password flow (recovery email + one-time reset link) — app parses `token`/`access_token` deep-link params; backend rate-limits one pending reset per email
+- [x] Landing page documents register / login / reset steps
 
 ### Plant Identification
 
