@@ -608,12 +608,24 @@ Track all agent sessions for continuity. Update before each commit.
 4. **When blocked**: Document in LESSONS.md with workaround
 
 ## Session: Auth security (forgot pw + admin reset + rate limiting)
+
 - Backend: new /api/auth/login (3-failure lockout), /api/auth/forgot-password (reset-once), /api/auth/reset-password (verify recovery code + set pw)
 - Backend: admin POST /admin/users/{id}/reset-password (sets default) ; shared deps.py (get_service_client, require_user, require_admin)
 - Mobile: login now routes through backend + setSession; Forgot Password button + forgot-password screen; reset-password deep-link screen; admin Reset Password button
 - Tests: 95 Python (4 new auth_security), ruff clean, tsc clean, lint clean
 
 ## Session: Release v1.1.0 (auth/login)
-- Deployed backend to prod manually (vercel --prod) — auth endpoints live (auto-deploy unreliable)
+
+- Deployed backend to prod manually (vercel --prod) ï¿½ auth endpoints live (auto-deploy unreliable)
 - Bumped 1.0.0 -> 1.1.0 (package.json, app.json, api/main.py, HealthResponse); CHANGELOG + LESSONS updated; release/v1.1.0 PR opened
 - Next: tag v1.1.0 after merge -> release.yml (EAS APK + GitHub Release + backend deploy)
+
+## Session: v1.1.0 Build Fix (brace-expansion) + Reset Feature Verification
+
+- Tag v1.1.0 pushed; release.yml run 30889700141 FAILED at Build APK (EAS)
+- Root cause: package.json override brace-expansion 5.0.9 (ESM-only) broke RN codegen (minimatch@3.1.5 needs CJS expand()); pinned to 2.1.4 (0 vulns)
+- Verified: local release build (gradlew app:assembleRelease) SUCCEEDS after fix; app boots, auth UI renders, client validation works
+- Tested forgot-password end-to-end on prod build: app shows "Reset Link Sent"; email delivered (luckyhegdedev@gmail.com)
+- Diagnosed reset completion gaps: (1) Supabase redirect allowlist missing gardenify:// -> recovery email links to web localhost:3000 (CONFIRMED); (2) reset-password.tsx expects ?code=&email= but Supabase sends token= query / access_token fragment
+- Created fix/brace-expansion-override branch; updated LESSONS.md + handoff + sessions
+- Next: commit+PR the fix, then re-cut v1.1.0 (re-tag or bump)
