@@ -23,6 +23,7 @@
 ## Detailed Security Checks
 
 ### 1. Secrets Management
+
 ```bash
 # Check for hardcoded secrets
 grep -rn "api_key\|password\|secret\|token" --include="*.py" --include="*.ts" api/ src/
@@ -36,6 +37,7 @@ gitleaks protect --staged
 ```
 
 ### 2. Authentication & Authorization
+
 ```sql
 -- Every table must have RLS enabled
 ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
@@ -50,6 +52,7 @@ SELECT * FROM table_name WHERE user_id = 'other-user-id';
 ```
 
 ### 3. Input Validation
+
 ```python
 # Backend: Always use Pydantic models
 class IdentifyRequest(BaseModel):
@@ -64,6 +67,7 @@ const schema = z.object({
 ```
 
 ### 4. File Upload Security
+
 ```python
 # Validate file type
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/jpg"}
@@ -80,6 +84,7 @@ if len(files) > 5:
 ```
 
 ### 5. Error Handling
+
 ```python
 # Never expose internal details
 try:
@@ -90,6 +95,7 @@ except Exception as e:
 ```
 
 ### 6. Dependency Security
+
 ```bash
 # Check for known vulnerabilities
 npm audit
@@ -111,12 +117,56 @@ If a security issue is found:
 5. **DOCUMENT**: Add to LESSONS.md with prevention steps
 6. **PREVENT**: Add test/rule to prevent recurrence
 
+## APK / Release Security
+
+```
+□ Release APK must NOT ship cleartext HTTP: `usesCleartextTraffic` lives only in
+  the debug manifest; the production build only talks HTTPS.
+□ Before tagging a release, grep the baked JS bundle for a local/staging URL:
+  `grep -c "10.0.2.2\|localhost:8000" android/app/build/generated/assets/react/release/index.android.bundle`
+  (expect 0 — else a stale EXPO_PUBLIC_API_URL is in the APK).
+□ Gradle daemon caches env vars: after changing EXPO_PUBLIC_*, stop the daemon
+  (`gradlew --stop`, kill java) and run `:app:clean` or the bundle task serves
+  UP-TO-DATE with the old URL.
+□ Run a real local native build (`npx expo run:android --variant release`)
+  before pushing a `v*` tag — tsc/lint/audit green is not sufficient for an APK.
+□ Do NOT commit the `android/` prebuild artifacts to git unless intentional.
+```
+
+## Admin & Admin-User Security
+
+```
+□ is_admin is read server-side from the users table via the service-role client —
+  never trust client claims or anon-key reads for privilege decisions.
+□ Admin endpoints (`/api/admin/*`) require a Bearer JWT and a users.is_admin=true
+  row lookup (api/routes/deps.py require_admin). RLS still protects the table.
+□ Promote users to admin via service role / SQL only; a soft-deleted user is
+  forced is_admin=false and auth-banned for 100 years.
+□ Never expose the service-role key to the client — it bypasses RLS.
+□ Admin password resets use a configured default_password (env); rotate it and
+  tell the user to change it on first login.
+```
+
+## Password-Reset Security
+
+```
+□ Recovery tokens are single-use and short-lived (Supabase OTP); a stale token
+  returns 400 / otp_expired — the app must show a clear "expired" message.
+□ `reset_redirect_url` is `gardenify://reset-password`. The app scheme
+  (`gardenify://`) MUST be allowlisted in Supabase Auth → URL Configuration,
+  otherwise recovery emails fall back to a web URL and never reach the app.
+□ Recovery deep links arrive as `?token=...` (verify link) or `access_token=...`
+  fragment (magic link) — the app must parse both, not just `code=`.
+□ forgot-password always returns success (never reveal whether the email exists)
+  and rate-limits one pending reset per email until completed.
+```
+
 ## Security Audit Schedule
 
-| Check | Frequency | Tool |
-|---|---|---|
-| Dependency scan | Every commit | npm audit, pip-audit |
-| Secret scan | Every commit | gitleaks, detect-secrets |
-| RLS policy review | Every schema change | Manual + automated test |
-| API key rotation | Quarterly | Manual |
-| Penetration test | Before launch | External |
+| Check             | Frequency           | Tool                     |
+| ----------------- | ------------------- | ------------------------ |
+| Dependency scan   | Every commit        | npm audit, pip-audit     |
+| Secret scan       | Every commit        | gitleaks, detect-secrets |
+| RLS policy review | Every schema change | Manual + automated test  |
+| API key rotation  | Quarterly           | Manual                   |
+| Penetration test  | Before launch       | External                 |

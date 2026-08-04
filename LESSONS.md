@@ -2,6 +2,48 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-05: Global `brace-expansion` Override Broke EAS Fingerprint — Use Scoped Overrides
+
+**Context:** After fixing the RN codegen issue (pinned `"brace-expansion": "2.1.4"` globally), the re-cut release failed **again** — this time in 5 seconds at EAS Build's "compute project fingerprint" step, before gradle even ran: `Failed to compute project fingerprint: (0, brace_expansion_1.expand) is not a function`. The same symptom as the codegen bug, different consumer.
+
+**Root cause:** A **global** override forces one brace-expansion version on the entire tree, but two consumers need incompatible entry points:
+
+| Consumer           | Used by                 | Import style                               | Needs      |
+| ------------------ | ----------------------- | ------------------------------------------ | ---------- |
+| `minimatch@3.1.5`  | `@react-native/codegen` | `require('brace-expansion')()` callable    | CJS v2.1.4 |
+| `minimatch@10.2.5` | `@expo/fingerprint`     | `(0, brace_expansion.expand)` named export | v5.x       |
+
+`brace-expansion` v2 exports a callable but **no named `.expand`**; v5 has named `expand` but is ESM-only. No single version satisfies both.
+
+**Fix:** scope the override to the CJS consumer so each package resolves its own compatible version:
+
+```json
+"overrides": {
+  "minimatch@3.1.5": { "brace-expansion": "2.1.4" },
+  "js-yaml": "5.2.3",
+  "uuid": "14.0.1"
+}
+```
+
+**Verification (before wasting a cloud build):**
+
+```bash
+# fingerprint is what EAS runs pre-build; this proves it works
+node -e "require('@expo/fingerprint').createFingerprintAsync(process.cwd()).then(function(f){console.log('OK',f.hash)}).catch(function(e){console.error('FAIL',e.message);process.exit(1)})"
+# resolution check
+node -e "var be=require('node_modules/minimatch/node_modules/brace-expansion'); console.log(typeof be.expand)"  # function
+```
+
+**Rules going forward:**
+
+- **Overrides are global — scope them by parent package when dependents disagree.** `"pkg@version": { "dep": "x" }` overrides only for that parent.
+- **A fix that resolves one consumer can break a sibling.** After any override change, grep which versions exist in the tree (`Get-ChildItem node_modules -Recurse -Directory -Filter brace-expansion`) and check each consumer's import style.
+- **`release.yml` swallowing `set -e` output hides every class of EAS failure** — patched the job to `set +e` capture + echo before exit so a red run always prints the real error.
+
+**Applies to:** CI/CD, dependencies, EAS Build
+**Severity:** critical
+**Status:** resolved
+
 ## 2026-08-04: ESM-only `brace-expansion` Override Broke the RN Codegen Gradle Build
 
 **Context:** Cut release v1.1.0 (`git tag v1.1.0` + push). `release.yml` fired and the **Build APK (EAS)** job failed at `gradle assembleRelease` → `../react-native/scripts/generate-codegen-schema.js` → `generateCodegenSchemaFromJavaScript` → `expand is not a function`. Every gradle `generateCodegenSchemaFromJavaScript` task (gesture-handler, netinfo, async-storage, etc.) failed; the APK never built and no GitHub Release was created.
