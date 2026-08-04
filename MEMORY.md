@@ -6,30 +6,30 @@
 
 **Gardenify** — Plant identification mobile app. Photo → species + disease + care instructions.
 
-| Key              | Value                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| Repo             | `https://github.com/luckyhegde6/gardenify`                                                  |
-| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                                      |
-| Platform         | Android-first, iOS later                                                                    |
-| Backend          | Python FastAPI on Vercel                                                                    |
-| Database         | Supabase (PostgreSQL + Auth + Storage)                                                      |
-| Plant AI         | PlantNet API v2 (free 500/day)                                                              |
-| Current Branch   | `feat/branded-404-favicon-sitemap` (PR #20)                                                 |
-| Backend (prod)   | `https://sasyakashi.vercel.app`                                                             |
-| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                                  |
-| Vercel bundle    | 268MB (fixed from 611MB — 412MB GBIF zip + dev data excluded via `.vercelignore`)           |
-| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                        |
-| APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (latest v0.1.5)        |
-| EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                           |
-| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                        |
-| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                       |
-| Tests            | 86 Python + 21 Playwright + 41 Jest = 148 total                                             |
-| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                                      |
-| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                                       |
-| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, 6 migrations applied (006 thumbnail live)            |
-| Prod species     | 10,008 GBIF species, jsonb common_names/native_regions; seed is idempotent + merge-preserve |
-| History images   | Persisted as base64 thumbnails in `identifications.image_thumbnails` (migration 006)        |
-| Vercel FS        | `/var/task` read-only; only `/tmp` writable — upload dir falls back to temp                 |
+| Key              | Value                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| Repo             | `https://github.com/luckyhegde6/gardenify`                                                                    |
+| EAS Project ID   | `b17c6958-f3e7-4ec1-afcf-3b241fcbcda0`                                                                        |
+| Platform         | Android-first, iOS later                                                                                      |
+| Backend          | Python FastAPI on Vercel                                                                                      |
+| Database         | Supabase (PostgreSQL + Auth + Storage)                                                                        |
+| Plant AI         | PlantNet API v2 (free 500/day)                                                                                |
+| Current Branch   | `fix/reset-password-deep-link` (PR #35)                                                                       |
+| Backend (prod)   | `https://sasyakashi.vercel.app`                                                                               |
+| Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                                                    |
+| Vercel bundle    | 268MB (fixed from 611MB — 412MB GBIF zip + dev data excluded via `.vercelignore`)                             |
+| EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                                          |
+| APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (v1.0.0 released; v1.1.0 re-cut pending) |
+| EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                                             |
+| Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                                          |
+| Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                                         |
+| Tests            | 86 Python + 21 Playwright + 41 Jest = 148 total                                                               |
+| PlantNet status  | Fixed: no `lang` param, urllib-based, verified working                                                        |
+| Server restart   | Use `Popen(CREATE_NEW_CONSOLE=0x00000010)` on Windows                                                         |
+| Supabase prod    | Project `amyriuhwqyalodsfkwzf` linked, 6 migrations applied (006 thumbnail live)                              |
+| Prod species     | 10,008 GBIF species, jsonb common_names/native_regions; seed is idempotent + merge-preserve                   |
+| History images   | Persisted as base64 thumbnails in `identifications.image_thumbnails` (migration 006)                          |
+| Vercel FS        | `/var/task` read-only; only `/tmp` writable — upload dir falls back to temp                                   |
 
 ## Architecture (10 seconds)
 
@@ -209,10 +209,12 @@ npx playwright test e2e/api-tests/ --reporter=list   # E2E (21 passing)
 - **Server-side API key**: never expose PlantNet key to client
 
 ## Auth Security (recent)
+
 - Login is backend-mediated (/api/auth/login) with 3-failure lockout (15 min) ; forgot-password is one-shot per email until completed
 - Admin can force-reset to default (GARDENIFY_DEFAULT_PASSWORD, default 12345678) via admin screen/API
 - Recovery deep link must be allowlisted in Supabase: gardenify://reset-password
 
 ## Release v1.1.0
+
 - App + API at 1.1.0; release/v1.1.0 PR pending merge; tag v1.1.0 triggers automated release.yml
 - Backend already deployed to prod manually; auth endpoints verified live

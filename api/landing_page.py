@@ -151,7 +151,7 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
     <h1>🌿 Gardenify</h1>
     <p class="tagline">Identify any plant, flower, leaf, or fruit with your camera. Powered by PlantNet AI and a database of 50,000+ species.</p>
     <div class="badges">
-        <span>v1.0.0</span>
+        <span>v1.1.0</span>
         <a href="/docs">Swagger API</a>
         <a href="https://github.com/luckyhegde6/gardenify" target="_blank">GitHub</a>
         <a href="https://github.com/luckyhegde6/gardenify/releases" target="_blank">Download APK</a>
@@ -159,6 +159,7 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
     <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#api">API</a>
+        <a href="#auth">Accounts</a>
         <a href="#download">Download</a>
         <a href="#about">About</a>
         <a href="#tech">Tech</a>
@@ -226,6 +227,42 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
         <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--gray-500);">
             Full interactive documentation at <a href="/docs">Swagger UI</a>
         </p>
+    </div>
+</section>
+
+<section id="auth" style="background: var(--gray-50);">
+    <div class="container">
+        <h2>Accounts &amp; Password Reset</h2>
+        <p class="subtitle">Register, log in, and recover your account right from the app</p>
+        <div class="cards">
+            <div class="card">
+                <h3>📝 Register</h3>
+                <ol style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--gray-600);">
+                    <li>Open the app and tap <strong>Create Account</strong></li>
+                    <li>Enter your email and a password (min. 6 characters)</li>
+                    <li>Confirm your email via the verification link we send</li>
+                </ol>
+            </div>
+            <div class="card">
+                <h3>🔑 Log In</h3>
+                <ol style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--gray-600);">
+                    <li>Open the app and tap <strong>Log In</strong></li>
+                    <li>Enter your email and password</li>
+                    <li>You're in — your history and profile are saved to your account</li>
+                </ol>
+            </div>
+            <div class="card">
+                <h3>🔐 Reset Password</h3>
+                <ol style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--gray-600);">
+                    <li>On the login screen tap <strong>Forgot Password?</strong></li>
+                    <li>Enter your email — we send a recovery link</li>
+                    <li>Open the link, choose a new password, and log back in</li>
+                </ol>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--gray-400);">
+                    For security, each recovery link is single-use and expires quickly.
+                </p>
+            </div>
+        </div>
     </div>
 </section>
 

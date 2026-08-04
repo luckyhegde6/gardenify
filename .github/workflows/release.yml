@@ -37,9 +37,16 @@ jobs:
         id: build
         run: |
           echo "::group::Build APK"
+          set +e
           BUILD_OUTPUT=$(eas build -p android --profile production --non-interactive --wait 2>&1)
+          BUILD_EXIT=$?
+          set -e
           echo "$BUILD_OUTPUT"
           echo "::endgroup::"
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "::error::EAS build failed (exit $BUILD_EXIT). See log above."
+            exit $BUILD_EXIT
+          fi
           APK_URL=$(echo "$BUILD_OUTPUT" | grep -oE 'https://expo\.dev/artifacts/eas/[A-Za-z0-9_-]+\.apk' | tail -1)
           if [ -z "$APK_URL" ]; then
             echo "::error::Could not find APK URL in EAS build output"

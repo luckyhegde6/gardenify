@@ -16,16 +16,17 @@ Gardenify is distributed as a direct APK download — no Play Store. The release
 
 Follow [Semantic Versioning](https://semver.org/):
 
-| Change Type | Version Bump | Example |
-|---|---|---|
-| Bug fix | `patch` | 1.0.0 → 1.0.1 |
-| New feature | `minor` | 1.0.0 → 1.1.0 |
-| Breaking change | `major` | 1.0.0 → 2.0.0 |
-| Pre-release | suffix | 1.1.0-alpha.1, 1.1.0-beta.2 |
+| Change Type     | Version Bump | Example                     |
+| --------------- | ------------ | --------------------------- |
+| Bug fix         | `patch`      | 1.0.0 → 1.0.1               |
+| New feature     | `minor`      | 1.0.0 → 1.1.0               |
+| Breaking change | `major`      | 1.0.0 → 2.0.0               |
+| Pre-release     | suffix       | 1.1.0-alpha.1, 1.1.0-beta.2 |
 
 ## Release Steps
 
 ### Patch Release (bug fix)
+
 ```bash
 git checkout main && git pull origin main
 npm version patch
@@ -33,6 +34,7 @@ git push origin main --follow-tags
 ```
 
 ### Minor Release (new feature)
+
 ```bash
 git checkout main && git pull origin main
 npm version minor
@@ -40,6 +42,7 @@ git push origin main --follow-tags
 ```
 
 ### Major Release (breaking change)
+
 ```bash
 git checkout main && git pull origin main
 npm version major
@@ -47,6 +50,7 @@ git push origin main --follow-tags
 ```
 
 ### Pre-release
+
 ```bash
 git checkout main && git pull origin main
 npm version prerelease --preid=alpha   # 1.1.0-alpha.0
@@ -67,12 +71,14 @@ When you push a `v*` tag:
 ## APK Distribution
 
 ### For Users
+
 1. Go to [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases)
 2. Download the latest APK
 3. On Android: Enable "Install from unknown sources" if prompted
 4. Open the APK to install
 
 ### For Testing
+
 1. Go to [EAS Builds](https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds)
 2. Download the preview APK
 3. Install on device
@@ -82,6 +88,7 @@ When you push a `v*` tag:
 Preview updates are published automatically when code is pushed to `feat/*`, `bugfix/*`, or `chore/*` branches.
 
 To push an OTA update manually:
+
 ```bash
 eas update --branch preview --auto
 ```
@@ -104,6 +111,9 @@ Quality:
   [ ] No crashes or ANRs
   [ ] API endpoints working on production
   [ ] Supabase migrations applied
+  [ ] Local native release build passes (`npx expo run:android --variant release`)
+  [ ] Baked bundle has no local/staging URL
+      (`grep -c "10.0.2.2\|localhost:8000" android/app/build/generated/assets/react/release/index.android.bundle` = 0)
 
 Release:
   [ ] Version bumped in package.json
@@ -119,6 +129,7 @@ Release:
 If a release has critical issues:
 
 1. **Immediate:** Tag a hotfix from main
+
    ```bash
    git checkout main
    git checkout -b hotfix/critical-fix
@@ -134,17 +145,19 @@ If a release has critical issues:
 ## Environment Variables
 
 ### Required GitHub Secrets
-| Secret | Purpose |
-|---|---|
-| `EXPO_TOKEN` | EAS build and update |
-| `VERCEL_TOKEN` | Backend deployment |
-| `SUPABASE_ACCESS_TOKEN` | Database migrations |
-| `SUPABASE_PROJECT_REF` | Supabase project ID |
-| `SUPABASE_DB_PASSWORD` | Database password |
+
+| Secret                  | Purpose              |
+| ----------------------- | -------------------- |
+| `EXPO_TOKEN`            | EAS build and update |
+| `VERCEL_TOKEN`          | Backend deployment   |
+| `SUPABASE_ACCESS_TOKEN` | Database migrations  |
+| `SUPABASE_PROJECT_REF`  | Supabase project ID  |
+| `SUPABASE_DB_PASSWORD`  | Database password    |
 
 ### Mobile App Config
-| Variable | Value |
-|---|---|
-| `EXPO_PUBLIC_API_URL` | `https://sasyakashi.vercel.app` (production) |
-| `EXPO_PUBLIC_SUPABASE_URL` | From Supabase dashboard |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | From Supabase dashboard |
+
+| Variable                        | Value                                        |
+| ------------------------------- | -------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`           | `https://sasyakashi.vercel.app` (production) |
+| `EXPO_PUBLIC_SUPABASE_URL`      | From Supabase dashboard                      |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | From Supabase dashboard                      |

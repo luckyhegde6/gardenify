@@ -15,8 +15,19 @@ import { spacing, borderRadius, typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ code?: string; email?: string }>();
-  const code = typeof params.code === "string" ? params.code : "";
+  const params = useLocalSearchParams<{
+    code?: string;
+    email?: string;
+    token?: string;
+    access_token?: string;
+  }>();
+  // Supabase recovery deep links arrive as `token=...` (verify link) or
+  // `access_token=...` (magic-link fragment); accept any of them as the code.
+  const code =
+    (typeof params.code === "string" ? params.code : "") ||
+    (typeof params.token === "string" ? params.token : "") ||
+    (typeof params.access_token === "string" ? params.access_token : "") ||
+    "";
   const linkEmail = typeof params.email === "string" ? params.email : "";
   const { colors } = useTheme();
   const [email, setEmail] = useState(linkEmail);

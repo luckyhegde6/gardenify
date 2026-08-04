@@ -16,6 +16,14 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-05: v1.1.0 Re-Cut — EAS Fingerprint Fix, Reset Deep-Link, Landing Auth Section
+
+- **Duration**: ~2 hours
+- **Goal**: Fix the two blocked release builds (RN codegen + EAS fingerprint), fix reset-password deep-link parsing, document register/login/reset on the landing page, harden release/security docs
+- **Files modified**: `package.json` + `package-lock.json` (scoped `brace-expansion` override), `src/app/(auth)/reset-password.tsx` (token/access_token parsing, PR #35), `api/landing_page.py` (auth section), `.agents/security-checklist.md`, `.agents/release-guidelines.md`, `.github/workflows/release.yml` (stop swallowing EAS errors), `LESSONS.md`
+- **Tests status**: `pytest` 7 passed; `tsc --noEmit` clean; `npm run lint` clean; `createFingerprintAsync` OK (was the EAS failure)
+- **Next session**: merge PR #35, re-tag `v1.1.0` on main, trigger release, verify APK + release; add `gardenify://` to Supabase Auth redirect allowlist for prod password-reset end-to-end
+
 ### 2026-08-04: v1.0.0 Release Testing + Prod Admin Log-in Fix
 
 - **Duration**: ~4 hours (incl. EAS build queue wait)
