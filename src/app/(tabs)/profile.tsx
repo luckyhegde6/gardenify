@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import Constants from "expo-constants";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/button";
 import { spacing, borderRadius, typography } from "@/constants/theme";
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
       </View>
 
       <Text style={[styles.version, { color: colors.textTertiary }]}>
-        Gardenify v1.0.0
+        Gardenify v{Constants.expoConfig?.version ?? "0.0.0"}
       </Text>
     </View>
   );

@@ -2,6 +2,43 @@
 
 Running log of lessons learned during Gardenify development. Agents read this file at session start and update it after significant discoveries.
 
+## 2026-08-06: expo-router Initial-Route Redirect Only Fires Once — Guard the Root Layout for Auth Navigation
+
+**Context:** After shipping auth, users reported two symptoms that looked like separate bugs: (1) Sign Out left the app on the Profile screen showing "Unknown" instead of returning to Login, and (2) after tapping Log In the app stayed on the login form until the user force-stopped and relaunched.
+
+**Root cause:** `src/app/index.tsx` used `<Redirect href={user ? "/(tabs)" : "/(auth)/login"} />` — but the `/` index route only renders on **initial** navigation. Once the user moved to `(auth)/login` or `(tabs)`, no code watched the auth state, so `signOut()`/`signIn()` updating `user` in context never triggered navigation. The session was actually cleared/persisted correctly (verified: force-stop + relaunch behaved correctly); it was purely a navigation gap.
+
+**Fix:** Add an auth guard in the root `RootNavigator` (`src/app/_layout.tsx`) using `useSegments()` + `useRouter()`:
+
+```tsx
+const segments = useSegments();
+const router = useRouter();
+useEffect(() => {
+  if (loading) return;
+  const inAuthGroup = segments[0] === "(auth)";
+  const onResetScreen = segments.join("/").includes("reset-password");
+  if (!user && !inAuthGroup) {
+    router.replace("/(auth)/login");
+  } else if (user && inAuthGroup && !onResetScreen) {
+    router.replace("/(tabs)");
+  }
+}, [user, loading, segments, router]);
+```
+
+**Rules going forward:**
+
+- **An initial-route `<Redirect>` is not an auth guard.** It only runs at app launch. Any screen reachable after navigation must be protected by a route-watching guard (root layout is the single place to do this).
+- **The guard fixes both directions** (sign-out → login, sign-in → tabs) because both are the same missing reactive check.
+- **Carve out deep links:** reset-password lives in `(auth)` but must not be bounced to `(tabs)` when a stale session exists — exclude it from the `user && inAuthGroup → tabs` branch.
+- **`useSegments()` narrowing can trip on stale typed-routes:** `.expo/types/router.d.ts` didn't include `reset-password`, so comparing `segments[1] === "reset-password"` was a TS narrowing error. Use `segments.join("/").includes("reset-password")` instead of relying on the generated tuple type.
+- **EAS build can hang at "Computing project fingerprint"** (before the build is created). Submit with `EAS_SKIP_AUTO_FINGERPRINT=1`. If you kill the CLI mid-fingerprint, a duplicate build may still appear — cancel it (`eas build:cancel <id>`).
+
+**Verification:** prod-baked build `e4cd16d5` on emulator: Sign Out → Login (and stays after force-stop); login → Home in-app (no restart); force-stop + relaunch → Home.
+
+**Applies to:** mobile, expo-router
+**Severity:** important
+**Status:** active
+
 ## 2026-08-05: Global `brace-expansion` Override Broke EAS Fingerprint — Use Scoped Overrides
 
 **Context:** After fixing the RN codegen issue (pinned `"brace-expansion": "2.1.4"` globally), the re-cut release failed **again** — this time in 5 seconds at EAS Build's "compute project fingerprint" step, before gradle even ran: `Failed to compute project fingerprint: (0, brace_expansion_1.expand) is not a function`. The same symptom as the codegen bug, different consumer.

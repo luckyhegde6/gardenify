@@ -16,6 +16,20 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-06: Auth Navigation Guard + Single Version Source + Emulator Verification
+
+- **Duration**: ~2 hours (+ EAS build queue wait)
+- **Goal**: Fix logout not navigating to login / login not transitioning to home, consolidate backend version strings to one source, and verify in the emulator with a fresh APK
+- **Files modified**:
+  - `src/app/_layout.tsx` — added root auth guard (`useSegments` + `router.replace`): `!user` outside `(auth)` → `/(auth)/login`; `user` in `(auth)` (except `reset-password`) → `/(tabs)`. Fixes both the logout dead-end and the login no-transition bug
+  - `api/config.py` — added `app_version: str = "1.1.0"` (single backend source)
+  - `api/routes/health.py`, `api/models/schemas.py`, `api/main.py` — read `settings.app_version` (was hardcoded `1.0.0` in health/debug)
+  - `src/app/(tabs)/profile.tsx` — footer version `Constants.expoConfig?.version` (was hardcoded `v1.0.0`)
+  - `src/__tests__/api-client.test.ts` — health mock version → `1.1.0`
+- **Tests status**: `tsc --noEmit` clean; `expo lint` clean; `jest` 44/44 pass
+- **Emulator verification** (build `e4cd16d5`, prod-baked): Sign Out → confirmation → **redirects to Login** and stays on Login after force-stop (session cleared); login with `luckyhegdedev@gmail.com`/`12345678` → **transitions to Home in-app** (no restart); force-stop + relaunch → Home (session persisted); Profile footer shows `Gardenify v1.1.0`
+- **Next session**: merge PR, tag `v1.1.1` (or re-cut) to ship the verified APK via release.yml; add `gardenify://` to Supabase redirect allowlist for reset end-to-end
+
 ### 2026-08-05: v1.1.0 Re-Cut — EAS Fingerprint Fix, Reset Deep-Link, Landing Auth Section
 
 - **Duration**: ~2 hours

@@ -14,12 +14,13 @@
 | Backend          | Python FastAPI on Vercel                                                                                      |
 | Database         | Supabase (PostgreSQL + Auth + Storage)                                                                        |
 | Plant AI         | PlantNet API v2 (free 500/day)                                                                                |
-| Current Branch   | `fix/reset-password-deep-link` (PR #35)                                                                       |
+| Current Branch   | `main` (auth-guard + version-source PR pending)                                                               |
 | Backend (prod)   | `https://sasyakashi.vercel.app`                                                                               |
 | Vercel env       | `USE_REMOTE=true`, PlantNet API key, Supabase URL/anon key                                                    |
 | Vercel bundle    | 268MB (fixed from 611MB — 412MB GBIF zip + dev data excluded via `.vercelignore`)                             |
 | EAS Build        | Production APK built, env vars from `eas secret:create` (not in git)                                          |
 | APK Distribution | [GitHub Releases](https://github.com/luckyhegde6/gardenify/releases) (v1.0.0 released; v1.1.0 re-cut pending) |
+| Version source   | Backend: `api/config.py` `app_version`; Mobile: `app.json` `expo.version` (read via `Constants.expoConfig`)   |
 | EAS Builds       | https://expo.dev/accounts/luckyhegdedev/projects/gardenify/builds                                             |
 | Local DB size    | 10,008 species, 1,960 with perceptual hashes (19.6%)                                                          |
 | Backend Pipeline | OpenCV gate → local DB pHash → PlantNet (quota saver)                                                         |
@@ -218,3 +219,10 @@ npx playwright test e2e/api-tests/ --reporter=list   # E2E (21 passing)
 
 - App + API at 1.1.0; release/v1.1.0 PR pending merge; tag v1.1.0 triggers automated release.yml
 - Backend already deployed to prod manually; auth endpoints verified live
+
+## Auth Navigation Guard (2026-08-06)
+
+- `src/app/_layout.tsx` root guard (useSegments + router.replace): `!user` outside `(auth)` → `/(auth)/login`; `user` in `(auth)` except `reset-password` → `/(tabs)`. Fixes sign-out dead-end + login no-transition (initial-route `<Redirect>` only ran once).
+- Version single-source: `api/config.py` `app_version = "1.1.0"`; health/debug/schemas/main read it; Profile footer reads `app.json` via `Constants.expoConfig?.version`.
+- Verified on emulator (prod-baked build `e4cd16d5`): logout → Login + session cleared; login → Home in-app; session persists on restart; footer `Gardenify v1.1.0`.
+- EAS submit gotcha: hang at "Computing project fingerprint" → use `EAS_SKIP_AUTO_FINGERPRINT=1`; cancel duplicate builds (`eas build:cancel <id>`).

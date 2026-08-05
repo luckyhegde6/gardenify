@@ -147,8 +147,13 @@
 - [ ] Step 14/15 (from prior session): migrate prod hashes (migration 008) + verify on Vercel
 
 ## This Session (auth-security)
+
 - [x] Backend 3-failure login lockout + one-shot forgot-password + reset-password + admin reset-to-default
 - [x] Mobile login via backend + Forgot Password + reset deep-link + admin Reset Password
+- [x] **Auth navigation guard** in `src/app/_layout.tsx` — sign-out redirects to Login; login transitions to Home in-app (both verified on emulator, build `e4cd16d5`)
+- [x] **Single version source** — `settings.app_version = "1.1.0"` (health/debug/schemas/main); Profile footer from `app.json`; Profile shows `Gardenify v1.1.0`
+- [x] **EAS build submitted + verified**: prod-baked APK `e4cd16d5` installed on emulator; logout + login transition + session persistence + version footer all confirmed
 - [ ] Supabase: allowlist redirect gardenify://reset-password (config, not code)
+- [ ] Create branch + PR for the auth-guard + version-source changes (merge by user)
+- [ ] After merge: release & deploy verified APK (tag → release.yml)
 - [ ] Carry forward (prior): seed prod image_hashes; recheck PlantNet 404/401
-- [ ] Verify on emulator once backend redeployed (login lockout + admin reset UX)

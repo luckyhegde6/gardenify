@@ -41,15 +41,18 @@ Expo App → FastAPI Backend → PlantNet API
 | Vercel Deploy        | ✅ Done  | `https://sasyakashi.vercel.app` live, bundle 268MB                                                      |
 | Android APK          | ✅ Done  | Production build on EAS, env vars via EAS Secrets                                                       |
 | EAS Secrets          | ✅ Done  | Supabase URL + anon key (not in git)                                                                    |
+| Auth Navigation      | ✅ Fixed | Root auth guard (sign-out → Login; login → Home in-app); verified build `e4cd16d5`                      |
+| Version Source       | ✅ Fixed | Single backend source `app_version`; mobile reads `app.json`; Profile footer `v1.1.0`                   |
 | PR #20               | 🟡 Open  | `feat/branded-404-favicon-sitemap` → `main`, favicon/404 + deploy-size/thumbnail changes, merge by user |
 
 ## What's Next
 
-1. Deploy fixed bundle to production + verify `/api/health` (user merges PR #20)
-2. Recheck PlantNet 404/401 identify failure
-3. Test APK on physical device (verify identify flow against production backend)
-4. Expand hash index to remaining ~8K species (need alternative image sources)
-5. Push notifications
+1. Merge auth-guard + version-source PR, then release verified APK (`e4cd16d5`) via tag → release.yml
+2. Deploy fixed bundle to production + verify `/api/health` (user merges PR #20)
+3. Recheck PlantNet 404/401 identify failure
+4. Test APK on physical device (verify identify flow against production backend)
+5. Expand hash index to remaining ~8K species (need alternative image sources)
+6. Push notifications
 
 ## Key Files
 

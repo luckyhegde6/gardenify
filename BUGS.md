@@ -26,6 +26,19 @@
 
 ## Open Issues
 
+### BUG-011: Sign Out Doesn't Navigate to Login + Login Doesn't Transition to Home (In-App)
+
+- **Status**: Fixed (2026-08-06, pending PR)
+- **Severity**: High
+- **Component**: Mobile
+- **Reported**: 2026-08-06
+- **Description**: After tapping Sign Out on the Profile screen and confirming, the app stayed on the tabs (Profile showed "Unknown") instead of returning to the Login screen. Separately, after a successful login the app stayed on the login form until the app was force-stopped and relaunched.
+- **Steps to reproduce**: (1) Log in, go to Profile → Sign Out → confirm → app stays on Profile showing "Unknown". (2) On a logged-out session, enter valid credentials → Log In → app stays on login form.
+- **Expected**: Sign Out navigates to Login; successful login navigates to Home (in-app, no restart).
+- **Actual**: Session state cleared/persisted correctly, but no navigation occurred.
+- **Fix**: Added root auth guard in `src/app/_layout.tsx` (useSegments + router.replace): `!user` outside `(auth)` → `/(auth)/login`; `user` in `(auth)` except `reset-password` → `/(tabs)`.
+- **Root cause**: `index.tsx`'s `<Redirect>` only runs at initial route render; nothing watched auth state for subsequent navigation. Verified fixed on emulator with prod-baked build `e4cd16d5`.
+
 ### BUG-001: TypeScript CI failing on example/ imports
 
 - **Status**: Fixed
@@ -215,7 +228,7 @@
 
 ---
 
-**Last updated**: 2026-08-03
+**Last updated**: 2026-08-06
 **Total open**: 0
-**Total fixed**: 10
+**Total fixed**: 11
 **Total observations**: 3
