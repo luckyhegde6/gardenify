@@ -35,7 +35,7 @@ These rules guide OpenCode agents when working on this project.
 
 ## Documentation Rules
 
-1. Update LESSONS.md when learning something new
+1. Update LESSONS.md (index + `.agents/lessons/<category>.md`) when learning something new
 2. Comment WHY, not WHAT
 3. Keep AGENTS.md current with architecture changes
 4. Document API endpoints with request/response examples

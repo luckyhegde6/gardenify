@@ -212,6 +212,64 @@ Also see the `docs/` directory for developer-facing guides:
 - `docs/supabase-integration.md` — Supabase setup and migrations
 - `docs/vercel-deployment.md` — Backend deployment
 
+## Agent Memory, Handoff & Self-Improvement
+
+This is the **operating model** for agents: how state is persisted across sessions, how a new agent reconstructs context cheaply, how mistakes become lessons, and how the system prevents hallucinated history and keeps token usage low.
+
+### 1. Memory Layout (what lives where)
+
+| File                                    | Tracked in git? | Contents                                                                                                 | Purpose                                                   |
+| --------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `AGENTS.md`                             | ✅              | Rules, workflow, this model                                                                              | Permanent conventions. Read once, follow always.          |
+| `MEMORY.md`                             | ✅              | **Index only** → `.agents/memory/*.md`                                                                   | Entry point for project state.                            |
+| `.agents/memory/project-overview.md`    | ✅              | Identity, key facts, architecture                                                                        | 10-second context.                                        |
+| `.agents/memory/current-state.md`       | ✅              | ✅ done / ❌ not-done, last major refactor                                                               | What changed and what's left.                             |
+| `.agents/memory/app-structure.md`       | ✅              | File tree, auth guard, run commands                                                                      | Where code lives + how to run.                            |
+| `.agents/memory/operations.md`          | ✅              | Auth security, release status, verification checklists                                                   | Ops-specific state.                                       |
+| `LESSONS.md`                            | ✅              | **Index only** → `.agents/lessons/*.md`                                                                  | Entry point for learned lessons.                          |
+| `.agents/lessons/*.md`                  | ✅              | Category files (backend, mobile, database, ci-cd, git, windows-dev, testing, architecture, docs-process) | `YYYY-MM-DD`-stamped mistakes → fix → prevention pattern. |
+| `.agents/session-todos.md`              | ✅              | Current session todos + carried-forward                                                                  | Live task tracking.                                       |
+| `.agents/sessions.md`                   | ✅              | Running chronological session log                                                                        | Audit trail of every session.                             |
+| `.agents/sessions/YYYY-MM-DD-<hash>.md` | ✅              | **Archives** of completed sessions                                                                       | Historical detail, removed from session-todos.            |
+| `.agents/handoff-current.md`            | ❌ (gitignored) | Live state, env, creds refs, emulator coords                                                             | Volatile "resume here" note. Never committed.             |
+| `.agents/primer.md`                     | ✅              | Quick-start table for new agents                                                                         | Fast onboarding.                                          |
+
+**Read order on session start:** `.agents/primer.md` → `MEMORY.md` index → `.agents/memory/current-state.md` → `.agents/handoff-current.md` → recent `git log --oneline -10` → `.agents/session-todos.md`. That is ~10 files of small, targeted reads instead of one giant blob — do NOT dump whole archives or the full `sessions.md`.
+
+### 2. Session Handoff & Continuity
+
+- **Handoff = files, not prose.** Do not trust your own summary of the session; before finishing, update `.agents/sessions.md` (log entry) and `.agents/handoff-current.md` (state + next steps) and mark/carry `.agents/session-todos.md`. The next agent resumes from these, never from conversation memory.
+- **`.agents/handoff-current.md` is the live resume point.** It is gitignored on purpose: it holds mutable state, environment references and ephemeral details (e.g. emulator tap coordinates, test credentials location) that should never be committed. Treat it as scratchpad state, not permanent doc.
+- **Session archives.** When a session completes, its todos move to `.agents/sessions/YYYY-MM-DD-<commit-hash>.md` and are removed from `.agents/session-todos.md`, keeping the todos file short. The filename encodes the date + the commit the work landed in, so the archive is traceable back to code.
+- **Todos are either done, carried forward, or bug-logged.** Before each commit: mark `[x]`/`[~]` on every item, carry unfulfilled ones into the next session's list verbatim, and if an unfulfilled todo is a _confirmed bug_, also log it in `BUGS.md`. Never silently drop a todo.
+
+### 3. Self-Learning (avoid repeating mistakes)
+
+- Every non-obvious discovery, bug fix, or gotcha gets a `YYYY-MM-DD`-stamped entry in the matching `.agents/lessons/<category>.md`, plus a one-line pointer in the `LESSONS.md` index. Format: **Context → Issue → Fix/Pattern → Applies to → Severity → Status**.
+- After the entry, ask "does this deserve a rule in `AGENTS.md` / `CLAUDE.md`, or a regression test?" — a lesson only sticks if it changes future behavior, not just the doc.
+- **Failure analysis loop** (from `.agents/self-improvement-loop.md`): Root cause → Why wasn't it caught? → Fix → Prevent (test/rule/check) → Document. The last step is mandatory, not optional.
+
+### 4. Self-Healing (detect + recover from broken state)
+
+- **Verify before you claim.** After any change, run the real checks: `npx tsc --noEmit`, `npm run lint`, `cd api && pytest`, `npx jest`, and the e2e suite. A "works" claim without a passing check is a hallucination risk.
+- **Trust the repo over memory.** If your memory of a file's contents disagrees with the file, the file wins — re-read it. Never reconstruct code or state from recollection.
+- **Service-level self-healing:** backend/EAS/dev services run detached on Windows; use the debug agent to verify `curl http://localhost:8000/api/health` before relying on them. If a release/build is stuck, check the actual CI/EAS status (`gh run view`, `eas build:list`) rather than assuming.
+- **Post-merge validation** (from `.agents/self-improvement-loop.md`): after merging, confirm EAS build, Vercel deploy, migrations and `/api/health` actually succeeded — do not infer success from the merge event alone.
+
+### 5. Avoiding Hallucination
+
+- **Never invent history.** Every claim about what was done must trace to: a git commit, a tracked doc, a passing test, or a verified live check (e.g. `curl /api/health`). If it isn't in git/docs/tests, phrase it as a hypothesis to verify, not a fact.
+- **Never invent facts/URLs/versions.** Check the repo (commit hashes, `app.json`, `api/config.py`) or query the live system before stating a version, endpoint, or number.
+- **Never invent file paths or API shapes.** Grep/read the actual code first; mirror existing patterns.
+- **Secrets hygiene prevents false state:** `handoff-current.md` and `.env.local`/`creds.json` are gitignored; never commit them, never echo real keys into docs. Before pushing: `git grep -nE 'sbp_[a-f0-9]{20,}'`.
+
+### 6. Token Efficiency
+
+- **Small, targeted reads beat big dumps.** Index files (`MEMORY.md`, `LESSONS.md`) exist so you read only the category you need — load `.agents/lessons/backend.md`, not the whole history. Read file slices by offset/limit; grep before glob; glob before reading entire directories.
+- **Keep docs short by construction.** `session-todos.md` = only current session + carried-forward. `sessions/` archives absorb history. Each lesson is one tight block. If a memory/lesson file grows past ~200 lines, split it.
+- **Don't re-derive what's documented.** If `.agents/memory/app-structure.md` already lists the file tree, don't re-run directory scans to learn it.
+- **State before you act.** Before a multi-file change, state your assumptions and plan in 2–3 lines so work (and token spend) doesn't go down a wrong path. For complex features, delegate planning/review to subagents (planner, code-reviewer, security-reviewer) which run in their own context.
+
 ## Pre-Commit Workflow
 
 Maintain `.agents/session-todos.md` from session start until the final commit: mark done/cancelled items before each commit, carry unfulfilled ones forward as new todos, and log any unfulfilled todo that is a confirmed bug into `BUGS.md`. Before EVERY commit, update these files:
@@ -220,8 +278,8 @@ Maintain `.agents/session-todos.md` from session start until the final commit: m
 □ .agents/session-todos.md — todos checked, unfulfilled carried forward, bugs logged
 □ .agents/sessions.md — log what was done
 □ .agents/handoff-current.md — next steps for next agent
-□ MEMORY.md — current state + what's not done
-□ LESSONS.md — any new discoveries
+□ MEMORY.md — current state + what's not done (index; details in .agents/memory/)
+□ LESSONS.md — any new discoveries (index; details in .agents/lessons/)
 □ PRD.md — check off completed items
 □ .agents/primer.md — quick context for new agents
 □ BUGS.md — log any bugs found or fixed
