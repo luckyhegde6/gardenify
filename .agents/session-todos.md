@@ -18,6 +18,7 @@
 - [x] Archive past sessions → `.agents/sessions/YYYY-MM-DD-<hash>.md`
 - [x] Split LESSONS.md + MEMORY.md into category files
 - [x] Update doc references (AGENTS.md, pre-commit-workflow, documentation-standards, primer)
+- [x] Document agent operating model in AGENTS.md (memory layout, handoff, self-learning/healing, anti-hallucination, token efficiency)
 - [ ] After release.yml finishes: verify GitHub Release has APK + `/api/health` reports 1.1.0
 - [ ] Commit doc restructure (PR)
 
