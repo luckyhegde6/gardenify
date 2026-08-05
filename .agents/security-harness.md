@@ -5,6 +5,7 @@
 Before any code is committed or deployed, verify:
 
 ### Authentication & Authorization
+
 ```
 □ No hardcoded API keys, tokens, or secrets
 □ All database tables have RLS enabled
@@ -14,6 +15,7 @@ Before any code is committed or deployed, verify:
 ```
 
 ### Input Validation
+
 ```
 □ All user inputs validated with Pydantic (backend)
 □ All form inputs validated with Zod (frontend)
@@ -23,6 +25,7 @@ Before any code is committed or deployed, verify:
 ```
 
 ### Data Protection
+
 ```
 □ HTTPS enforced in production
 □ Sensitive data not logged
@@ -32,6 +35,7 @@ Before any code is committed or deployed, verify:
 ```
 
 ### Rate Limiting
+
 ```
 □ PlantNet API quota tracked and enforced
 □ Per-user identification limits enforced
@@ -41,12 +45,12 @@ Before any code is committed or deployed, verify:
 
 ## Security Audit Schedule
 
-| Check | Frequency | Owner |
-|---|---|---|
-| Dependency scan | Weekly | CI/CD |
-| RLS policy review | Monthly | Manual |
-| API key rotation | Quarterly | Manual |
-| Penetration test | Before launch | External |
+| Check             | Frequency     | Owner    |
+| ----------------- | ------------- | -------- |
+| Dependency scan   | Weekly        | CI/CD    |
+| RLS policy review | Monthly       | Manual   |
+| API key rotation  | Quarterly     | Manual   |
+| Penetration test  | Before launch | External |
 
 ## Incident Response
 
@@ -56,7 +60,7 @@ If a security issue is discovered:
 2. **Assess**: Determine scope of impact
 3. **Fix**: Patch the vulnerability
 4. **Notify**: Inform affected users if needed
-5. **Document**: Add to LESSONS.md with prevention steps
+5. **Document**: Add to `.agents/lessons/<category>.md` with prevention steps
 
 ## Environment Variables
 

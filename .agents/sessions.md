@@ -16,6 +16,21 @@ Track all agent sessions for continuity. Update before each commit.
 
 ---
 
+### 2026-08-06: Auth Guard Release (PR #36) + Agent Docs Restructure
+
+- **Duration**: ~1 hour
+- **Goal**: Merge the auth-nav fix, re-cut the release tag, and restructure agent docs (archive sessions, split LESSONS/MEMORY)
+- **Files modified**:
+  - Merged PR #36 (`fix/auth-navigation-and-version`) → main `97554e2` (auth nav guard + single version source + emulator-verified APK `e4cd16d5`); CI green
+  - Re-cut `v1.1.0` tag → `97554e2` (deleted stale release, force-pushed tag); `release.yml` run `31041652851` building EAS APK `2d8eeb92`
+  - `.agents/sessions/` — archived 6 past sessions (`2026-08-01-1e78a69`, `2026-08-02-332f309`, `2026-08-02-9e43131`, `2026-08-02-21f82f7`, `2026-08-04-8623de5`, `2026-08-05-97554e2`)
+  - `.agents/session-todos.md` — shortened to current session + carried-forward only
+  - `LESSONS.md` → slim index; split into `.agents/lessons/` (architecture, backend, database, mobile, ci-cd, git, windows-dev, testing, docs-process)
+  - `MEMORY.md` → slim index; split into `.agents/memory/` (project-overview, current-state, app-structure, operations)
+  - Updated cross-references: `AGENTS.md`, `.agents/documentation-standards.md`, `.agents/pre-commit-workflow.md`, `.agents/agentic-handoff.md`, `.agents/primer.md`, `.agents/self-improvement-loop.md`, `.agents/security-harness.md`, `.agents/security-checklist.md`, `.opencode/instructions/INSTRUCTIONS.md`, `.opencode/rules/gardenify.md`, `RULES.md`, `.agents/handoff-current.md`
+- **Tests status**: n/a (docs-only changes; no code touched)
+- **Next session**: verify `release.yml` (APK asset + `/api/health` 1.1.0); commit doc restructure on `docs/agent-file-restructure` branch → PR; Supabase redirect allowlist
+
 ### 2026-08-06: Auth Navigation Guard + Single Version Source + Emulator Verification
 
 - **Duration**: ~2 hours (+ EAS build queue wait)

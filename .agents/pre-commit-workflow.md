@@ -34,9 +34,9 @@ Always maintain `.agents/session-todos.md` from session start until the final co
   □ New code has tests
 
 □ DOCUMENTATION
-  □ MEMORY.md updated
-  □ LESSONS.md updated (if new discovery)
-  □ .agents/sessions.md updated
+  □ MEMORY.md index + .agents/memory/current-state.md updated
+  □ LESSONS.md index + .agents/lessons/<category>.md updated (if new discovery)
+  □ .agents/sessions.md updated (completed session → archive .agents/sessions/YYYY-MM-DD-<hash>.md)
   □ .agents/handoff-current.md updated
   □ .agents/session-todos.md checked — all done/carried-forward; unfulfilled bugs → BUGS.md
   □ PRD.md updated (if feature completed)

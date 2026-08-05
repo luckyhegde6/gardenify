@@ -5,24 +5,29 @@
 ## 1. Documentation Types
 
 ### User-Facing
+
 - **README.md**: Project overview, quick start
 - **CHANGELOG.md**: Version history
 - **CONTRIBUTING.md**: How to contribute
 
 ### Developer-Facing
+
 - **AGENTS.md**: Agent instructions
-- **MEMORY.md**: Quick context for agents
-- **LESSONS.md**: Mistakes and solutions
+- **MEMORY.md**: Index → `.agents/memory/*.md` (project-overview, current-state, app-structure, operations)
+- **LESSONS.md**: Index → `.agents/lessons/*.md` (architecture, backend, database, mobile, ci-cd, git, windows-dev, testing, docs-process)
+- **.agents/sessions/**: Archived per-session logs (`YYYY-MM-DD-<hash>.md`)
 - **.agents/**: Architecture, phase TODOs, guidelines
 
 ### API Documentation
+
 - **OpenAPI/Swagger**: Auto-generated from code
 - **API Examples**: Request/response samples
 
 ## 2. Documentation Rules
 
 ### README.md Structure
-```markdown
+
+````markdown
 # Project Name
 
 One-line description.
@@ -32,6 +37,7 @@ One-line description.
 ```bash
 # 3-5 commands to get started
 ```
+````
 
 ## Features
 
@@ -40,20 +46,21 @@ One-line description.
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|---|---|---|
-| API_KEY | Your API key | Yes |
+| Variable | Description  | Required |
+| -------- | ------------ | -------- |
+| API_KEY  | Your API key | Yes      |
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /api/identify | Identify plant |
+| Method | Endpoint      | Description    |
+| ------ | ------------- | -------------- |
+| POST   | /api/identify | Identify plant |
 
 ## Contributing
 
 See CONTRIBUTING.md
-```
+
+````
 
 ### Code Comments
 ```typescript
@@ -78,10 +85,12 @@ const hash = computeHash(image);
 // ❌ BAD: Obvious comments
 // Return the result
 return result;
-```
+````
 
 ### API Documentation
+
 Every endpoint must have:
+
 - Summary (1 line)
 - Description (1-2 sentences)
 - Request schema with examples
@@ -91,40 +100,47 @@ Every endpoint must have:
 ## 3. Documentation Updates
 
 ### When to Update
+
 ```
 □ After adding a feature → Update README.md
 □ After changing API → Update OpenAPI spec
-□ After fixing a bug → Update LESSONS.md
+□ After fixing a bug → Update .agents/lessons/<category>.md
 □ After making a decision → Update AGENTS.md
-□ After discovering something → Update LESSONS.md
-□ Before commit → Update MEMORY.md
+□ After discovering something → Update .agents/lessons/<category>.md
+□ Before commit → Update .agents/memory/current-state.md
+□ Completed session → Archive to .agents/sessions/YYYY-MM-DD-<hash>.md
 ```
 
 ### Who Updates
+
 - **README.md**: Developer who adds feature
 - **CHANGELOG.md**: Automated or release manager
 - **AGENTS.md**: Architecture owner
-- **MEMORY.md**: Any agent
-- **LESSONS.md**: Any agent who learns something
+- **.agents/memory/**: Any agent
+- **.agents/lessons/**: Any agent who learns something
 
 ## 4. Documentation Quality
 
 ### Clear
+
 - Simple language
 - Short sentences
 - Concrete examples
 
 ### Concise
+
 - No unnecessary words
 - Bullet points over paragraphs
 - Tables over lists when appropriate
 
 ### Complete
+
 - All features documented
 - All API endpoints documented
 - All environment variables documented
 
 ### Current
+
 - Updated with code changes
 - No stale information
 - Version numbers match
@@ -132,6 +148,7 @@ Every endpoint must have:
 ## 5. Documentation Tools
 
 ### Auto-Generation
+
 ```bash
 # OpenAPI spec from FastAPI
 uvicorn api.main:app --openapi=openapi.json
@@ -144,6 +161,7 @@ cd docs && make html
 ```
 
 ### Linting
+
 ```bash
 # Markdown lint
 npx markdownlint-cli2 "**/*.md"
@@ -169,11 +187,11 @@ npx cspell "src/**/*.{ts,tsx}" "*.md"
 
 ## 7. Common Documentation Mistakes
 
-| Mistake | Solution |
-|---|---|
-| Outdated README | Update after every feature |
-| Missing env vars | Document all required vars |
-| No examples | Add request/response examples |
-| Too verbose | Use bullet points, tables |
-| No changelog | Generate on every release |
-| Stale comments | Review comments quarterly |
+| Mistake          | Solution                      |
+| ---------------- | ----------------------------- |
+| Outdated README  | Update after every feature    |
+| Missing env vars | Document all required vars    |
+| No examples      | Add request/response examples |
+| Too verbose      | Use bullet points, tables     |
+| No changelog     | Generate on every release     |
+| Stale comments   | Review comments quarterly     |

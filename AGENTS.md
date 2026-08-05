@@ -220,8 +220,8 @@ Maintain `.agents/session-todos.md` from session start until the final commit: m
 □ .agents/session-todos.md — todos checked, unfulfilled carried forward, bugs logged
 □ .agents/sessions.md — log what was done
 □ .agents/handoff-current.md — next steps for next agent
-□ MEMORY.md — current state + what's not done
-□ LESSONS.md — any new discoveries
+□ MEMORY.md — current state + what's not done (index; details in .agents/memory/)
+□ LESSONS.md — any new discoveries (index; details in .agents/lessons/)
 □ PRD.md — check off completed items
 □ .agents/primer.md — quick context for new agents
 □ BUGS.md — log any bugs found or fixed

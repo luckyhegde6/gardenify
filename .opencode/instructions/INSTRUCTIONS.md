@@ -156,8 +156,8 @@ Before EVERY commit:
 □ RLS enabled on new tables
 □ .agents/sessions.md updated
 □ .agents/handoff-current.md updated
-□ MEMORY.md updated
-□ LESSONS.md updated (if new discovery)
+□ MEMORY.md index + .agents/memory/current-state.md updated
+□ LESSONS.md index + .agents/lessons/<category>.md updated (if new discovery)
 □ BUGS.md updated (if bug found/fixed)
 ```
 

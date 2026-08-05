@@ -44,7 +44,7 @@ Every Friday, review:
 
 When you learn something new:
 
-1. Update `LESSONS.md` with the finding
+1. Update `.agents/lessons/<category>.md` with the finding
 2. Add a rule to `CLAUDE.md` if it's a general principle
 3. Update `AGENTS.md` if it affects the architecture
 4. Add a test case to prevent regression
@@ -57,19 +57,19 @@ When something breaks:
 2. **Why wasn't it caught?**: What test/rule was missing?
 3. **Fix**: Apply the code change
 4. **Prevent**: Add test, rule, or check to prevent recurrence
-5. **Document**: Update LESSONS.md with the pattern
+5. **Document**: Update `.agents/lessons/<category>.md` with the pattern
 
 ## 6. Performance Benchmarks
 
 Track these metrics over time:
 
-| Metric | Target | Current | Trend |
-|---|---|---|---|
-| App startup time | < 2s | — | — |
-| API response time | < 500ms | — | — |
-| Identification accuracy | > 90% | — | — |
-| Test coverage | > 80% | — | — |
-| Bundle size | < 50MB | — | — |
+| Metric                  | Target  | Current | Trend |
+| ----------------------- | ------- | ------- | ----- |
+| App startup time        | < 2s    | —       | —     |
+| API response time       | < 500ms | —       | —     |
+| Identification accuracy | > 90%   | —       | —     |
+| Test coverage           | > 80%   | —       | —     |
+| Bundle size             | < 50MB  | —       | —     |
 
 ## 7. Code Quality Metrics
 
