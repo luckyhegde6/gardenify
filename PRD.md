@@ -8,8 +8,9 @@
 
 - [x] User can register with email/password
 - [x] User can log in
-- [x] User can log out
+- [x] User can log out (navigates to login + clears session — auth guard in root layout)
 - [x] Session persists across app restarts (SecureStore)
+- [x] Successful login navigates to Home in-app (auth guard in root layout)
 - [x] Password validation (min 8 chars)
 - [x] Error messages for invalid credentials
 - [x] Forgot-password flow (recovery email + one-time reset link) — app parses `token`/`access_token` deep-link params; backend rate-limits one pending reset per email

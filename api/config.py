@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "local"  # local | production
     use_remote: bool = False
+    app_version: str = "1.1.0"
 
     # PlantNet
     plantnet_api_key: str = ""

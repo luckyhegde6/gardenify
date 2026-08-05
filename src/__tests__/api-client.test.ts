@@ -48,7 +48,7 @@ const mockSpeciesResponse = {
   ],
 };
 
-const mockHealthResponse = { status: "ok", version: "1.0.0" };
+const mockHealthResponse = { status: "ok", version: "1.1.0" };
 
 function mockFetch(response: unknown, status = 200) {
   return (global.fetch = jest.fn().mockResolvedValue({

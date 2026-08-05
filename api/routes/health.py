@@ -20,7 +20,7 @@ router = APIRouter()
 )
 async def health_check():
     """Health check endpoint for monitoring and load balancers."""
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": settings.app_version}
 
 
 @router.get(
@@ -33,7 +33,7 @@ async def debug_info():
     """Debug endpoint returning config and system info."""
     from api.services.cache import cache_stats
     return {
-        "version": "1.0.0",
+        "version": settings.app_version,
         "python": sys.version.split()[0],
         "uptime_seconds": int(time.time() - _start_time),
         "cache": cache_stats(),

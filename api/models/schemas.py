@@ -1,9 +1,11 @@
 from pydantic import BaseModel, Field
 
+from api.config import settings
+
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    version: str = "1.1.0"
+    version: str = settings.app_version
 
 
 class IdentificationRequest(BaseModel):
